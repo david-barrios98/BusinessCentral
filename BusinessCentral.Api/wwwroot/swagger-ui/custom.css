@@ -1,0 +1,57 @@
+/* Hacer Swagger más atractivo */
+.swagger-ui {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.swagger-ui .topbar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.swagger-ui .scheme-container {
+    background: #f5f5f5;
+}
+
+.swagger-ui .btn {
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.swagger-ui .btn-primary {
+    background: #667eea;
+}
+
+.swagger-ui .btn-primary:hover {
+    background: #764ba2;
+}
+
+.swagger-ui .model-box {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin: 10px 0;
+    padding: 10px;
+}
+
+.swagger-ui .response-col_status {
+    font-weight: bold;
+}
+
+/* Colores para métodos HTTP */
+.swagger-ui .opblock-tag {
+    background: #f9f9f9;
+    border-bottom: 2px solid #667eea;
+}
+
+.swagger-ui .opblock.opblock-get {
+    background: rgba(97, 175, 254, 0.1);
+}
+
+.swagger-ui .opblock.opblock-post {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.swagger-ui .opblock.opblock-delete {
+    background: rgba(249, 89, 89, 0.1);
+}
