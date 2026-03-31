@@ -1,14 +1,12 @@
 [
   {
-    "id": 1,
-    "name": "Cédula de Ciudadanía",
-    "abbreviation": "CC",
-    "active": true
+    "Name": "CÃ©dula de CiudadanÃ­a",
+    "Abbreviation": "CC",
+    "Active": true
   },
   {
-    "id": 2,
-    "name": "NIT",
-    "abbreviation": "NIT",
-    "active": true
+    "Name": "NIT",
+    "Abbreviation": "NIT",
+    "Active": true
   }
 ]

@@ -1,0 +1,17 @@
+﻿[
+  {
+    "ModuleId": 1,
+    "Name": "Users.Read",
+    "Description": "Ver usuarios"
+  },
+  {
+    "ModuleId": 1,
+    "Name": "Users.Write",
+    "Description": "Crear/Editar usuarios"
+  },
+  {
+    "ModuleId": 2,
+    "Name": "Services.Manage",
+    "Description": "Gestionar servicios de belleza"
+  }
+]

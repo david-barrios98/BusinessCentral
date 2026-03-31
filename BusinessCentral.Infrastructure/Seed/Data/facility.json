@@ -1,13 +1,13 @@
 [
   {
-    "id": 1,
-    "company_id": 1,
-    "facility_type_id": 1,
-    "name": "Sede Cedritos",
-    "code": "SED-CED-01",
-    "email": "cedritos@dnails.com",
-    "priority": 1,
-    "create": "2026-01-01T08:00:00",
-    "active": true
+    "CompanyId": 1,
+    "FacilityTypeId": 1,
+    "Name": "Sede Cedritos",
+    "Address": "Calle 147 # 12-34, Mazuren",
+    "Code": "SED-CED-01",
+    "Email": "cedritos@dnails.com",
+    "Priority": 1,
+    "Create": "2026-01-01T08:00:00",
+    "Active": true
   }
 ]

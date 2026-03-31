@@ -1,77 +1,62 @@
 [
   {
-    "id": 1,
-    "name": "Bogot· D.C.",
-    "country_id": 1
+    "Name": "Bogot√° D.C.",
+    "CountryId": 1
   },
   {
-    "id": 2,
-    "name": "Antioquia",
-    "country_id": 1
+    "Name": "Antioquia",
+    "CountryId": 1
   },
   {
-    "id": 3,
-    "name": "Valle del Cauca",
-    "country_id": 1
+    "Name": "Valle del Cauca",
+    "CountryId": 1
   },
   {
-    "id": 4,
-    "name": "Distrito Capital",
-    "country_id": 2
+    "Name": "Distrito Capital",
+    "CountryId": 2
   },
   {
-    "id": 5,
-    "name": "Zulia",
-    "country_id": 2
+    "Name": "Zulia",
+    "CountryId": 2
   },
   {
-    "id": 6,
-    "name": "Miranda",
-    "country_id": 2
+    "Name": "Miranda",
+    "CountryId": 2
   },
   {
-    "id": 7,
-    "name": "Lima",
-    "country_id": 3
+    "Name": "Lima",
+    "CountryId": 3
   },
   {
-    "id": 8,
-    "name": "Arequipa",
-    "country_id": 3
+    "Name": "Arequipa",
+    "CountryId": 3
   },
   {
-    "id": 9,
-    "name": "Cusco",
-    "country_id": 3
+    "Name": "Cusco",
+    "CountryId": 3
   },
   {
-    "id": 10,
-    "name": "Pichincha",
-    "country_id": 4
+    "Name": "Pichincha",
+    "CountryId": 4
   },
   {
-    "id": 11,
-    "name": "Guayas",
-    "country_id": 4
+    "Name": "Guayas",
+    "CountryId": 4
   },
   {
-    "id": 12,
-    "name": "Azuay",
-    "country_id": 4
+    "Name": "Azuay",
+    "CountryId": 4
   },
   {
-    "id": 13,
-    "name": "S„o Paulo",
-    "country_id": 5
+    "Name": "S√£o Paulo",
+    "CountryId": 5
   },
   {
-    "id": 14,
-    "name": "Rio de Janeiro",
-    "country_id": 5
+    "Name": "Rio de Janeiro",
+    "CountryId": 5
   },
   {
-    "id": 15,
-    "name": "Minas Gerais",
-    "country_id": 5
+    "Name": "Minas Gerais",
+    "CountryId": 5
   }
 ]

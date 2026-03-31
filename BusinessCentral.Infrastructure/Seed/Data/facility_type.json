@@ -1,12 +1,14 @@
 [
   {
-    "id": 1,
-    "name": "Sede Principal",
-    "active": true
+    "Name": "Sede Principal",
+    "Active": true
   },
   {
-    "id": 2,
-    "name": "Punto Móvil",
-    "active": true
+    "Name": "Punto MÃ³vil",
+    "Active": true
+  },
+  {
+    "Name": "Local Comercial",
+    "Active": true
   }
 ]

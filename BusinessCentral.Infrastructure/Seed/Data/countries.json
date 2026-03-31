@@ -1,27 +1,27 @@
 [
   {
-    "name": "Colombia",
-    "iso_code": "CO",
-    "active": true
+    "Name": "Colombia",
+    "IsoCode": "CO",
+    "Active": true
   },
   {
-    "name": "Venezuela",
-    "iso_code": "VE",
-    "active": true
+    "Name": "Venezuela",
+    "IsoCode": "VE",
+    "Active": true
   },
   {
-    "name": "Perú",
-    "iso_code": "PE",
-    "active": true
+    "Name": "PerÃº",
+    "IsoCode": "PE",
+    "Active": true
   },
   {
-    "name": "Ecuador",
-    "iso_code": "EC",
-    "active": true
+    "Name": "Ecuador",
+    "IsoCode": "EC",
+    "Active": true
   },
   {
-    "name": "Brasil",
-    "iso_code": "BR",
-    "active": true
+    "Name": "Brasil",
+    "IsoCode": "BR",
+    "Active": true
   }
 ]

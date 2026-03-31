@@ -9,20 +9,17 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Common
 {
-    [Table("city", Schema = "common")]
+    [Table("City", Schema = "common")]
     public class City
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(100)]
-        [Column("name")]
         public string Name { get; set; } = null!;
 
         // Relación con Department
-        [Column("department_id")]
         public int DepartmentId { get; set; }
 
         public Department Department { get; set; } = null!;

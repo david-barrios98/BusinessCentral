@@ -9,24 +9,20 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Common
 {
-    [Table("document_types", Schema = "common")]
+    [Table("DocumentType", Schema = "common")]
     public class DocumentType
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(50)]
-        [Column("name")]
         public string Name { get; set; } = null!; // Ej: "Cédula de Ciudadanía"
 
         [Required]
         [MaxLength(10)]
-        [Column("abbreviation")]
         public string Abbreviation { get; set; } = null!; // Ej: "CC"
 
-        [Column("active")]
         public bool Active { get; set; } = true;
     }
 }

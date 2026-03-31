@@ -1,14 +1,12 @@
 [
   {
-    "id": 1,
-    "company_id": 1,
-    "name": "Administrador",
-    "is_system_role": true
+    "CompanyId": 1,
+    "Name": "Administrador",
+    "IsSystemRole": true
   },
   {
-    "id": 2,
-    "company_id": 1,
-    "name": "Manicurista",
-    "is_system_role": false
+    "CompanyId": 1,
+    "Name": "Manicurista",
+    "IsSystemRole": false
   }
 ]

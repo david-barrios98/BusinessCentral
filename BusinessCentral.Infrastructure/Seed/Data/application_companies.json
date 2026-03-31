@@ -1,0 +1,9 @@
+[
+  {
+    "CompanyId": 1,
+    "ApplicationCode": "001",
+    "LoginField": "email",
+    "Priority": 1,
+    "Active": true
+  }
+]

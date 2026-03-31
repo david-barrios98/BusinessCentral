@@ -1,0 +1,9 @@
+[
+  {
+    "CompanyId": 1,
+    "MembershipPlanId": 1,
+    "StartDate": "2026-03-01T00:00:00",
+    "EndDate": "2027-03-01T00:00:00",
+    "Status": "Active"
+  }
+]

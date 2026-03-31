@@ -8,28 +8,22 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Config
 {
-    [Table("modules", Schema = "config")]
+    [Table("Module", Schema = "config")]
     public class Module
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
-        [Required]
         [MaxLength(50)]
-        [Column("code")]
-        public string Code { get; set; } = null!; // Ej: "INV", "ACC", "HR"
+        public string? Code { get; set; } // Ej: "INV", "ACC", "HR"
 
         [Required]
         [MaxLength(100)]
-        [Column("name")]
         public string Name { get; set; } = null!;
 
-        [Column("description")]
         [MaxLength(250)]
         public string? Description { get; set; }
 
-        [Column("is_active")]
-        public bool IsActive { get; set; } = true;
+        public bool Active { get; set; } = true;
     }
 }

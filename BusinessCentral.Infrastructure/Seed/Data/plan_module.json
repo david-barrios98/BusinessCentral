@@ -1,0 +1,14 @@
+[
+  {
+    "MembershipPlanId": 1,
+    "ModuleId": 1
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleId": 2
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleId": 3
+  }
+]

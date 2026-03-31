@@ -1,0 +1,14 @@
+[
+  {
+    "RoleId": 1,
+    "PermissionId": 1
+  },
+  {
+    "RoleId": 1,
+    "PermissionId": 2
+  },
+  {
+    "RoleId": 1,
+    "PermissionId": 3
+  }
+]

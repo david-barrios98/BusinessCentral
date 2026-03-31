@@ -8,15 +8,13 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Config
 {
-    [Table("permissions", Schema = "config")]
+    [Table("Permission", Schema = "config")]
     public class Permission
     {
         [Key]
-        [Column("id")]
         public int Id { get; set; }
 
         [Required]
-        [Column("module_id")]
         public int ModuleId { get; set; }
 
         [ForeignKey("ModuleId")]
@@ -24,12 +22,10 @@ namespace BusinessCentral.Domain.Entities.Config
 
         [Required]
         [MaxLength(100)]
-        [Column("name")]
         public string Name { get; set; } = null!; // Ej: "Crear Factura", "Eliminar Producto"
 
         [Required]
         [MaxLength(50)]
-        [Column("code")]
-        public string Code { get; set; } = null!; // Ej: "INVENTORY_CREATE"
+        public string? Code { get; set; } // Ej: "INVENTORY_CREATE"
     }
 }

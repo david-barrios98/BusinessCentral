@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -9,23 +10,21 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Common
 {
-    [Table("department", Schema = "common")]
+    [Table("Department", Schema = "common")]
     public class Department
     {
         [Key]
-        [Column("id")]
-        [JsonPropertyName("id")]
         public int Id { get; set; }
 
         [Required]
         [MaxLength(100)]
-        [Column("name")]
         public string Name { get; set; } = null!;
 
         // Relación con Countries
-        [Column("country_id")]
+        [ForeignKey("CountryId")]
         public int CountryId { get; set; }
 
-        public Countries Countries { get; set; } = null!;
+        // Navegación
+        public virtual Countries Country { get; set; } = null!;
     }
 }

@@ -1,16 +1,20 @@
 [
   {
-    "id": 1,
-    "code": "AUTH",
-    "name": "Autenticaci髇",
-    "description": "Gesti髇 de usuarios y acceso",
-    "is_active": true
+    "Code": "AUTH",
+    "Name": "Autenticaci贸n",
+    "Description": "Gesti贸n de usuarios, roles y permisos",
+    "Active": true
   },
   {
-    "id": 2,
-    "code": "SERV",
-    "name": "Servicios de Belleza",
-    "description": "Agenda y gesti髇 de manicure/pedicure",
-    "is_active": true
+    "Code": "BUSS",
+    "Name": "Core de Negocio",
+    "Description": "Gesti贸n de empresas y sedes",
+    "Active": true
+  },
+  {
+    "Code": "SERV",
+    "Name": "Servicios DNAILS",
+    "Description": "Gesti贸n de citas de manicure, pedicure y depilaci贸n",
+    "Active": true
   }
 ]

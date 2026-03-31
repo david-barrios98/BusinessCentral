@@ -36,8 +36,8 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<Facility>(context, "facility.json");
             await SeedEntity<FacilityAddress>(context, "facility_address.json");
             await SeedEntity<ApplicationCompanies>(context, "application_companies.json");
-            await SeedEntity<CompanySubscription>(context, "company_subscriptions.json");
-            await SeedEntity<PlanModule>(context, "plan_modules.json");
+            await SeedEntity<CompanySubscription>(context, "company_subscription.json");
+            await SeedEntity<PlanModule>(context, "plan_module.json");
             await SeedEntity<Role>(context, "roles.json");
 
             // --- 5. SEGURIDAD DETALLADA (Dependen de Roles/Permissions) ---
@@ -60,8 +60,7 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             var dbSet = context.Set<T>();
 
-            // ✅ Evita duplicados
-            if (dbSet.Any())
+            if (await dbSet.AnyAsync()) // Usa AnyAsync para no bloquear el hilo
             {
                 Console.WriteLine($"⚠️ {typeof(T).Name} ya tiene datos");
                 return;
@@ -77,13 +76,20 @@ namespace BusinessCentral.Infrastructure.Seed
 
             try
             {
-                dbSet.AddRange(data);
+                await dbSet.AddRangeAsync(data);
                 await context.SaveChangesAsync();
+
+                // 💡 ESTO ES LO QUE FALTA:
+                // Limpia el rastreador de EF para que la siguiente entidad (ej. Departments) 
+                // no crea que los objetos de la anterior (ej. Countries) están en conflicto.
+                context.ChangeTracker.Clear();
 
                 Console.WriteLine($"✅ Seed {typeof(T).Name} insertado");
             }
             catch (Exception ex)
             {
+                // Limpia también en caso de error para no contaminar el siguiente intento
+                context.ChangeTracker.Clear();
                 throw new Exception($"❌ Error en Seed de {typeof(T).Name}", ex);
             }
         }
@@ -95,18 +101,38 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             var assembly = Assembly.GetExecutingAssembly();
 
+            // Busca el recurso ignorando mayúsculas/minúsculas en el nombre del archivo
             var resourceName = assembly.GetManifestResourceNames()
-                .FirstOrDefault(r => r.EndsWith(fileName));
+                .FirstOrDefault(r => r.EndsWith(fileName, StringComparison.OrdinalIgnoreCase));
 
             if (string.IsNullOrEmpty(resourceName))
-                throw new Exception($"No se encontró el recurso JSON: {fileName}");
+            {
+                throw new FileNotFoundException($"No se encontró el recurso embebido JSON: {fileName}");
+            }
 
             using var stream = assembly.GetManifestResourceStream(resourceName);
-            using var reader = new StreamReader(stream!);
+            if (stream == null) return new List<T>();
 
+            using var reader = new StreamReader(stream);
             var json = await reader.ReadToEndAsync();
 
-            return JsonSerializer.Deserialize<List<T>>(json) ?? new List<T>();
+            // Configuración crítica para el match entre JSON y Entidades C#
+            var options = new JsonSerializerOptions
+            {
+
+                PropertyNameCaseInsensitive = true, 
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                AllowTrailingCommas = true 
+            };
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<T>>(json, options) ?? new List<T>();
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Error de formato en el JSON '{fileName}': {ex.Message}", ex);
+            }
         }
     }
 }

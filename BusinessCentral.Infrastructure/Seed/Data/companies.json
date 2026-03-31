@@ -1,17 +1,16 @@
 [
   {
-    "id": 1,
-    "name": "DNAILS Beauty Service",
-    "trade_name": "DNAILS",
-    "document_type_id": 2,
-    "document_number": "901234567",
-    "verification_digit": "1",
-    "email": "contacto@dnails.com",
-    "phone": "3001234567",
-    "website": "https://dnails.com",
-    "subdomain": "dnails",
-    "create": "2026-01-01T08:00:00",
-    "update": "2026-01-01T08:00:00",
-    "active": true
+    "Name": "DNAILS Beauty Service",
+    "TradeName": "DNAILS",
+    "DocumentTypeId": 1,
+    "DocumentNumber": "901234567",
+    "VerificationDigit": "1",
+    "Email": "contacto@dnails.com",
+    "Phone": "3001234567",
+    "Website": "https://dnails.com",
+    "Subdomain": "dnails",
+    "Create": "2026-01-01T08:00:00",
+    "Update": "2026-01-01T08:00:00",
+    "Active": true
   }
 ]
