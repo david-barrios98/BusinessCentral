@@ -4,20 +4,20 @@ using BusinessCentral.Domain.Entities.Auth;
 
 namespace BusinessCentral.Infrastructure.Persistence.Configuration.Table
 {
-    public class UsersConfigurations : IEntityTypeConfiguration<Users>
+    public class UsersInfoConfigurations : IEntityTypeConfiguration<UsersInfo>
     {
-        public void Configure(EntityTypeBuilder<Users> entity)
+        public void Configure(EntityTypeBuilder<UsersInfo> entity)
         {
 
-            entity.Property(e => e.active)
+            entity.Property(e => e.Active)
                 .HasColumnName("active")
                 .HasDefaultValueSql("((1))");
 
-            entity.Property(e => e.create)
+            entity.Property(e => e.Create)
                 .HasDefaultValueSql("GETDATE()")
                 .HasColumnName("create");
 
-            entity.Property(e => e.update)
+            entity.Property(e => e.Update)
                 .HasDefaultValueSql("GETDATE()")
                 .HasColumnName("update");
 

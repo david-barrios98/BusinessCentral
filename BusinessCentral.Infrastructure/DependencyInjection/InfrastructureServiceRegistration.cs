@@ -12,6 +12,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
         {
             // Repositories
             services.AddScoped<ILoginRepository, LoginRepository>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
             // Services
             services.AddScoped<ITokenService, TokenService>();

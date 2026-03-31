@@ -17,4 +17,8 @@
 	  <ProjectReference Include="..\BusinessCentral.Shared\BusinessCentral.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Ports\Inbound\" />
+	</ItemGroup>
+
 </Project>

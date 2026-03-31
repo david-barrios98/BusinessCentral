@@ -14,7 +14,7 @@ namespace BusinessCentral.Infrastructure.Seed
             await context.Database.MigrateAsync();
 
             // ⚠️ ORDEN IMPORTANTE (FK)
-            await SeedEntity<Users>(context, "users.json");
+            await SeedEntity<UsersInfo>(context, "users.json");
         }
 
         // =============================
