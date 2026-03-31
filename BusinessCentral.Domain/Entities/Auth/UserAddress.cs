@@ -26,7 +26,7 @@ namespace BusinessCentral.Domain.Entities.Auth
 
         [MaxLength(100)]
         [Column("alias")]
-        public string Alias { get; set; } = "Home"; // Ej: "Casa", "Oficina", "Mamá"
+        public string? Alias { get; set; }
 
         // --- Datos de Geolocalización ---
 

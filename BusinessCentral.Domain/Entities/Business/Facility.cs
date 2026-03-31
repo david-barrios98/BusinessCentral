@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace BusinessCentral.Domain.Entities.Business
 {
     [Table("facility", Schema = "business")]
-    internal class Facility
+    public class Facility
     {
         [Key]
         [Column("id")]
@@ -31,15 +31,14 @@ namespace BusinessCentral.Domain.Entities.Business
         [Column("name")]
         public string Name { get; set; } = null!;
 
-        [Required]
         [MaxLength(200)]
         [Column("code")]
-        public string Code { get; set; } = null!;
+        public string? Code { get; set; }
 
         [MaxLength(150)]
         [EmailAddress]
         [Column("email")]
-        public string Email { get; set; } = null!;
+        public string? Email { get; set; }
 
         [MaxLength(20)]
         [Column("phone")]

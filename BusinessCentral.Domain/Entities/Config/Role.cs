@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BusinessCentral.Domain.Entities.Config
 {
-    [Table("roles", Schema = "Config")]
+    [Table("roles", Schema = "config")]
     public class Role
     {
         [Key]

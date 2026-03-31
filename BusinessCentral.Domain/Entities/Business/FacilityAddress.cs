@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace BusinessCentral.Domain.Entities.Business
 {
     [Table("Facility_address", Schema = "business")]
-    internal class FacilityAddress
+    public class FacilityAddress
     {
         [Key]
         [Column("id")]

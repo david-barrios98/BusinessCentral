@@ -27,27 +27,26 @@ namespace BusinessCentral.Domain.Entities.Auth
 
         [ForeignKey("DocumentTypeId")] public virtual DocumentType DocumentType { get; set; } = null!;
 
-        [Required]
         [MaxLength(20)]
         [Column("document_number")]
-        public string DocumentNumber { get; set; } = null!;
+        public string? DocumentNumber { get; set; }
 
-        [Required]
         [MaxLength(150)]
         [Column("first_name")]
-        public string FirstName { get; set; } = null!;
+        public string? FirstName { get; set; }
 
-        [Required]
+
         [MaxLength(150)]
         [Column("last_name")]
-        public string LastName { get; set; } = null!;
+        public string? LastName { get; set; }
 
-        [Required]
+
         [MaxLength(100)]
         [Column("email")]
-        public string Email { get; set; } = null!;
+        public string? Email { get; set; } 
 
-        [MaxLength(255)] [Column("password")] public string? Password { get; set; } // Nullable por si usa Google Auth
+        [MaxLength(255)] [Column("password")]
+        public string? Password { get; set; } // Nullable por si usa Google Auth
 
         [Required]
         [MaxLength(10)]
