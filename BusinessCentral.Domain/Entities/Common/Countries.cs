@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace BusinessCentral.Domain.Entities.Common
 {
     [Table("countries", Schema = "common")]
-    public class Country
+    public class Countries
     {
         [Key]
         [Column("id")]

@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Reflection;
+using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Domain.Entities.Auth;
+using BusinessCentral.Domain.Entities.Business;
+using BusinessCentral.Domain.Entities.Common;
+using BusinessCentral.Domain.Entities.Config;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using Module = BusinessCentral.Domain.Entities.Config.Module;
 
 namespace BusinessCentral.Infrastructure.Seed
 {
@@ -13,8 +17,37 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             await context.Database.MigrateAsync();
 
-            // ⚠️ ORDEN IMPORTANTE (FK)
-            await SeedEntity<UsersInfo>(context, "users.json");
+            // --- 1. CATÁLOGOS BASE (Nivel 0 - No dependen de nadie) ---
+            await SeedEntity<Countries>(context, "countries.json");
+            await SeedEntity<DocumentType>(context, "document_types.json");
+            await SeedEntity<MembershipPlan>(context, "membership_plans.json");
+            await SeedEntity<Module>(context, "modules.json");
+            await SeedEntity<FacilityType>(context, "facility_type.json");
+
+            // --- 2. GEOGRAFÍA (Nivel 1 - Dependen de Countries) ---
+            await SeedEntity<Department>(context, "department.json");
+            await SeedEntity<City>(context, "city.json");
+
+            // --- 3. ESTRUCTURA EMPRESARIAL (Nivel 2 - Dependen de DocumentType/City) ---
+            await SeedEntity<Companies>(context, "companies.json");
+            await SeedEntity<Permission>(context, "permissions.json");
+
+            // --- 4. CONFIGURACIÓN Y SEDES (Dependen de Companies/Plans/Modules) ---
+            await SeedEntity<Facility>(context, "facility.json");
+            await SeedEntity<FacilityAddress>(context, "facility_address.json");
+            await SeedEntity<ApplicationCompanies>(context, "application_companies.json");
+            await SeedEntity<CompanySubscription>(context, "company_subscriptions.json");
+            await SeedEntity<PlanModule>(context, "plan_modules.json");
+            await SeedEntity<Role>(context, "roles.json");
+
+            // --- 5. SEGURIDAD DETALLADA (Dependen de Roles/Permissions) ---
+            await SeedEntity<RolePermission>(context, "role_permissions.json");
+
+            // --- 6. USUARIOS Y SESIONES (Nivel Final - Dependen de Companies/Roles) ---
+            await SeedEntity<UsersInfo>(context, "users_info.json");
+            await SeedEntity<UserAddress>(context, "user_addresses.json");
+            await SeedEntity<UserSession>(context, "user_sessions.json");
+            await SeedEntity<RefreshToken>(context, "refresh_tokens.json");
         }
 
         // =============================

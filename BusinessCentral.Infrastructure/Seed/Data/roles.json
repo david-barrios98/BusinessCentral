@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "company_id": 1,
+    "name": "Administrador",
+    "is_system_role": true
+  },
+  {
+    "id": 2,
+    "company_id": 1,
+    "name": "Manicurista",
+    "is_system_role": false
+  }
+]

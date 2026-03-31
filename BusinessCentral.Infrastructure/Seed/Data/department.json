@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "name": "Bogotá D.C.",
+    "country_id": 1
+  },
+  {
+    "id": 2,
+    "name": "Antioquia",
+    "country_id": 1
+  },
+  {
+    "id": 3,
+    "name": "Valle del Cauca",
+    "country_id": 1
+  },
+  {
+    "id": 4,
+    "name": "Distrito Capital",
+    "country_id": 2
+  },
+  {
+    "id": 5,
+    "name": "Zulia",
+    "country_id": 2
+  },
+  {
+    "id": 6,
+    "name": "Miranda",
+    "country_id": 2
+  },
+  {
+    "id": 7,
+    "name": "Lima",
+    "country_id": 3
+  },
+  {
+    "id": 8,
+    "name": "Arequipa",
+    "country_id": 3
+  },
+  {
+    "id": 9,
+    "name": "Cusco",
+    "country_id": 3
+  },
+  {
+    "id": 10,
+    "name": "Pichincha",
+    "country_id": 4
+  },
+  {
+    "id": 11,
+    "name": "Guayas",
+    "country_id": 4
+  },
+  {
+    "id": 12,
+    "name": "Azuay",
+    "country_id": 4
+  },
+  {
+    "id": 13,
+    "name": "São Paulo",
+    "country_id": 5
+  },
+  {
+    "id": 14,
+    "name": "Rio de Janeiro",
+    "country_id": 5
+  },
+  {
+    "id": 15,
+    "name": "Minas Gerais",
+    "country_id": 5
+  }
+]

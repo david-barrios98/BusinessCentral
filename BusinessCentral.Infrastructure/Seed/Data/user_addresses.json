@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "userinfo_id": 1,
+    "full_address": "Calle 147 # 12-34, Mazuren",
+    "alias": "Apartamento",
+    "latitude": 4.7302,
+    "longitude": -74.0512,
+    "place_id": "ChIJ_abc123",
+    "city_id": 1,
+    "is_main": true
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "name": "Plan Emprendedor",
+    "price": 49900,
+    "billing_cycle": "Monthly",
+    "duration_days": 30,
+    "max_users": 5,
+    "is_public": true
+  }
+]

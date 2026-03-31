@@ -32,7 +32,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
 
         // Esquema COMMON
-        public DbSet<Country> Country { get; set; } = null!;
+        public DbSet<Countries> Country { get; set; } = null!;
         public DbSet<Department> Department { get; set; } = null!;
         public DbSet<DocumentType> DocumentTypes { get; set; } = null!;
         public DbSet<City> Cities { get; set; } = null!;

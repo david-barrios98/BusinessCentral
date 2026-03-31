@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "name": "Bogotá",
+    "department_id": 1
+  },
+  {
+    "id": 2,
+    "name": "Medellín",
+    "department_id": 2
+  },
+  {
+    "id": 3,
+    "name": "Cali",
+    "department_id": 3
+  },
+  {
+    "id": 4,
+    "name": "Caracas",
+    "department_id": 4
+  },
+  {
+    "id": 5,
+    "name": "Maracaibo",
+    "department_id": 5
+  },
+  {
+    "id": 6,
+    "name": "Santa Lucía",
+    "department_id": 6
+  },
+  {
+    "id": 7,
+    "name": "Lima",
+    "department_id": 7
+  },
+  {
+    "id": 8,
+    "name": "Arequipa",
+    "department_id": 8
+  },
+  {
+    "id": 9,
+    "name": "Cusco",
+    "department_id": 9
+  },
+  {
+    "id": 10,
+    "name": "Quito",
+    "department_id": 10
+  },
+  {
+    "id": 11,
+    "name": "Guayaquil",
+    "department_id": 11
+  },
+  {
+    "id": 12,
+    "name": "Cuenca",
+    "department_id": 12
+  },
+  {
+    "id": 13,
+    "name": "São Paulo",
+    "department_id": 13
+  },
+  {
+    "id": 14,
+    "name": "Rio de Janeiro",
+    "department_id": 14
+  },
+  {
+    "id": 15,
+    "name": "Belo Horizonte",
+    "department_id": 15
+  }
+]

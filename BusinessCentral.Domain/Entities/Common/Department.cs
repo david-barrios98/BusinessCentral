@@ -14,6 +14,7 @@ namespace BusinessCentral.Domain.Entities.Common
     {
         [Key]
         [Column("id")]
+        [JsonPropertyName("id")]
         public int Id { get; set; }
 
         [Required]
@@ -21,10 +22,10 @@ namespace BusinessCentral.Domain.Entities.Common
         [Column("name")]
         public string Name { get; set; } = null!;
 
-        // Relación con Country
+        // Relación con Countries
         [Column("country_id")]
         public int CountryId { get; set; }
 
-        public Country Country { get; set; } = null!;
+        public Countries Countries { get; set; } = null!;
     }
 }

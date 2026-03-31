@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "company_id": 1,
+    "document_type_id": 1,
+    "document_number": "1010202303",
+    "first_name": "David",
+    "last_name": "Barrios",
+    "email": "dbarrios@gmail.com",
+    "password": "$2a$11$lK3CandPBR7gyDPszhpQmuEsWYZ.WxH7Tq7qRI98ytj2r.qlRksnu",
+    "phone": "3104445566",
+    "auth_provider": "Local",
+    "role_id": 1,
+    "confirmed_account": true,
+    "active": true,
+    "create": "2026-03-01T10:00:00",
+    "update": "2026-03-01T10:00:00"
+  }
+]

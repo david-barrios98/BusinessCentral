@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "company_id": 1,
+    "facility_type_id": 1,
+    "name": "Sede Cedritos",
+    "code": "SED-CED-01",
+    "email": "cedritos@dnails.com",
+    "priority": 1,
+    "create": "2026-01-01T08:00:00",
+    "active": true
+  }
+]
