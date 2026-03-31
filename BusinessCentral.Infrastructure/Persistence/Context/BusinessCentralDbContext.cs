@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using BusinessCentral.Infrastructure.Persistence.Configuration.Table;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
 {

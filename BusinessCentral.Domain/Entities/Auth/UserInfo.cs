@@ -15,23 +15,17 @@ namespace BusinessCentral.Domain.Entities.Auth
     [Table("users_info", Schema = "auth")]
     public class UsersInfo
     {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
+        [Key] [Column("id")] public int Id { get; set; }
 
-        [Required]
-        [Column("company_id")]
-        public int CompanyId { get; set; }
+        [Required] [Column("company_id")] public int CompanyId { get; set; }
 
-        [ForeignKey("CompanyId")]
-        public virtual Companies Company { get; set; } = null!;
+        [ForeignKey("CompanyId")] public virtual Companies Company { get; set; } = null!;
 
         [Required]
         [Column("document_type_id")]
         public int DocumentTypeId { get; set; }
 
-        [ForeignKey("DocumentTypeId")]
-        public virtual DocumentType DocumentType { get; set; } = null!;
+        [ForeignKey("DocumentTypeId")] public virtual DocumentType DocumentType { get; set; } = null!;
 
         [Required]
         [MaxLength(20)]
@@ -53,9 +47,7 @@ namespace BusinessCentral.Domain.Entities.Auth
         [Column("email")]
         public string Email { get; set; } = null!;
 
-        [MaxLength(255)]
-        [Column("password")]
-        public string? Password { get; set; } // Nullable por si usa Google Auth
+        [MaxLength(255)] [Column("password")] public string? Password { get; set; } // Nullable por si usa Google Auth
 
         [Required]
         [MaxLength(10)]
@@ -71,24 +63,18 @@ namespace BusinessCentral.Domain.Entities.Auth
         [Column("external_id")]
         public string? ExternalId { get; set; } // ID de Google
 
-        [Required]
-        [Column("role_id")]
-        public int RoleId { get; set; }
+        [Required] [Column("role_id")] public int RoleId { get; set; }
 
-        [ForeignKey("RoleId")]
-        public virtual Role Role { get; set; } = null!;
+        [ForeignKey("RoleId")] public virtual Role Role { get; set; } = null!;
 
-        [Column("confirmed_account")]
-        public bool ConfirmedAccount { get; set; } = false;
+        [Column("confirmed_account")] public bool ConfirmedAccount { get; set; } = false;
 
-        [Column("active")]
-        public bool Active { get; set; } = true;
+        [Column("active")] public bool Active { get; set; } = true;
 
-        [Column("create")]
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        [Column("create")] public DateTime Created { get; set; } = DateTime.Now;
 
-        [Column("update")]
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        [Column("update")] public DateTime Updated { get; set; } = DateTime.Now;
 
         public virtual ICollection<UserAddress> Addresses { get; set; } = new List<UserAddress>();
     }
+}
