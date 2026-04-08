@@ -1,0 +1,32 @@
+[
+  {
+    "Name": "DNAILS",
+    "TradeName": "DNAILS",
+    "DocumentTypeId": 1,
+    "DocumentNumber": "901234567",
+    "VerificationDigit": "1",
+    "Email": "contacto@dnails.com",
+    "Phone": "3001234567",
+    "Website": "https://dnails.com",
+    "LogoUrl": "https://dnails.com/logo.png",
+    "Subdomain": "dnails",
+    "Create": "2026-01-01T08:00:00",
+    "Update": "2026-01-01T08:00:00",
+    "Active": true
+  },
+  {
+    "Name": "Sistemas Globales SAS",
+    "TradeName": "Global Systems",
+    "DocumentTypeId": 1,
+    "DocumentNumber": "800111222",
+    "VerificationDigit": "5",
+    "Email": "admin@globalsystems.com",
+    "Phone": "6012345678",
+    "Website": "https://globalsystems.com",
+    "LogoUrl": null,
+    "Subdomain": "globalsys",
+    "Create": "2026-03-15T10:30:00",
+    "Update": "2026-03-15T10:30:00",
+    "Active": true
+  }
+]

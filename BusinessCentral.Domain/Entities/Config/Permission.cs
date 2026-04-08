@@ -24,7 +24,6 @@ namespace BusinessCentral.Domain.Entities.Config
         [MaxLength(100)]
         public string Name { get; set; } = null!; // Ej: "Crear Factura", "Eliminar Producto"
 
-        [Required]
         [MaxLength(50)]
         public string? Code { get; set; } // Ej: "INVENTORY_CREATE"
     }

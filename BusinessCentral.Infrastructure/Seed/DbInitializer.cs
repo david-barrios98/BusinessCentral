@@ -29,12 +29,12 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<City>(context, "city.json");
 
             // --- 3. ESTRUCTURA EMPRESARIAL (Nivel 2 - Dependen de DocumentType/City) ---
-            await SeedEntity<Companies>(context, "companies.json");
+            await SeedEntity<Companies>(context, "company.json");
             await SeedEntity<Permission>(context, "permissions.json");
 
             // --- 4. CONFIGURACIÓN Y SEDES (Dependen de Companies/Plans/Modules) ---
             await SeedEntity<Facility>(context, "facility.json");
-            await SeedEntity<FacilityAddress>(context, "facility_address.json");
+            //await SeedEntity<FacilityAddress>(context, "facility_address.json");
             await SeedEntity<ApplicationCompanies>(context, "application_companies.json");
             await SeedEntity<CompanySubscription>(context, "company_subscription.json");
             await SeedEntity<PlanModule>(context, "plan_module.json");
@@ -46,8 +46,6 @@ namespace BusinessCentral.Infrastructure.Seed
             // --- 6. USUARIOS Y SESIONES (Nivel Final - Dependen de Companies/Roles) ---
             await SeedEntity<UsersInfo>(context, "users_info.json");
             await SeedEntity<UserAddress>(context, "user_addresses.json");
-            await SeedEntity<UserSession>(context, "user_sessions.json");
-            await SeedEntity<RefreshToken>(context, "refresh_tokens.json");
         }
 
         // =============================
@@ -66,6 +64,11 @@ namespace BusinessCentral.Infrastructure.Seed
                 return;
             }
 
+            if (fileName == "companies.json")
+            {
+                Console.WriteLine($"⚠️ {typeof(T).Name} ya tiene datos");
+
+            }
             var data = await LoadJsonAsync<T>(fileName);
 
             if (data == null || !data.Any())
@@ -121,7 +124,7 @@ namespace BusinessCentral.Infrastructure.Seed
             {
 
                 PropertyNameCaseInsensitive = true, 
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNamingPolicy = null,
                 AllowTrailingCommas = true 
             };
 

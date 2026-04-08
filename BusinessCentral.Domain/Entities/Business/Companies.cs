@@ -11,9 +11,8 @@ namespace BusinessCentral.Domain.Entities.Business
         [Key]
         public int Id { get; set; }
 
-        [Required]
         [MaxLength(200)]
-        public string Name { get; set; } = null!; // Razón Social
+        public string? Name { get; set; } // Razón Social
 
         [MaxLength(200)]
         public string? TradeName { get; set; } // Nombre Comercial
@@ -47,9 +46,8 @@ namespace BusinessCentral.Domain.Entities.Business
 
         // --- Configuración Multi-tenant ---
 
-        [Required]
         [MaxLength(50)]
-        public string Subdomain { get; set; } = null!; // Ej: "miempresa.tuapp.com"
+        public string? Subdomain { get; set; } // Ej: "miempresa.tuapp.com"
 
         public DateTime Create { get; set; }
 
