@@ -1,6 +1,7 @@
 [
   {
     "CompanyId": 1,
+    "RoleId": 1,
     "DocumentTypeId": 1,
     "DocumentNumber": "1010202030",
     "FirstName": "Administrador",
