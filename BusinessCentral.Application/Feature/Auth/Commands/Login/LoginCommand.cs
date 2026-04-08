@@ -4,6 +4,6 @@ using BusinessCentral.Application.DTOs.Auth;
 
 namespace BusinessCentral.Application.Features.Auth.Commands.Login
 {
-    public record LoginCommand(string username, string password)
+    public record LoginCommand(LoginRequestDTO userLogin)
         : IRequest<Result<LoginResponseDTO>>;
 }

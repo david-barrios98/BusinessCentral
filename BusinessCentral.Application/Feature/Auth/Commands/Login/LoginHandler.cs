@@ -38,7 +38,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             }
 
             // 2. Validamos contraseña
-            if (!_hashService.Verify(request.password, user.password))
+            if (!_hashService.Verify(request.userLogin.Password, user.password))
             {
                 // Usamos "Unauthorized" para que el Controller lance un 401
                 return Result<LoginResponseDTO>.Failure(

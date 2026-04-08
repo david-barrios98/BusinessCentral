@@ -1,14 +1,13 @@
 [
   {
     "CompanyId": 1,
-    "RoleId": 1,
     "DocumentTypeId": 1,
     "DocumentNumber": "1010202030",
     "FirstName": "Administrador",
     "LastName": "DNAILS",
     "Email": "admin@dnails.com",
     "Phone": "3100000000",
-    "PasswordHash": "HASH_DE_PRUEBA_BCRYPT",
+    "Password": "HASH_DE_PRUEBA_BCRYPT",
     "Active": true,
     "Create": "2026-03-31T15:38:00"
   }

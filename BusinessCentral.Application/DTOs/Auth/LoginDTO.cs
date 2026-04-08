@@ -10,13 +10,17 @@ public class LoginRequestDTO
 {
     [JsonPropertyName("username")]
     [Required(ErrorMessage = "El nombre de usuario es requerido")]
-    public string username { get; set; } = null!;
+    public string UserName { get; set; } = null!;
 
     [JsonPropertyName("password")]
     [Required(ErrorMessage = "La contraseña es requerida")]
     [MinLength(2, ErrorMessage = "Mínimo 8 caracteres")]
     [DataType(DataType.Password)]
-    public string password { get; set; } = null!;
+    public string Password { get; set; } = null!;
+
+    [JsonPropertyName("companyId")]
+    [Required(ErrorMessage = "La compañia es requerida")]
+    public string CompanyId { get; set; } = null!;
 }
 
 /// <summary>
