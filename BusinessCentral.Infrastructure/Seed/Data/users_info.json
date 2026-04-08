@@ -7,7 +7,7 @@
     "LastName": "DNAILS",
     "Email": "admin@dnails.com",
     "Phone": "3100000000",
-    "Password": "HASH_DE_PRUEBA_BCRYPT",
+    "Password": "$2a$11$lK3CandPBR7gyDPszhpQmuEsWYZ.WxH7Tq7qRI98ytj2r.qlRksnu",
     "Active": true,
     "Create": "2026-03-31T15:38:00"
   }
