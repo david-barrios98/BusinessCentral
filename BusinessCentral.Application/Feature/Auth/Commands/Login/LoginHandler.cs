@@ -51,7 +51,9 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             JwtUserDto jwtUser = new JwtUserDto
             {
                 userId = user.UserId,
-                userName = user.UserName
+                userName = user.UserName,
+                companyId = user.CompanyId.ToString(),
+                companyName = user.CompanyName.ToString()
             };
 
             var token = _tokenService.GenerateAccessToken(jwtUser);
