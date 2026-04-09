@@ -8,8 +8,10 @@ namespace BusinessCentral.Core.Application.DTOs
 {
     public class JwtUserDto
     {
-        public int user_id { get; set; }
-        public string username { get; set; } = string.Empty; // phone, email o document
+        public int userId { get; set; }
+        public string userName { get; set; } = string.Empty; // phone, email o document
+        public string companyId { get; set; } = string.Empty;
+        public string companyName { get; set; } = string.Empty;
         public string role { get; set; } = string.Empty;
         public List<string> permissions { get; set; } = new List<string>();
     }

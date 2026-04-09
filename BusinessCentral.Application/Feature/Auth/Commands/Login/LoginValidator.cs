@@ -7,14 +7,16 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
         public LoginValidator()
         {
             RuleFor(x => x.userLogin.UserName)
-                .NotEmpty();
+                .NotEmpty()
+                .MinimumLength(2);
 
             RuleFor(x => x.userLogin.Password)
                 .NotEmpty()
                 .MinimumLength(2);
 
             RuleFor(x => x.userLogin.CompanyId)
-                .NotEmpty();
+                .NotEmpty()
+                .MinimumLength(1);
         }
     }
 }

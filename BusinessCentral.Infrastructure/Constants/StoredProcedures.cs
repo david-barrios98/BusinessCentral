@@ -10,5 +10,9 @@ namespace BusinessCentral.Infrastructure.Constants
             //Login
             public const string sp_login_user = "[auth].[sp_login_user]";
         }
+        public static class Config
+        {
+            public const string sp_check_tenant_access = "[config].[sp_check_tenant_access]";
+        }
     }
 }

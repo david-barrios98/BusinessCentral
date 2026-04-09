@@ -7,89 +7,51 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @HasPrimary BIT = 0;
-
-    -- ============================================
-    -- 🔍 VALIDAR CONFIGURACIÓN DE LOGIN
-    -- ============================================
+    -- 1. Validar que la compañía existe y tiene habilitado el acceso
     IF NOT EXISTS (
-        SELECT 1
-        FROM [config].[application_companies] WITH (NOLOCK)
-        WHERE company_id = @company_id
+        SELECT 1 
+        FROM [config].[ApplicationCompanies] WITH (NOLOCK) 
+        WHERE CompanyId = @company_id AND IsEnabled = 1 AND Active = 1
     )
-    BEGIN
-        RAISERROR('La compañía no tiene configuración de login.', 16, 1);
+BEGIN
+        RAISERROR('La compañía no tiene una configuración de aplicación activa.', 16, 1);
         RETURN;
-    END
+END
 
-    -- ============================================
-    -- 🔍 VALIDAR SI EXISTE PRIMARY
-    -- ============================================
-    IF EXISTS (
-        SELECT 1
-        FROM [config].[application_companies] WITH (NOLOCK)
-        WHERE company_id = @company_id
-          AND is_primary = 1
+    -- 2. Búsqueda del usuario basada en la configuración de la empresa
+    ;WITH CompanyConfig AS (
+    SELECT LoginField, Priority
+    FROM [config].[ApplicationCompanies] WITH (NOLOCK)
+     WHERE CompanyId = @company_id AND IsEnabled = 1 AND Active = 1
+         )
+SELECT TOP 1
+        ui.Id AS UserId,
+    @username as UserName,
+       ui.DocumentNumber,
+       ui.FirstName,
+       ui.LastName,
+       ui.Email,
+       ui.Phone,
+       ui.Password,
+       ui.RoleId,
+       c.Name AS CompanyName,
+       c.Id AS CompanyId
+FROM [auth].[UsersInfo] ui WITH (NOLOCK)
+    INNER JOIN [business].[Companies] c WITH (NOLOCK) ON ui.CompanyId = c.Id
+    CROSS JOIN CompanyConfig cc
+WHERE ui.CompanyId = @company_id
+  AND ui.Active = 1
+  AND c.Active = 1
+  AND (
+    (cc.LoginField = 'email' AND ui.Email = @username) OR
+    (cc.LoginField = 'phone' AND ui.Phone = @username) OR
+    (cc.LoginField = 'documentNumber' AND ui.DocumentNumber = @username)
     )
-    BEGIN
-        SET @HasPrimary = 1;
-    END
+ORDER BY cc.Priority;
 
-    -- ============================================
-    -- 🔍 QUERY PRINCIPAL CON PRIORIDAD DINÁMICA
-    -- ============================================
-    ;WITH LoginConfig AS
-    (
-        SELECT
-            type,
-            is_primary,
-            ROW_NUMBER() OVER (
-                ORDER BY 
-                    CASE 
-                        WHEN is_primary = 1 THEN 1
-                        WHEN @HasPrimary = 0 AND type = 'phone' THEN 1
-                        ELSE 2
-                    END
-            ) AS priority
-        FROM [config].[application_companies] WITH (NOLOCK)
-        WHERE company_id = @company_id and active = 1
-    )
-
-    SELECT TOP 1
-        ui.users_id,
-        pd.value AS document_type,
-        ui.document,
-        ui.phone,
-        ui.email,
-        ui.first_name,
-        ui.last_name,
-        ui.address AS address_users,
-        ui.password,
-        c.name AS company_name,
-        c.id AS company_id
-    FROM LoginConfig lc
-    INNER JOIN [auth].[users_info] ui WITH (NOLOCK)
-        ON u.id = ui.users_id
-    INNER JOIN [business].[companies] c WITH (NOLOCK)
-        ON u.company_id = c.id and c.active = 1
-    WHERE
-        ui.active = 1
-        AND c.active = 1
-        AND (
-            (lc.type = 'phone' AND ui.phone = @username)
-            OR
-            (lc.type = 'email' AND ui.email = @username)
-            OR
-            (lc.type = 'document' AND ui.document = @username)
-        )
-    ORDER BY lc.priority;
-
-    -- ============================================
-    -- ⚠️ NO ENCONTRADO
-    -- ============================================
-    IF @@ROWCOUNT = 0
-    BEGIN
-        RAISERROR('Usuario no encontrado con la configuración de login definida.', 16, 1);
-    END
+IF @@ROWCOUNT = 0
+BEGIN
+        RAISERROR('Usuario no encontrado o método de login no válido para esta compañía.', 16, 1);
+END
 END
 GO

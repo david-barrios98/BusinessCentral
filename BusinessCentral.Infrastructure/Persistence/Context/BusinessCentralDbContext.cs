@@ -80,7 +80,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 }
 
                 // --- OPCIONAL: AUTO-SNAKE_CASE PARA COLUMNAS ---
-                // Si quieres que en la DB se llamen "user_id" y en C# "UserId"
+                // Si quieres que en la DB se llamen "UserId" y en C# "UserId"
                 foreach (var property in entity.GetProperties())
                 {
                     // Solo si no definiste el [Column("nombre")] manualmente

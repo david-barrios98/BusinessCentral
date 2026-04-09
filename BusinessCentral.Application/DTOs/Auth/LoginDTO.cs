@@ -8,18 +8,19 @@ namespace BusinessCentral.Application.DTOs.Auth;
 /// </summary>
 public class LoginRequestDTO
 {
-    [JsonPropertyName("username")]
-    [Required(ErrorMessage = "El nombre de usuario es requerido")]
+    [JsonPropertyName("UserName")]
+    [Required(ErrorMessage = "El UserName de usuario es requerido")]
     public string UserName { get; set; } = null!;
 
-    [JsonPropertyName("password")]
+    [JsonPropertyName("Password")]
     [Required(ErrorMessage = "La contraseña es requerida")]
-    [MinLength(2, ErrorMessage = "Mínimo 8 caracteres")]
+    [MinLength(2, ErrorMessage = "La contraseña requiere mínimo 2 caracteres")]
     [DataType(DataType.Password)]
     public string Password { get; set; } = null!;
 
     [JsonPropertyName("companyId")]
     [Required(ErrorMessage = "La compañia es requerida")]
+    [MinLength(1, ErrorMessage = "El companyId requiere mínimo 1 caracteres")]
     public string CompanyId { get; set; } = null!;
 }
 
@@ -28,33 +29,50 @@ public class LoginRequestDTO
 /// </summary>
 public class LoginResponseDTO
 {
-    [JsonPropertyName("user_id")]
-    public int user_id { get; set; }
+    [JsonPropertyName("userId")]
+    public int UserId { get; set; }
 
-    [JsonPropertyName("username")]
-    public string username { get; set; } = null!;
+    [JsonPropertyName("userName")]
+    public string? UserName { get; set; }
 
-    [JsonPropertyName("password")]
-    public string password { get; set; } = null!;
+    [JsonPropertyName("documentNumber")]
+    public string? DocumentNumber { get; set; }
 
     [JsonPropertyName("email")]
-    public string? email { get; set; }
+    public string? Email { get; set; }
 
-    [JsonPropertyName("first_name")]
-    public string? first_name { get; set; }
+    [JsonPropertyName("phone")]
+    public string? Phone { get; set; }
 
-    [JsonPropertyName("last_name")]
-    public string? last_name { get; set; }
+    [JsonPropertyName("firstName")]
+    public string? FirstName { get; set; }
 
-    [JsonPropertyName("access_token")]
-    public string access_token { get; set; } = null!;
+    [JsonPropertyName("lastName")]
+    public string? LastName { get; set; }
 
-    [JsonPropertyName("token_type")]
-    public string token_type { get; set; } = "Bearer";
+    [JsonPropertyName("companyId")]
+    public int CompanyId { get; set; }
 
-    [JsonPropertyName("expires_in")]
-    public int expires_in { get; set; }
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
 
-    [JsonPropertyName("issued_at")]
-    public DateTime issued_at { get; set; }
+    // --- Datos de Seguridad (JWT) ---
+
+    [JsonPropertyName("accessToken")]
+    public string AccessToken { get; set; } = null!;
+
+    [JsonPropertyName("tokenType")]
+    public string TokenType { get; set; } = "Bearer";
+
+    [JsonPropertyName("expiresIn")]
+    public int ExpiresIn { get; set; }
+
+    [JsonPropertyName("issuedAt")]
+    public DateTime IssuedAt { get; set; }
+
+    // Nota: Es mejor no devolver el Password en el DTO de respuesta por seguridad, 
+    // pero se incluye si tu lógica de aplicación lo requiere para validaciones internas.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("password")]
+    public string? Password { get; set; }
 }

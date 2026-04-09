@@ -1,7 +1,8 @@
-﻿using BusinessCentral.Application.DTOs.Common;
-using System.Net;
-using BusinessCentral.Application.Constants;
+﻿using BusinessCentral.Application.Constants;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
+using System.Net;
+using System.Text.Json;
 
 namespace BusinessCentral.Api.Middleware
 {
@@ -16,35 +17,77 @@ namespace BusinessCentral.Api.Middleware
 
         public async Task InvokeAsync(HttpContext context, ISubscriptionRepository subscriptionService)
         {
-            // 1. Extraer CompanyId del Token JWT (Claim)
-            var companyIdClaim = context.User.FindFirst("company_id")?.Value;
+            // 1. Intentar obtener el ID desde el Token o Header (Para peticiones autenticadas)
+            var companyIdStr = context.User.FindFirst("companyId")?.Value
+                               ?? context.Request.Headers["companyId"].ToString();
 
-            // Si no hay ID de compañía (ej: rutas de login o registro), dejamos pasar
-            if (string.IsNullOrEmpty(companyIdClaim))
+            // 2. CASO ESPECIAL: Si es LOGIN, intentamos leer el ID del Body
+            // Solo lo hacemos si el ID sigue vacío y la ruta es la de auth/login
+            if (string.IsNullOrEmpty(companyIdStr) && IsLoginRoute(context))
+            {
+                companyIdStr = await GetCompanyIdFromLoginBody(context);
+            }
+
+            // Si después de intentar todo sigue vacío, es una ruta pública sin tenant (ej: HealthCheck)
+            if (string.IsNullOrEmpty(companyIdStr))
             {
                 await _next(context);
                 return;
             }
 
-            int companyId = int.Parse(companyIdClaim);
-
-            // 2. Identificar si el endpoint requiere un módulo específico
-            var endpoint = context.GetEndpoint();
-            var requiredModule = endpoint?.Metadata.GetMetadata<RequiresModuleAttribute>()?.ModuleName;
-
-            // 3. Validar acceso (Este servicio debe usar Cache para ser rápido)
-            var accessStatus = await subscriptionService.CheckAccessAsync(companyId, requiredModule);
-
-            if (accessStatus == AccessResult.Success)
+            if (int.TryParse(companyIdStr, out int companyId))
             {
-                await _next(context);
-                return;
-            }
+                var endpoint = context.GetEndpoint();
+                var requiredModule = endpoint?.Metadata.GetMetadata<RequiresModuleAttribute>()?.ModuleName;
 
-            // 4. Manejo de bloqueos usando tu formato ApiResponse
-            await HandleBlockedAccessAsync(context, accessStatus);
+                // VALIDACIÓN CRÍTICA: Aquí es donde el SP verifica si la empresa está activa/paga
+                var accessStatus = await subscriptionService.CheckAccessAsync(companyId, requiredModule);
+
+                if (accessStatus == AccessResult.Success)
+                {
+                    await _next(context);
+                    return;
+                }
+
+                await HandleBlockedAccessAsync(context, accessStatus);
+            }
+            else
+            {
+                await _next(context); // O manejar error de formato
+            }
         }
 
+        // --- MÉTODOS AUXILIARES LIVIANOS ---
+
+        private bool IsLoginRoute(HttpContext context)
+            => context.Request.Path.Value?.Contains("/auth/login", StringComparison.OrdinalIgnoreCase) ?? false;
+
+        private async Task<string?> GetCompanyIdFromLoginBody(HttpContext context)
+        {
+            context.Request.EnableBuffering();
+            // Usamos leaveOpen: true para no cerrar el stream del body
+            using var reader = new StreamReader(context.Request.Body, System.Text.Encoding.UTF8, false, 1024, true);
+            var body = await reader.ReadToEndAsync();
+            context.Request.Body.Position = 0; // REINICIAR el stream para el Controller
+
+            if (string.IsNullOrEmpty(body)) return null;
+
+            try
+            {
+                using var jsonDoc = JsonDocument.Parse(body);
+                // Buscamos específicamente en tu estructura: userLogin -> companyId
+                if (jsonDoc.RootElement.TryGetProperty("userLogin", out var userLogin) &&
+                    userLogin.TryGetProperty("companyId", out var companyProp))
+                {
+                    return companyProp.ValueKind == JsonValueKind.String
+                           ? companyProp.GetString()
+                           : companyProp.GetRawText();
+                }
+            }
+            catch { /* Ignorar errores de parseo aquí */ }
+
+            return null;
+        }
         private static Task HandleBlockedAccessAsync(HttpContext context, AccessResult status)
         {
             context.Response.ContentType = "application/json";

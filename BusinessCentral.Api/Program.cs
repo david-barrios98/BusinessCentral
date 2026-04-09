@@ -1,8 +1,10 @@
-using NLog.Extensions.Logging;
 using BusinessCentral.Api.Extensions;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Infrastructure.DependencyInjection;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Seed;
+using Microsoft.AspNetCore.Mvc;
+using NLog.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,8 @@ builder.Services
     .AddRateLimiting(configuration)
     .AddSwaggerDocumentation()
     .AddControllers();
+
+builder.Services.AddCustomValidationResponse();
 
 // ================= LOGGING =================
 builder.Logging.ClearProviders();

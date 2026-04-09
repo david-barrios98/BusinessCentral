@@ -23,7 +23,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
 
             var parameters = new[]
             {
-                CreateParameter("@username", request.userLogin.UserName, SqlDbType.VarChar),
+                CreateParameter("@UserName", request.userLogin.UserName, SqlDbType.VarChar),
                 CreateParameter("@company_id", request.userLogin.CompanyId, SqlDbType.Int)
             };
             return await ExecuteStoredProcedureSingleAsync(

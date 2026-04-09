@@ -38,7 +38,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             }
 
             // 2. Validamos contraseña
-            if (!_hashService.Verify(request.userLogin.Password, user.password))
+            if (!_hashService.Verify(request.userLogin.Password, user.Password))
             {
                 // Usamos "Unauthorized" para que el Controller lance un 401
                 return Result<LoginResponseDTO>.Failure(
@@ -50,14 +50,14 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             // 3. Generación de Token
             JwtUserDto jwtUser = new JwtUserDto
             {
-                user_id = user.user_id,
-                username = user.username
+                userId = user.UserId,
+                userName = user.UserName
             };
 
             var token = _tokenService.GenerateAccessToken(jwtUser);
 
             // Asignamos el token al DTO de respuesta
-            user.access_token = token;
+            user.AccessToken = token;
 
             return Result<LoginResponseDTO>.Success(user);
         }

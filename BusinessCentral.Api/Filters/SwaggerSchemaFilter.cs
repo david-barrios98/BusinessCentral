@@ -12,8 +12,8 @@ namespace BusinessCentral.Api.Filters
             {
                 schema.Example = new Microsoft.OpenApi.Any.OpenApiObject
                 {
-                    ["username"] = new Microsoft.OpenApi.Any.OpenApiString("3100000000"),
-                    ["password"] = new Microsoft.OpenApi.Any.OpenApiString("cc1"),
+                    ["UserName"] = new Microsoft.OpenApi.Any.OpenApiString("3100000000"),
+                    ["Password"] = new Microsoft.OpenApi.Any.OpenApiString("cc1"),
                     ["companyId"] = new Microsoft.OpenApi.Any.OpenApiString("1")
                 };
             }

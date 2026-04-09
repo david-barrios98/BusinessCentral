@@ -24,8 +24,10 @@ namespace BusinessCentral.Shared.Helper
             // Claims básicos + extendidos
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.user_id.ToString()),
-                new Claim("username", user.username),
+                new Claim(JwtRegisteredClaimNames.Sub, user.userId.ToString()),
+                new Claim("userName", user.userName),
+                new Claim("companyId", user.companyId),
+                new Claim("companyName", user.companyName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 
             };

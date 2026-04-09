@@ -1,5 +1,6 @@
 ﻿using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.Data;
@@ -24,7 +25,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
 
             // Ejecutamos el SP y mapeamos el string resultante al Enum AccessResult
             var result = await ExecuteStoredProcedureSingleAsync(
-                "auth.sp_check_tenant_access",
+                StoredProcedures.Config.sp_check_tenant_access,
                 parameters,
                 reader => reader["AccessStatus"].ToString()
             );

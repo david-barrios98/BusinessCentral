@@ -33,12 +33,12 @@ public class FailedLoginAttemptService : IFailedLoginAttemptService
 
         _cache.Set(key, attempts, TimeSpan.FromMinutes(LockoutDurationMinutes));
 
-        _logger.LogWarning("Intento fallido de login #{Attempts} para usuario: {username}",
+        _logger.LogWarning("Intento fallido de login #{Attempts} para usuario: {UserName}",
             attempts, username);
 
         if (attempts >= MaxFailedAttempts)
         {
-            _logger.LogWarning("Cuenta bloqueada por m�ltiples intentos fallidos: {username}", username);
+            _logger.LogWarning("Cuenta bloqueada por m�ltiples intentos fallidos: {UserName}", username);
         }
 
         await Task.CompletedTask;
