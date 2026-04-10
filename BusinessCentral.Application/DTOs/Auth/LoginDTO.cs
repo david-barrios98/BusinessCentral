@@ -57,9 +57,12 @@ public class LoginResponseDTO
     public string? CompanyName { get; set; }
 
     // --- Datos de Seguridad (JWT) ---
-
     [JsonPropertyName("accessToken")]
     public string AccessToken { get; set; } = null!;
+
+    [JsonPropertyName("refreshToken")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? RefreshToken { get; set; }
 
     [JsonPropertyName("tokenType")]
     public string TokenType { get; set; } = "Bearer";

@@ -36,5 +36,21 @@ namespace BusinessCentral.Domain.Entities.Audit
         public string? ReplacedByToken { get; set; } // Para auditoría de rotación de tokens
 
         public bool IsActive => RevokedAt == null && DateTime.UtcNow < ExpiresAt;
+
+        /// <summary>
+        /// Guardamos companyId aquí para auditoría (aunque exista FK en UsersInfo).
+        /// </summary>
+        public int? CompanyId { get; set; }
+
+        /// <summary>
+        /// Opcional: JTI del access token (si quieres trazar tokens por jti).
+        /// </summary>
+        [MaxLength(50)]
+        public string? JwtId { get; set; }
+
+        /// <summary>
+        /// Fecha de expiración del access token relacionado (opcional).
+        /// </summary>
+        public DateTime? AccessTokenExpiresAt { get; set; }
     }
 }

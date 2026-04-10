@@ -6,4 +6,11 @@
     "Priority": 1,
     "Active": true
   }
+  {
+    "CompanyId": 1,
+    "ApplicationCode": "002",
+    "LoginField": "phone",
+    "Priority": 1,
+    "Active": true
+  }
 ]

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Persistence.Repositories;
 using BusinessCentral.Infrastructure.Security;
 using BusinessCentral.Shared.Helper;
@@ -13,6 +14,8 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             // Repositories
             services.AddScoped<ILoginRepository, LoginRepository>();
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 
             // Services
             services.AddScoped<ITokenService, TokenService>();
