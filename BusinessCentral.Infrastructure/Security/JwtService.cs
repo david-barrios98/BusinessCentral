@@ -29,7 +29,6 @@ namespace BusinessCentral.Shared.Helper
                 new Claim("companyId", user.companyId),
                 new Claim("companyName", user.companyName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-                
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
@@ -63,7 +62,11 @@ namespace BusinessCentral.Shared.Helper
             return (int)(expiryMinutes * 60);
         }
 
-        public ClaimsPrincipal? ValidateTokenAndGetClaims(string token)
+        /// <summary>
+        /// Valida el token y devuelve los claims. Por defecto no valida la expiración (mantiene compatibilidad).
+        /// Pasa validateLifetime = true para validar también la expiración.
+        /// </summary>
+        public ClaimsPrincipal? ValidateTokenAndGetClaims(string token, bool validateLifetime = false)
         {
             try
             {
@@ -79,7 +82,7 @@ namespace BusinessCentral.Shared.Helper
                     ValidIssuer = jwtSettings["Issuer"],
                     ValidateAudience = true,
                     ValidAudience = jwtSettings["Audience"],
-                    ValidateLifetime = false,
+                    ValidateLifetime = validateLifetime, // <- configurable
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
@@ -91,6 +94,19 @@ namespace BusinessCentral.Shared.Helper
             }
         }
 
+        /// <summary>
+        /// Intenta validar token incluyendo la expiración. Devuelve true si firma + expiración + issuer/audience son correctos.
+        /// No hace comprobación de revocación en BD.
+        /// </summary>
+        public bool TryValidateToken(string token, out ClaimsPrincipal? principal)
+        {
+            principal = ValidateTokenAndGetClaims(token, validateLifetime: true);
+            return principal != null;
+        }
+
+        /// <summary>
+        /// Extrae el userId del token (sub). Lanza si no es válido.
+        /// </summary>
         public int GetUserIdFromJwt(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -107,6 +123,9 @@ namespace BusinessCentral.Shared.Helper
             return int.Parse(userIdClaim.Value);
         }
 
+        /// <summary>
+        /// Devuelve la fecha de expiración (convertida a Colombia) si existe.
+        /// </summary>
         public DateTime? GetExpirationTime(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -120,7 +139,6 @@ namespace BusinessCentral.Shared.Helper
                 {
                     var expirationTimeUnix = long.Parse(expClaim.Value);
                     var expirationTime = DateTimeOffset.FromUnixTimeSeconds(expirationTimeUnix).UtcDateTime;
-                    // ✅ CONVERTIR A ZONA HORARIA DE COLOMBIA
                     return TimeZoneHelper.ConvertToColombiaTime(expirationTime);
                 }
 
@@ -129,6 +147,24 @@ namespace BusinessCentral.Shared.Helper
             catch (Exception ex)
             {
                 throw new SecurityTokenException("Error al leer el token JWT: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Indica si el token está expirado según su claim exp.
+        /// </summary>
+        public bool IsTokenExpired(string token)
+        {
+            try
+            {
+                var exp = GetExpirationTime(token);
+                if (!exp.HasValue) return false;
+                return exp.Value.ToUniversalTime() <= DateTime.UtcNow;
+            }
+            catch
+            {
+                // Si no se puede leer, consideramos inválido/expirado
+                return true;
             }
         }
     }

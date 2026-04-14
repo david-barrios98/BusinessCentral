@@ -1,6 +1,7 @@
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Shared.Helper;
 using BusinessCentral.Core.Application.DTOs;
+using System.Security.Claims;
 
 namespace BusinessCentral.Infrastructure.Security;
 
@@ -30,5 +31,10 @@ public class TokenService : ITokenService
     public int GetAccessTokenExpirationSeconds()
     {
         return _jwtHelper.GetAccessTokenExpirationSeconds();
+    }
+
+    public bool TryValidateToken(string token, out ClaimsPrincipal? principal)
+    {
+        return _jwtHelper.TryValidateToken(token, out principal);
     }
 }

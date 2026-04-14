@@ -1,4 +1,5 @@
 using BusinessCentral.Core.Application.DTOs;
+using System.Security.Claims;
 
 namespace BusinessCentral.Application.Ports.Outbound;
 
@@ -10,4 +11,5 @@ public interface ITokenService
     string GenerateAccessToken(JwtUserDto user);
     string GenerateRefreshToken();
     int GetAccessTokenExpirationSeconds();
+    bool TryValidateToken(string token, out ClaimsPrincipal? principal);
 }
