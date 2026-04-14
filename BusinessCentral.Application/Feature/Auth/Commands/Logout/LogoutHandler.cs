@@ -17,18 +17,36 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Logout
 
         public async Task<Result<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
         {
-            var token = await _refreshRepo.GetActiveByTokenAsync(request.RefreshToken);
-            if (token != null)
+            // Si traes refreshToken específico, revócalo
+            if (!string.IsNullOrEmpty(request.RefreshToken))
             {
-                await _refreshRepo.RevokeAsync(token, null);
+                var token = await _refreshRepo.GetActiveByTokenAsync(request.RefreshToken);
+                if (token != null)
+                    await _refreshRepo.RevokeAsync(token, null);
             }
 
+            // Si pasa userId: revocamos todos los refresh tokens del usuario y cerramos sesiones
+            if (request.UserId.HasValue)
+            {
+                await _refreshRepo.RevokeAllByUserAsync(request.UserId.Value, null);
+                await _sessionRepo.CloseSessionsByCompanyAsync(request.UserId.Value);
+            }
+
+            // Si pasa companyId: revocamos tokens (si snapshot companyId existe) y cerramos sesiones
+            if (request.CompanyId.HasValue)
+            {
+                await _refreshRepo.RevokeAllByCompanyAsync(request.CompanyId.Value, null);
+                await _sessionRepo.CloseSessionsByCompanyAsync(request.CompanyId.Value);
+            }
+
+            // Si pasa sessionId: cerramos esa sesión concreta
             if (request.SessionId.HasValue)
             {
                 var session = await _sessionRepo.GetByIdAsync(request.SessionId.Value);
-                if (session != null)
+                if (session != null && session.LogoutAt == null)
                 {
                     session.LogoutAt = DateTime.UtcNow;
+                    session.IsSuccess = false;
                     await _sessionRepo.UpdateAsync(session);
                 }
             }

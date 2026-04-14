@@ -1,12 +1,7 @@
 ﻿using BusinessCentral.Domain.Entities.Auth;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+
 
 namespace BusinessCentral.Domain.Entities.Audit
 {
@@ -47,5 +42,9 @@ namespace BusinessCentral.Domain.Entities.Audit
 
         [MaxLength(100)]
         public string? FailureReason { get; set; } // Ej: "Invalid Password", "Locked Account"
+
+        // Propiedad calculada para saber si la sesión sigue activa
+        [NotMapped]
+        public bool IsActive => LogoutAt == null && IsSuccess;
     }
 }

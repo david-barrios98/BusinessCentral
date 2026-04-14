@@ -34,27 +34,22 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
         {
             var user = await _repository.GetLoginUserAsync(request);
 
-            // 1. Validamos existencia del usuario
             if (user == null)
             {
-                // Usamos "NotFound" para que el Controller lance un 404
                 return Result<LoginResponseDTO>.Failure(
                     Messages.GENERAL[MessageKeys.USER_NOT_FOUND],
                     MessageKeys.USER_NOT_FOUND,
                     "NotFound");
             }
 
-            // 2. Validamos contraseña
             if (!_hashService.Verify(request.userLogin.Password, user.Password))
             {
-                // Usamos "Unauthorized" para que el Controller lance un 401
                 return Result<LoginResponseDTO>.Failure(
                     Messages.GENERAL[MessageKeys.ERROR_LOGIN],
                     MessageKeys.ERROR_LOGIN,
                     "Unauthorized");
             }
 
-            // 3. Generación de Token
             JwtUserDto jwtUser = new JwtUserDto
             {
                 userId = user.UserId,
@@ -65,19 +60,24 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
 
             var accessToken = _tokenService.GenerateAccessToken(jwtUser);
 
-            // 4. Generar refresh token y persistirlo
-            var refreshTokenValue = _tokenService.GenerateRefreshToken();
-            var refreshTokenEntity = new RefreshToken
+            // Antes de crear nuevo refresh token / sesión, inhabilitamos los previos
+            await _refreshTokenRepository.RevokeAllByUserAsync(user.UserId, null);
+            await _userSessionRepository.CloseSessionsByUserAsync(user.UserId);
+
+            // Crear refresh token con snapshot
+            var refreshValue = _tokenService.GenerateRefreshToken();
+            var refreshEntity = new RefreshToken
             {
                 UserId = user.UserId,
-                Token = refreshTokenValue,
+                Token = refreshValue,
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                CompanyId = user.CompanyId
             };
 
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+            await _refreshTokenRepository.AddAsync(refreshEntity);
 
-            // 5. Registrar sesión de usuario (AUDITORÍA)
+            // Registrar sesión
             var session = new UserSession
             {
                 UserId = user.UserId,
@@ -92,9 +92,8 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
 
             await _userSessionRepository.AddAsync(session);
 
-            // 6. Asignamos los tokens/valores al DTO de respuesta
             user.AccessToken = accessToken;
-            user.RefreshToken = refreshTokenValue;
+            user.RefreshToken = refreshValue;
             user.ExpiresIn = _tokenService.GetAccessTokenExpirationSeconds();
             user.IssuedAt = DateTime.UtcNow;
 

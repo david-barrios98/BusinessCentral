@@ -33,5 +33,45 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             _context.RefreshTokens.Update(token);
             await _context.SaveChangesAsync();
         }
+
+        // Revoke all active tokens for a user (used before issuing a new refresh token)
+        public async Task RevokeAllByUserAsync(int userId, string? replacedByToken = null)
+        {
+            var activeTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
+
+            if (!activeTokens.Any())
+                return;
+
+            foreach (var tk in activeTokens)
+            {
+                tk.RevokedAt = DateTime.UtcNow;
+                tk.ReplacedByToken = replacedByToken;
+            }
+
+            _context.RefreshTokens.UpdateRange(activeTokens);
+            await _context.SaveChangesAsync();
+        }
+
+        // Revoke all active tokens for a company (works if tokens have CompanyId snapshot filled)
+        public async Task RevokeAllByCompanyAsync(int companyId, string? replacedByToken = null)
+        {
+            var activeTokens = await _context.RefreshTokens
+                .Where(rt => rt.CompanyId == companyId && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
+
+            if (!activeTokens.Any())
+                return;
+
+            foreach (var tk in activeTokens)
+            {
+                tk.RevokedAt = DateTime.UtcNow;
+                tk.ReplacedByToken = replacedByToken;
+            }
+
+            _context.RefreshTokens.UpdateRange(activeTokens);
+            await _context.SaveChangesAsync();
+        }
     }
 }

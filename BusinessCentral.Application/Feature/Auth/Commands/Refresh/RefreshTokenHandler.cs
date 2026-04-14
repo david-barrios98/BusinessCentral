@@ -31,11 +31,10 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Refresh
                 return Result<LoginResponseDTO>.Failure("Refresh token inválido o expirado", "INVALID_REFRESH", "Unauthorized");
             }
 
-            // Mapear datos del usuario desde la entidad incluida (snapshot)
+            // Mapear datos del usuario desde la entidad incluida
             var userDto = new LoginResponseDTO
             {
                 UserId = existing.UserId,
-                UserName = "",
                 CompanyId = existing.User.CompanyId
             };
 
@@ -50,9 +49,9 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Refresh
 
             var newAccessToken = _tokenService.GenerateAccessToken(jwtUser);
 
-            // Opcional: rotar refresh token
+            // 2. Rotación: revocamos todos los tokens activos del usuario antes de crear el nuevo
             var newRefreshToken = _tokenService.GenerateRefreshToken();
-            await _refreshRepo.RevokeAsync(existing, newRefreshToken);
+            await _refreshRepo.RevokeAllByUserAsync(existing.UserId, newRefreshToken);
 
             var newRefreshEntity = new RefreshToken
             {
@@ -61,7 +60,6 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Refresh
                 ExpiresAt = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow,
                 CompanyId = existing.User.CompanyId,
-                // JwtId / AccessTokenExpiresAt pueden llenarse si extraes los claims del token
                 JwtId = null,
                 AccessTokenExpiresAt = null
             };

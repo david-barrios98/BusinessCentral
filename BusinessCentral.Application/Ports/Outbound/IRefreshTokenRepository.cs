@@ -8,5 +8,7 @@ namespace BusinessCentral.Application.Ports.Outbound
         Task AddAsync(RefreshToken token);
         Task<RefreshToken?> GetActiveByTokenAsync(string token);
         Task RevokeAsync(RefreshToken token, string? replacedByToken = null);
+        Task RevokeAllByUserAsync(int userId, string? replacedByToken = null);
+        Task RevokeAllByCompanyAsync(int companyId, string? replacedByToken = null);
     }
 }
