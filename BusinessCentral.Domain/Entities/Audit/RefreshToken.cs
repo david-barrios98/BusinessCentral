@@ -14,7 +14,7 @@ namespace BusinessCentral.Domain.Entities.Audit
     public class RefreshToken
     {
         [Key]
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         [Required]
         public int UserId { get; set; }

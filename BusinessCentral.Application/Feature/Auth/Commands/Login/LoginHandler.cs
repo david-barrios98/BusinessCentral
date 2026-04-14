@@ -15,41 +15,67 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
         private readonly ITokenService _tokenService;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUserSessionRepository _userSessionRepository;
+        private readonly IFailedLoginAttemptService _failedLoginAttemptService;
 
         public LoginHandler(
             ILoginRepository repository,
             IHashPasswordService hashService,
             ITokenService tokenService,
             IRefreshTokenRepository refreshTokenRepository,
-            IUserSessionRepository userSessionRepository)
+            IUserSessionRepository userSessionRepository,
+            IFailedLoginAttemptService failedLoginAttemptService)
         {
             _repository = repository;
             _hashService = hashService;
             _tokenService = tokenService;
             _refreshTokenRepository = refreshTokenRepository;
             _userSessionRepository = userSessionRepository;
+            _failedLoginAttemptService = failedLoginAttemptService;
         }
 
         public async Task<Result<LoginResponseDTO>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
+            var username = request.userLogin.UserName;
+
+            // 0. Verificar si la cuenta está bloqueada por varios intentos fallidos
+            if (await _failedLoginAttemptService.IsAccountLockedAsync(username))
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "Cuenta bloqueada por múltiples intentos fallidos. Intenta más tarde.",
+                    "ACCOUNT_LOCKED",
+                    "Unauthorized");
+            }
+
             var user = await _repository.GetLoginUserAsync(request);
 
+            // 1. Validamos existencia del usuario
             if (user == null)
             {
+                // Registramos intento fallido por seguridad/limitación de intentos
+                await _failedLoginAttemptService.RecordFailedAttemptAsync(username);
+
                 return Result<LoginResponseDTO>.Failure(
                     Messages.GENERAL[MessageKeys.USER_NOT_FOUND],
                     MessageKeys.USER_NOT_FOUND,
                     "NotFound");
             }
 
+            // 2. Validamos contraseña
             if (!_hashService.Verify(request.userLogin.Password, user.Password))
             {
+                // Registrar intento fallido
+                await _failedLoginAttemptService.RecordFailedAttemptAsync(username);
+
                 return Result<LoginResponseDTO>.Failure(
                     Messages.GENERAL[MessageKeys.ERROR_LOGIN],
                     MessageKeys.ERROR_LOGIN,
                     "Unauthorized");
             }
 
+            // 3. Login exitoso: limpiar contador de intentos fallidos
+            await _failedLoginAttemptService.ClearFailedAttemptsAsync(username);
+
+            // 4. Generación de Token (igual que antes)
             JwtUserDto jwtUser = new JwtUserDto
             {
                 userId = user.UserId,
@@ -82,10 +108,10 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             {
                 UserId = user.UserId,
                 CompanyId = user.CompanyId,
-                Platform = "Web",
+                Platform = request.Platform,
                 DeviceFingerprint = null,
-                IpAddress = null,
-                UserAgent = null,
+                IpAddress = request.IpAddress,
+                UserAgent = request.UserAgent,
                 LoginAt = DateTime.UtcNow,
                 IsSuccess = true
             };

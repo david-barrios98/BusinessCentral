@@ -1,63 +1,63 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Persistence.Configuration;
 
 namespace BusinessCentral.Infrastructure.ExternalServices;
 
-/// <summary>
-/// Adaptador: Implementaci�n de prevenci�n de fuerza bruta
-/// Usa cach� en memoria (escalable a Redis)
-/// </summary>
 public class FailedLoginAttemptService : IFailedLoginAttemptService
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<FailedLoginAttemptService> _logger;
-    private const int MaxFailedAttempts = 5;
-    private const int LockoutDurationMinutes = 15;
-    private const string CacheKeyPrefix = "failed_login_";
+    private readonly FailedLoginOptions _options;
 
-    public FailedLoginAttemptService(IMemoryCache cache, ILogger<FailedLoginAttemptService> logger)
+    public FailedLoginAttemptService(
+        IMemoryCache cache,
+        ILogger<FailedLoginAttemptService> logger,
+        IOptions<FailedLoginOptions> options)
     {
         _cache = cache;
         _logger = logger;
+        _options = options?.Value ?? new FailedLoginOptions();
     }
 
-    public async Task RecordFailedAttemptAsync(string username)
+    public Task RecordFailedAttemptAsync(string username)
     {
-        var key = $"{CacheKeyPrefix}{username}";
+        var key = $"{_options.CacheKeyPrefix}{username}";
         if (!_cache.TryGetValue(key, out int attempts))
         {
             attempts = 0;
         }
         attempts++;
 
-        _cache.Set(key, attempts, TimeSpan.FromMinutes(LockoutDurationMinutes));
+        _cache.Set(key, attempts, TimeSpan.FromMinutes(_options.LockoutDurationMinutes));
 
         _logger.LogWarning("Intento fallido de login #{Attempts} para usuario: {UserName}",
             attempts, username);
 
-        if (attempts >= MaxFailedAttempts)
+        if (attempts >= _options.MaxFailedAttempts)
         {
-            _logger.LogWarning("Cuenta bloqueada por m�ltiples intentos fallidos: {UserName}", username);
+            _logger.LogWarning("Cuenta bloqueada por múltiples intentos fallidos: {UserName}", username);
         }
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public async Task<bool> IsAccountLockedAsync(string username)
+    public Task<bool> IsAccountLockedAsync(string username)
     {
-        var key = $"{CacheKeyPrefix}{username}";
+        var key = $"{_options.CacheKeyPrefix}{username}";
         if (!_cache.TryGetValue(key, out int attempts))
         {
             attempts = 0;
         }
-        return await Task.FromResult(attempts >= MaxFailedAttempts);
+        return Task.FromResult(attempts >= _options.MaxFailedAttempts);
     }
 
-    public async Task ClearFailedAttemptsAsync(string username)
+    public Task ClearFailedAttemptsAsync(string username)
     {
-        var key = $"{CacheKeyPrefix}{username}";
+        var key = $"{_options.CacheKeyPrefix}{username}";
         _cache.Remove(key);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

@@ -1,5 +1,6 @@
 using BusinessCentral.Api.Common;
 using BusinessCentral.Api.Controllers.Auth;
+using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Features.Auth.Commands.Login;
 using BusinessCentral.Application.Features.Auth.Commands.Logout;
 using BusinessCentral.Application.Features.Auth.Commands.Refresh;
@@ -16,8 +17,14 @@ namespace BusinessCentral.Api.Controllers.Auth
         public AuthController(IMediator mediator) => _mediator = mediator;
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginCommand command)
+        public async Task<IActionResult> Login(LoginRequestDTO requestDto)
         {
+            var command = new LoginCommand(
+                requestDto,
+                IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent: Request.Headers["User-Agent"].ToString(),
+                Platform: Request.Headers["sec-ch-ua-platform"].ToString().Trim('"') ?? "Undefaund" // Puedes usar un header personalizado
+            );
             var result = await _mediator.Send(command);
             return ProcessResult(result);
         }

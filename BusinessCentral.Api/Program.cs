@@ -14,7 +14,7 @@ var configuration = builder.Configuration;
 // ================= SERVICES =================
 builder.Services
     .AddApplicationServices()
-    .AddInfrastructure()
+    .AddInfrastructure(configuration)
     .AddDatabase(configuration)
     .AddJwtAuthentication(configuration)
     .AddCorsPolicy(configuration)
