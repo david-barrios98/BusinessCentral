@@ -1,16 +1,19 @@
-using Microsoft.EntityFrameworkCore;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
+using BusinessCentral.Shared.Helper;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
 {
     public class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly BusinessCentralDbContext _context;
+        private readonly DateTime _getColombiaTimeNow;
 
         public RefreshTokenRepository(BusinessCentralDbContext context)
         {
             _context = context;
+            _getColombiaTimeNow = TimeZoneHelper.GetColombiaTimeNow();
         }
 
         public async Task AddAsync(RefreshToken token)
@@ -23,12 +26,12 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         {
             return await _context.RefreshTokens
                 .Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == token && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow);
+                .FirstOrDefaultAsync(rt => rt.Token == token && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow);
         }
 
         public async Task RevokeAsync(RefreshToken token, string? replacedByToken = null)
         {
-            token.RevokedAt = DateTime.UtcNow;
+            token.RevokedAt = TimeZoneHelper.GetColombiaTimeNow();
             token.ReplacedByToken = replacedByToken;
             _context.RefreshTokens.Update(token);
             await _context.SaveChangesAsync();
@@ -38,7 +41,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public async Task RevokeAllByUserAsync(int userId, string? replacedByToken = null)
         {
             var activeTokens = await _context.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow)
                 .ToListAsync();
 
             if (!activeTokens.Any())
@@ -46,7 +49,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             foreach (var tk in activeTokens)
             {
-                tk.RevokedAt = DateTime.UtcNow;
+                tk.RevokedAt = _getColombiaTimeNow;
                 tk.ReplacedByToken = replacedByToken;
             }
 
@@ -58,7 +61,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public async Task RevokeAllByCompanyAsync(int companyId, string? replacedByToken = null)
         {
             var activeTokens = await _context.RefreshTokens
-                .Where(rt => rt.CompanyId == companyId && rt.RevokedAt == null && rt.ExpiresAt > DateTime.UtcNow)
+                .Where(rt => rt.CompanyId == companyId && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow)
                 .ToListAsync();
 
             if (!activeTokens.Any())
@@ -66,7 +69,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             foreach (var tk in activeTokens)
             {
-                tk.RevokedAt = DateTime.UtcNow;
+                tk.RevokedAt = _getColombiaTimeNow;
                 tk.ReplacedByToken = replacedByToken;
             }
 

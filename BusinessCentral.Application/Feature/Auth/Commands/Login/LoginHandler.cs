@@ -1,10 +1,11 @@
-﻿using MediatR;
-using BusinessCentral.Application.Common.Results;
+﻿using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Core.Application.DTOs;
 using BusinessCentral.Domain.Entities.Audit;
+using BusinessCentral.Shared.Helper;
+using MediatR;
 
 namespace BusinessCentral.Application.Features.Auth.Commands.Login
 {
@@ -96,8 +97,8 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             {
                 UserId = user.UserId,
                 Token = refreshValue,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = TimeZoneHelper.ConvertToColombiaTime(DateTime.UtcNow.AddMinutes(30)),
+                CreatedAt = TimeZoneHelper.GetColombiaTimeNow(),
                 CompanyId = user.CompanyId
             };
 
@@ -112,7 +113,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
                 DeviceFingerprint = null,
                 IpAddress = request.IpAddress,
                 UserAgent = request.UserAgent,
-                LoginAt = DateTime.UtcNow,
+                LoginAt = TimeZoneHelper.GetColombiaTimeNow(),
                 IsSuccess = true
             };
 
@@ -121,7 +122,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.Login
             user.AccessToken = accessToken;
             user.RefreshToken = refreshValue;
             user.ExpiresIn = _tokenService.GetAccessTokenExpirationSeconds();
-            user.IssuedAt = DateTime.UtcNow;
+            user.IssuedAt = TimeZoneHelper.GetColombiaTimeNow();
 
             return Result<LoginResponseDTO>.Success(user);
         }
