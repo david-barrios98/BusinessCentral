@@ -27,7 +27,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
 
 
             var tokenActive = await _repo.GetActiveByTokenAsync(userId: user.UserId);
-            if (tokenActive.UserId == user.UserId)
+            if (tokenActive != null)
             {
                 return Result<bool>.Failure($"El usuario {user.LastName} ya tiene un token activo", "INVALID_TOKEN", "Unauthorized");
             }

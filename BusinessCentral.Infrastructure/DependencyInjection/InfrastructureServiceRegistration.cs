@@ -1,4 +1,5 @@
 ﻿using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Configuration;
 using BusinessCentral.Infrastructure.ExternalServices;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Persistence.Configuration;
@@ -15,6 +16,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
         {
             services.Configure<FailedLoginOptions>(config.GetSection("FailedLoginOptions"));
+            services.Configure<EmailOptions>(config.GetSection("EmailOptions"));
 
             // Repositories
             services.AddScoped<ILoginRepository, LoginRepository>();

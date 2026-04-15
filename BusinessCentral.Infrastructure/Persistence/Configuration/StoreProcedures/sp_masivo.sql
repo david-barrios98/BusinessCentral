@@ -140,10 +140,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO [audit].[PasswordResetToken] (UserId, Token, ExpiresAt, CreatedAt)
-    VALUES (@UserId, @Token, @ExpiresAt, @CreatedAt);
+INSERT INTO [audit].[PasswordResetToken] (UserId, Token, ExpiresAt, CreatedAt, IsActive)
+VALUES (@UserId, @Token, @ExpiresAt, @CreatedAt, 1);
 
-    SELECT SCOPE_IDENTITY() AS InsertedId;
+SELECT SCOPE_IDENTITY() AS InsertedId;
 END
 GO
 
