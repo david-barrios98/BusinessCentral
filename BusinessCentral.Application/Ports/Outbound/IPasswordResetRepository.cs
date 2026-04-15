@@ -5,7 +5,7 @@ namespace BusinessCentral.Application.Ports.Outbound
 {
     public interface IPasswordResetRepository
     {
-        Task<PasswordResetToken?> GetActiveByTokenAsync(DateTime expiresAt, string? token = null, int? userId = null);
+        Task<PasswordResetToken?> GetActiveByTokenAsync(string? token = null, int? userId = null);
         Task<int?> InsertPasswordResetTokenAsync(int userId, string token, DateTime expiresAt, DateTime createdAt);
         Task MarkAsUsedAsync(string token);
 

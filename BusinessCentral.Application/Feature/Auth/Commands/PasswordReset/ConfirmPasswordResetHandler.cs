@@ -28,9 +28,8 @@ namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
         {
             var token = request.Request.Token;
             var newPassword = request.Request.NewPassword;
-            DateTime now = TimeZoneHelper.GetColombiaTimeNow();
 
-            var resetEntity = await _repo.GetActiveByTokenAsync(now, token:token);
+            var resetEntity = await _repo.GetActiveByTokenAsync(token:token);
             if (resetEntity == null)
             {
                 return Result<bool>.Failure("Token inválido o expirado", "INVALID_TOKEN", "Unauthorized");

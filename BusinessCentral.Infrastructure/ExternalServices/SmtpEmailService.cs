@@ -15,7 +15,7 @@ namespace BusinessCentral.Infrastructure.ExternalServices
             _options = options.Value;
         }
 
-        public async Task SendPasswordResetAsync(string toEmail, string subject, string htmlBody)
+        public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
         {
             using var client = new SmtpClient(_options.SmtpHost, _options.SmtpPort)
             {

@@ -7,7 +7,7 @@ BEGIN
     SET NOCOUNT ON;
 
 UPDATE [audit].[PasswordResetToken]
-SET UsedAt = SYSUTCDATETIME()
+SET UsedAt = SYSUTCDATETIME(), IsActive = 0
 WHERE Token = @Token;
 END
 GO

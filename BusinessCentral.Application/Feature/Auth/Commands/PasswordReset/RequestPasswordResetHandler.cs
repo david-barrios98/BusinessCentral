@@ -25,9 +25,8 @@ namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
 
             var user = await _repo.GetUserByEmailAndCompanyAsync(email, companyId);
 
-            DateTime now = TimeZoneHelper.GetColombiaTimeNow();
 
-            var tokenActive = await _repo.GetActiveByTokenAsync(now, userId: user.UserId);
+            var tokenActive = await _repo.GetActiveByTokenAsync(userId: user.UserId);
             if (tokenActive.UserId == user.UserId)
             {
                 return Result<bool>.Failure($"El usuario {user.LastName} ya tiene un token activo", "INVALID_TOKEN", "Unauthorized");
@@ -55,7 +54,7 @@ namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
                 <p>Solicitaste restablecer contraseña. Haz clic en el enlace válido hasta {expiresAt:u} UTC:</p>
                 <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
 
-            await _emailService.SendPasswordResetAsync(user.Email!, subject, body);
+            await _emailService.SendEmailAsync(user.Email!, subject, body);
 
             return Result<bool>.Success(true);
         }

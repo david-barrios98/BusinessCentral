@@ -8,6 +8,6 @@ namespace BusinessCentral.Application.Ports.Outbound
 {
     public interface IEmailService
     {
-        Task SendPasswordResetAsync(string toEmail, string subject, string htmlBody);
+        Task SendEmailAsync(string toEmail, string subject, string htmlBody);
     }
 }

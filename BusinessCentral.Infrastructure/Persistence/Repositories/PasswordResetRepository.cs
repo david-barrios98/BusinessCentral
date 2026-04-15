@@ -51,12 +51,11 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             return (int)result;
         }
 
-        public async Task<PasswordResetToken?> GetActiveByTokenAsync(DateTime expiresAt, string? token = null, int? userId = null)
+        public async Task<PasswordResetToken?> GetActiveByTokenAsync(string? token = null, int? userId = null)
         {
             var parameters = new[]
             {
                 CreateParameter("@Token", token, SqlDbType.NVarChar),
-                CreateParameter("@ExpiresAt", expiresAt, SqlDbType.DateTime2),
                 CreateParameter("@UserId", userId, SqlDbType.Int)
 
             };

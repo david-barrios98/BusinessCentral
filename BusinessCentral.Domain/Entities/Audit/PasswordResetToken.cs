@@ -28,6 +28,6 @@ namespace BusinessCentral.Domain.Entities.Audit
 
         public DateTime? UsedAt { get; set; }
 
-        public bool IsActive => UsedAt == null && DateTime.UtcNow < ExpiresAt;
+        public bool IsActive { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 CREATE OR ALTER PROCEDURE [auth].[sp_get_active_password_reset_token]
 (
     @Token VARCHAR(255) = NULL,
-    @ExpiresAt DATETIME2,
     @UserId INT = NULL
 )
 AS
@@ -16,7 +15,7 @@ FROM [audit].[PasswordResetToken] pr WITH (NOLOCK)
     INNER JOIN [auth].[UsersInfo] ui WITH (NOLOCK) ON pr.UserId = ui.Id
 WHERE pr.UserId = @UserId
   AND pr.UsedAt IS NULL
-  AND pr.ExpiresAt > @ExpiresAt;
+  AND pr.IsActive = 1;
 END
 ELSE
 BEGIN
@@ -26,7 +25,7 @@ FROM [audit].[PasswordResetToken] pr WITH (NOLOCK)
     INNER JOIN [auth].[UsersInfo] ui WITH (NOLOCK) ON pr.UserId = ui.Id
 WHERE pr.Token = @Token
   AND pr.UsedAt IS NULL
-  AND pr.ExpiresAt > @ExpiresAt;
+  AND pr.IsActive = 1;
 END
 
 END
