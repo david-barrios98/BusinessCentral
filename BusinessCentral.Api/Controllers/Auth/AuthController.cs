@@ -68,5 +68,21 @@ namespace BusinessCentral.Api.Controllers.Auth
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
+
+        [HttpPost("password/forgot")]
+        public async Task<IActionResult> RequestPasswordReset([FromBody] BusinessCentral.Application.DTOs.Auth.PasswordResetRequestDTO request)
+        {
+            var cmd = new BusinessCentral.Application.Features.Auth.Commands.PasswordReset.RequestPasswordResetCommand(request);
+            var result = await _mediator.Send(cmd);
+            return ProcessResult(result);
+        }
+
+        [HttpPost("password/reset")]
+        public async Task<IActionResult> ConfirmPasswordReset([FromBody] BusinessCentral.Application.DTOs.Auth.PasswordResetConfirmDTO request)
+        {
+            var cmd = new BusinessCentral.Application.Features.Auth.Commands.PasswordReset.ConfirmPasswordResetCommand(request);
+            var result = await _mediator.Send(cmd);
+            return ProcessResult(result);
+        }
     }
 }

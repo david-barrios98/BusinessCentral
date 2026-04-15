@@ -21,12 +21,14 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IUserSessionRepository, UserSessionRepository>();
+            services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
 
             // Services
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IHashPasswordService, HashPasswordService>();
             services.AddSingleton<JwtService>();
             services.AddSingleton<IFailedLoginAttemptService, FailedLoginAttemptService>();
+            services.AddScoped<IEmailService, SmtpEmailService>();
 
             return services;
         }

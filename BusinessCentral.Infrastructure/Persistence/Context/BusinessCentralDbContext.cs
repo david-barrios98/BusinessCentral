@@ -18,6 +18,8 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         // Esquema AUDIT
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<UserAddress> UserAddresses { get; set; } = null!;
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+
 
         // Esquema AUTH
         public DbSet<UsersInfo> Users { get; set; } = null!;
