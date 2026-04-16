@@ -164,6 +164,7 @@ FROM [audit].[PasswordResetToken] pr WITH (NOLOCK)
     INNER JOIN [auth].[UsersInfo] ui WITH (NOLOCK) ON pr.UserId = ui.Id
 WHERE pr.UserId = @UserId
   AND pr.UsedAt IS NULL
+  AND GETDATE() < pr.ExpiresAt
   AND pr.IsActive = 1;
 END
 ELSE
@@ -174,6 +175,7 @@ FROM [audit].[PasswordResetToken] pr WITH (NOLOCK)
     INNER JOIN [auth].[UsersInfo] ui WITH (NOLOCK) ON pr.UserId = ui.Id
 WHERE pr.Token = @Token
   AND pr.UsedAt IS NULL
+  AND GETDATE() < pr.ExpiresAt
   AND pr.IsActive = 1;
 END
 

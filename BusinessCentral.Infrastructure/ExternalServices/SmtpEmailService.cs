@@ -1,8 +1,9 @@
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Configuration;
+using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Net.Mail;
+using MailKit.Security;
+using MimeKit;
 
 namespace BusinessCentral.Infrastructure.ExternalServices
 {
@@ -17,16 +18,24 @@ namespace BusinessCentral.Infrastructure.ExternalServices
 
         public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
         {
-            using var client = new SmtpClient(_options.SmtpHost, _options.SmtpPort)
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Tu Nombre", _options.From));
+            message.To.Add(new MailboxAddress("", toEmail));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = htmlBody };
+
+            using var client = new SmtpClient();
+            try
             {
-                EnableSsl = _options.UseSsl
-            };
-
-            if (!string.IsNullOrEmpty(_options.Username))
-                client.Credentials = new NetworkCredential(_options.Username, _options.Password);
-
-            var mail = new MailMessage(_options.From, toEmail, subject, htmlBody) { IsBodyHtml = true };
-            await client.SendMailAsync(mail);
+                // En .NET 6, StartTls es la opción más segura para el puerto 587
+                await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, SecureSocketOptions.StartTls);
+                await client.AuthenticateAsync(_options.Username, _options.Password);
+                await client.SendAsync(message);
+            }
+            finally
+            {
+                await client.DisconnectAsync(true);
+            }
         }
     }
 }
