@@ -25,6 +25,7 @@ namespace BusinessCentral.Shared.Helper
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.userId.ToString()),
+                new Claim("userId", user.userId.ToString()),
                 new Claim("userName", user.userName),
                 new Claim("companyId", user.companyId),
                 new Claim("companyName", user.companyName),

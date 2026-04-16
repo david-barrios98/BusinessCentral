@@ -8,19 +8,18 @@
 
 	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.10.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.6" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.20" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.20" />
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.5" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.10.0" />
-	</ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.0" />
+		<!-- Alineadas a 10.0.6 para evitar degradación -->
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.6" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -24,6 +24,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IUserSessionRepository, UserSessionRepository>();
             services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+            services.AddScoped<IUserRepository, UsersRepository>();
 
             // Services
             services.AddScoped<ITokenService, TokenService>();
@@ -31,7 +32,6 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddSingleton<JwtService>();
             services.AddSingleton<IFailedLoginAttemptService, FailedLoginAttemptService>();
             services.AddScoped<IEmailService, SmtpEmailService>();
-
             return services;
         }
     }

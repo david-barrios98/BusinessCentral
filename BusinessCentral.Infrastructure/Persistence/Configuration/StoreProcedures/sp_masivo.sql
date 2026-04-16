@@ -210,3 +210,140 @@ SET Password = @NewPassword
 WHERE Id = @UserId;
 END
 GO
+CREATE OR ALTER PROCEDURE [auth].[sp_list_users]
+(
+    @CompanyId INT,
+    @Page INT,
+    @PageSize INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@Page - 1) * @PageSize;
+
+    SELECT
+        ui.Id AS UserId,
+        ui.CompanyId,
+        ui.DocumentNumber,
+        ui.FirstName,
+        ui.LastName,
+        ui.Email,
+        ui.Phone,
+        ui.RoleId,
+        r.Name AS RoleName,
+        ui.Active,
+        ui.Created,
+        ui.Updated
+    FROM [auth].[UsersInfo] ui
+    LEFT JOIN [config].[Role] r ON ui.RoleId = r.Id
+    WHERE ui.CompanyId = @CompanyId
+    ORDER BY ui.Id
+    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_update_user]
+(
+    @UserId INT,
+    @DocumentTypeId INT,
+    @DocumentNumber VARCHAR(50),
+    @FirstName VARCHAR(150),
+    @LastName VARCHAR(150),
+    @Email VARCHAR(150),
+    @Phone VARCHAR(20),
+    @PasswordHash NVARCHAR(255), -- NULL si no se actualiza
+    @AuthProvider VARCHAR(50),
+    @ExternalId VARCHAR(150),
+    @RoleId INT,
+    @Active BIT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE [auth].[UsersInfo]
+    SET DocumentTypeId = @DocumentTypeId,
+        DocumentNumber = @DocumentNumber,
+        FirstName = @FirstName,
+        LastName = @LastName,
+        Email = @Email,
+        Phone = @Phone,
+        AuthProvider = @AuthProvider,
+        ExternalId = @ExternalId,
+        RoleId = @RoleId,
+        Active = @Active,
+        Updated = SYSUTCDATETIME(),
+        Password = CASE WHEN @PasswordHash IS NOT NULL THEN @PasswordHash ELSE Password END
+    WHERE Id = @UserId;
+END
+GO
+CREATE OR ALTER PROCEDURE [auth].[sp_get_user_by_id]
+(
+    @UserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ui.Id AS UserId,
+        ui.CompanyId,
+        c.Name AS CompanyName,
+        ui.DocumentNumber,
+        ui.FirstName,
+        ui.LastName,
+        ui.Email,
+        ui.Phone,
+        ui.RoleId,
+        r.Name AS RoleName,
+        ui.ConfirmedAccount,
+        ui.Active,
+        ui.Created,
+        ui.Updated
+    FROM [auth].[UsersInfo] ui
+    LEFT JOIN [business].[Companies] c ON ui.CompanyId = c.Id
+    LEFT JOIN [config].[Role] r ON ui.RoleId = r.Id
+    WHERE ui.Id = @UserId;
+END
+GO
+CREATE OR ALTER PROCEDURE [auth].[sp_delete_user]
+(
+    @UserId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Soft delete
+    UPDATE [auth].[UsersInfo]
+    SET Active = 0, Updated = GETDATE()
+    WHERE Id = @UserId;
+END
+GO
+CREATE OR ALTER PROCEDURE [auth].[sp_create_user]
+(
+    @CompanyId INT,
+    @DocumentTypeId INT,
+    @DocumentNumber VARCHAR(50),
+    @FirstName VARCHAR(150),
+    @LastName VARCHAR(150),
+    @Email VARCHAR(150),
+    @Phone VARCHAR(20),
+    @PasswordHash NVARCHAR(255),
+    @AuthProvider VARCHAR(50),
+    @ExternalId VARCHAR(150),
+    @RoleId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [auth].[UsersInfo]
+    (CompanyId, DocumentTypeId, DocumentNumber, FirstName, LastName, Email, Phone, Password, AuthProvider, ExternalId, RoleId, ConfirmedAccount, Active, Created, Updated)
+    VALUES
+    (@CompanyId, @DocumentTypeId, @DocumentNumber, @FirstName, @LastName, @Email, @Phone, @PasswordHash, @AuthProvider, @ExternalId, @RoleId, 0, 1, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS InsertedId;
+END
+GO

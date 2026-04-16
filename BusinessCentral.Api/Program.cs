@@ -5,6 +5,8 @@ using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Seed;
 using Microsoft.AspNetCore.Mvc;
 using NLog.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
+using BusinessCentral.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,19 @@ builder.Services
     .AddControllers();
 
 builder.Services.AddCustomValidationResponse();
+
+// Registrar el AuthorizationHandler y la policy "SystemRole"
+builder.Services.AddScoped<IAuthorizationHandler, SystemRoleHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SystemRole", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.Requirements.Add(new SystemRoleRequirement());
+    });
+});
+
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BusinessCentral.Api.Security.CustomAuthorizationMiddlewareResultHandler>();
 
 // ================= LOGGING =================
 builder.Logging.ClearProviders();
