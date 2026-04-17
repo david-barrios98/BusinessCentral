@@ -3,16 +3,68 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BusinessCentral.Api.Common;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Auth.Commands.Logout;
+using BusinessCentral.Application.Features.Auth.Commands.Refresh;
 using BusinessCentral.Application.Features.Auth.Commands.Users;
 
 namespace BusinessCentral.Api.Controllers
 {
-    [Route("api/users")]
+    [Route("api/private/users")]
     [Authorize(Policy = "SystemRole")]
     public class UsersController : ApiControllerBase
     {
         private readonly IMediator _mediator;
         public UsersController(IMediator mediator) => _mediator = mediator;
+
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh(RefreshTokenCommand command)
+        {
+            var result = await _mediator.Send(command);
+            return ProcessResult(result);
+        }
+
+        /// <summary>
+        /// Logout flexible: revoca por refreshToken, sessionId, userId o companyId.
+        /// Se puede enviar cualquiera de los campos en el body.
+        /// </summary>
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(LogoutRequestDTO command)
+        {
+            var authHeader = Request.Headers["Authorization"].ToString();
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var cmd = new LogoutCommand(
+                UserId: command.UserId,
+                CompanyId: command.CompanyId,
+                RefreshToken: command.RefreshToken,
+                SessionId: command.SessionId,
+                Token: token
+            );
+            var result = await _mediator.Send(cmd);
+            return ProcessResult(result);
+        }
+
+        /// <summary>
+        /// Forzar cierre de todas las sesiones y revocar refresh tokens de un usuario.
+        /// </summary>
+        [HttpPost("logout/user/{userId:int}")]
+        public async Task<IActionResult> LogoutUser([FromRoute] int userId)
+        {
+            var cmd = new LogoutCommand(UserId: userId);
+            var result = await _mediator.Send(cmd);
+            return ProcessResult(result);
+        }
+
+        /// <summary>
+        /// Forzar cierre de todas las sesiones y revocar refresh tokens de una compañía.
+        /// </summary>
+        [HttpPost("logout/company/{companyId:int}")]
+        public async Task<IActionResult> LogoutCompany([FromRoute] int companyId)
+        {
+            var cmd = new LogoutCommand(CompanyId: companyId);
+            var result = await _mediator.Send(cmd);
+            return ProcessResult(result);
+        }
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserDTO dto)
