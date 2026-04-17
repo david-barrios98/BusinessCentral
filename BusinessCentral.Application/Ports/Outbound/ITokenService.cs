@@ -12,4 +12,7 @@ public interface ITokenService
     string GenerateRefreshToken();
     int GetAccessTokenExpirationSeconds();
     bool TryValidateToken(string token, out ClaimsPrincipal? principal);
+    Task<bool> IsTokenExpired(string token);
+    Task<bool> IsTokenRevoked(string token);
+
 }

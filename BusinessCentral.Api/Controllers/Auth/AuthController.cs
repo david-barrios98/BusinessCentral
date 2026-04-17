@@ -1,10 +1,8 @@
 ﻿using BusinessCentral.Api.Common;
-using BusinessCentral.Api.Controllers.Auth;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Auth.Commands.Logout;
 using BusinessCentral.Application.Features.Auth.Commands.Login;
-using BusinessCentral.Application.Features.Auth.Commands.Logout;
 using BusinessCentral.Application.Features.Auth.Commands.Refresh;
-using BusinessCentral.Infrastructure.Constants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +12,11 @@ namespace BusinessCentral.Api.Controllers.Auth
     public class AuthController : ApiControllerBase
     {
         private readonly IMediator _mediator;
-        public AuthController(IMediator mediator) => _mediator = mediator;
+
+        public AuthController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequestDTO requestDto)
@@ -41,9 +43,18 @@ namespace BusinessCentral.Api.Controllers.Auth
         /// Se puede enviar cualquiera de los campos en el body.
         /// </summary>
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout(LogoutCommand command)
+        public async Task<IActionResult> Logout(LogoutRequestDTO command)
         {
-            var result = await _mediator.Send(command);
+            var authHeader = Request.Headers["Authorization"].ToString();
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var cmd = new LogoutCommand(
+                UserId: command.UserId,
+                CompanyId: command.CompanyId,
+                RefreshToken: command.RefreshToken,
+                SessionId: command.SessionId,
+                Token: token
+            );
+            var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 

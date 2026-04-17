@@ -1,27 +1,27 @@
+using BusinessCentral.Infrastructure.Persistence.Repositories;
+using BusinessCentral.Shared.Helper;
+using BusinessCentral.Shared.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
-using BusinessCentral.Infrastructure.Persistence.Repositories;
-using BusinessCentral.Shared.Helper;
-using Microsoft.AspNetCore.Http;
 
 namespace BusinessCentral.Infrastructure.Security
 {
     public class SystemRoleHandler : AuthorizationHandler<SystemRoleRequirement>
     {
-        private readonly IMemoryCache _cache;
         private readonly ILogger<SystemRoleHandler> _logger;
         private readonly UsersRepository _usersRepository;
+        private readonly MemoryCacheService _cacheService;
 
         public SystemRoleHandler(
             UsersRepository usersRepository,
-            IMemoryCache cache,
+            MemoryCacheService cacheService,
             ILogger<SystemRoleHandler> logger)
         {
             _usersRepository = usersRepository;
-            _cache = cache;
+            _cacheService = cacheService;
             _logger = logger;
         }
 
@@ -49,7 +49,7 @@ namespace BusinessCentral.Infrastructure.Security
         {
             try
             {
-                // 1. Si no está autenticado, NO publicamos mensaje.
+                // Si no está autenticado, NO publicamos mensaje.
                 // Dejamos que el CustomAuthorizationMiddlewareResultHandler detecte si es Expiración o Falta de Token.
                 if (context.User?.Identity?.IsAuthenticated != true)
                 {
@@ -70,42 +70,46 @@ namespace BusinessCentral.Infrastructure.Security
 
                 var cacheKey = $"systemrole_{userId}";
 
-                if (!_cache.TryGetValue(cacheKey, out bool isSystemRole))
+                // Si el valor YA existe en el caché, lo usamos y salimos de inmediato.
+                if (_cacheService.Exists(cacheKey))
                 {
-                    var user = await _usersRepository.RolUsersAsync(userId);
-
-                    // 2. CASOS DE NEGOCIO: Aquí sí publicamos mensajes específicos.
-                    if (user.Count == 0 || !user.Exists(x => x.IsSystemRole == 1))
-                    {
-                        _logger.LogWarning("Authorization failed: user {UserId} not found.", userId);
-                        PublishFailureToHttpContext(context, "El usuario no existe en el sistema", 404);
-                        context.Fail();
-                        return;
-                    }
-
-                    if (!user.Exists(x => x.UserActive))
-                    {
-                        _logger.LogWarning("Authorization failed: user {UserId} inactive.", userId);
-                        PublishFailureToHttpContext(context, "Su cuenta de usuario está desactivada", 403);
-                        context.Fail();
-                        return;
-                    }
-
-                    if (!user.Exists(x => x.RolActive))
-                    {
-                        _logger.LogWarning("Authorization failed: user {UserId} role inactive.", userId);
-                        var inactiveRole = user.FirstOrDefault(x => !x.RolActive)?.RoleName ?? "desconocido";
-                        PublishFailureToHttpContext(context, $"Su rol de {inactiveRole} está desactivado", 403);
-                        context.Fail();
-                        return;
-                    }
-
-                    isSystemRole = user.Exists(x => x.IsSystemRole == 1);
-                    _cache.Set(cacheKey, isSystemRole, TimeSpan.FromSeconds(30));
+                    context.Succeed(requirement);
+                    return; // IMPORTANTE: Aquí cortamos la ejecución, no se consulta la DB.
                 }
+              
+                var user = await _usersRepository.RolUsersAsync(userId);
+
+                // 2. CASOS DE NEGOCIO: Aquí sí publicamos mensajes específicos.
+                if (user.Count == 0 || !user.Exists(x => x.IsSystemRole == 1))
+                {
+                    _logger.LogWarning("Authorization failed: user {UserId} not found.", userId);
+                    PublishFailureToHttpContext(context, "El usuario no existe en el sistema", 404);
+                    context.Fail();
+                    return;
+                }
+
+                if (!user.Exists(x => x.UserActive))
+                {
+                    _logger.LogWarning("Authorization failed: user {UserId} inactive.", userId);
+                    PublishFailureToHttpContext(context, "Su cuenta de usuario está desactivada", 403);
+                    context.Fail();
+                    return;
+                }
+
+                if (!user.Exists(x => x.RolActive))
+                {
+                    _logger.LogWarning("Authorization failed: user {UserId} role inactive.", userId);
+                    var inactiveRole = user.FirstOrDefault(x => !x.RolActive)?.RoleName ?? "desconocido";
+                    PublishFailureToHttpContext(context, $"Su rol de {inactiveRole} está desactivado", 403);
+                    context.Fail();
+                    return;
+                }
+
+                bool isSystemRole = user.Exists(x => x.IsSystemRole == 1 && x.UserActive && x.RolActive);
 
                 if (isSystemRole)
                 {
+                    _cacheService.Set(cacheKey, TimeZoneHelper.GetColombiaTimeNow().AddMinutes(60));
                     context.Succeed(requirement);
                     return;
                 }

@@ -1,12 +1,13 @@
-using System.Net;
-using Microsoft.AspNetCore.Authentication;
+using BusinessCentral.Application.DTOs.Common;
+using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Shared.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using BusinessCentral.Application.DTOs.Common;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using BusinessCentral.Shared.Helper;
 
 namespace BusinessCentral.Api.Middleware;
 
@@ -26,39 +27,48 @@ public class CustomAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewa
         AuthorizationPolicy policy,
         PolicyAuthorizationResult authorizeResult)
     {
+
+        int statusCode = (int)HttpStatusCode.Forbidden;
+        string message = "Acceso denegado.";
+        var _tokenService = context.RequestServices.GetRequiredService<ITokenService>();
+        var token = string.Empty;
+        var authHeader = string.Empty;
+
         if (authorizeResult.Succeeded)
         {
+            authHeader = context.Request.Headers["Authorization"].ToString();
+            token = authHeader.Substring("Bearer ".Length).Trim();
+
+            if (await _tokenService.IsTokenRevoked(token))
+            {
+                message = "Token ha sido revocado";
+                context.Response.Headers.Append("Token-Expired", "true");
+                context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
+                await WriteResponseAsync(context, statusCode, message);
+                return;
+            }
             await _defaultHandler.HandleAsync(next, context, policy, authorizeResult);
             return;
         }
 
-        int statusCode = (int)HttpStatusCode.Forbidden;
-        string message = "Acceso denegado.";
 
         if (authorizeResult.Challenged)
         {
+            authHeader = context.Request.Headers["Authorization"].ToString();
             statusCode = (int)HttpStatusCode.Unauthorized;
-            message = "Usuario no autenticado.";
 
-            // --- LÓGICA DE DETECCIÓN MANUAL DE EXPIRACIÓN ---
-            // Si el Challenge falló, extraemos el token del header para ver por qué falló
-            var authHeader = context.Request.Headers["Authorization"].ToString();
-            if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrEmpty(authHeader))
             {
-                var token = authHeader.Substring("Bearer ".Length).Trim();
-                var handler = new JwtSecurityTokenHandler();
+                await WriteResponseAsync(context, statusCode, message);
+                return;
+            }
+            token = authHeader.Substring("Bearer ".Length).Trim();
 
-                if (handler.CanReadToken(token))
-                {
-                    var jwtToken = handler.ReadJwtToken(token);
-                    // Comparamos la fecha de expiración del token con la hora actual
-                    if (jwtToken.ValidTo < DateTime.UtcNow)
-                    {
-                        message = "La sesión ha expirado.";
-                        context.Response.Headers.Append("Token-Expired", "true");
-                        context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
-                    }
-                }
+            if (await _tokenService.IsTokenExpired(token) || string.IsNullOrEmpty(token))
+            {
+                message = "La sesión ha expirado.";
+                context.Response.Headers.Append("Token-Expired", "true");
+                context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
             }
         }
 

@@ -24,10 +24,18 @@ public class LoginRequestDTO
     public string CompanyId { get; set; } = null!;
 }
 
+public class LogoutRequestDTO
+{
+    public int? UserId { get; set; } = null;
+    public int? CompanyId { get; set; } = null;
+    public string? RefreshToken { get; set; } = null;
+    public long? SessionId { get; set; } = null;
+}
+
 /// <summary>
-/// DTO de salida: NO incluye contraseña ni datos sensibles
-/// </summary>
-public class LoginResponseDTO
+    /// DTO de salida: NO incluye contraseña ni datos sensibles
+    /// </summary>
+    public class LoginResponseDTO
 {
     [JsonPropertyName("userId")]
     public int UserId { get; set; }

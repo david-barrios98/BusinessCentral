@@ -1,7 +1,7 @@
 using MediatR;
 using BusinessCentral.Application.Common.Results;
-using BusinessCentral.Application.Features.Auth.Commands.Logout;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Shared.Helpers;
 
 namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
 {
@@ -9,11 +9,13 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
     {
         private readonly IRefreshTokenRepository _refreshRepo;
         private readonly IUserSessionRepository _sessionRepo;
+        private readonly IRedisService _redisService;
 
-        public LogoutHandler(IRefreshTokenRepository refreshRepo, IUserSessionRepository sessionRepo)
+        public LogoutHandler(IRefreshTokenRepository refreshRepo, IUserSessionRepository sessionRepo, IRedisService redisService)
         {
             _refreshRepo = refreshRepo;
             _sessionRepo = sessionRepo;
+            _redisService = redisService;
         }
 
         public async Task<Result<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
@@ -50,6 +52,11 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
                     session.IsSuccess = false;
                     await _sessionRepo.UpdateAsync(session);
                 }
+            }
+
+            if (!string.IsNullOrEmpty(request.Token))
+            {
+                await _redisService.RevokeTokenAsync(request.Token, new TimeSpan(TimeZoneHelper.GetColombiaTimeNow().Ticks));
             }
 
             return Result<bool>.Success(true);

@@ -1,21 +1,25 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Core.Application.DTOs;
+using BusinessCentral.Shared.Helpers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using BusinessCentral.Core.Application.DTOs;
-using BusinessCentral.Shared.Helpers;
 
 namespace BusinessCentral.Shared.Helper
 {
     public class JwtService
     {
         private readonly IConfiguration _configuration;
+        private readonly IServiceProvider _serviceProvider;
 
-        public JwtService(IConfiguration configuration)
+        public JwtService(IConfiguration configuration, IServiceProvider serviceProvider)
         {
             _configuration = configuration;
+            _serviceProvider = serviceProvider;
         }
 
         public string GenerateJwtToken(JwtUserDto user)
@@ -161,7 +165,7 @@ namespace BusinessCentral.Shared.Helper
             {
                 var exp = GetExpirationTime(token);
                 if (!exp.HasValue) return false;
-                return exp.Value.ToUniversalTime() <= DateTime.UtcNow;
+                return exp.Value.ToUniversalTime() <= TimeZoneHelper.GetColombiaTimeNow();
             }
             catch
             {

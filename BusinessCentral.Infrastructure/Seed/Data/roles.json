@@ -2,11 +2,13 @@
   {
     "CompanyId": 1,
     "Name": "Administrador",
-    "IsSystemRole": true
+    "IsSystemRole": true,
+    "Active" : true
   },
   {
     "CompanyId": 1,
     "Name": "Manicurista",
-    "IsSystemRole": false
+    "IsSystemRole": false,
+    "Active": true
   }
 ]
