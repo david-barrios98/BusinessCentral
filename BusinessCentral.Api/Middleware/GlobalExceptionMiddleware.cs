@@ -52,7 +52,7 @@ public class GlobalExceptionMiddleware
 
         // Usamos el mensaje genérico para errores 500 por seguridad, 
         // para el resto usamos el mensaje de la excepción.
-        string message = statusCode == 500 ? "Ha ocurrido un error inesperado" : exception.Message;
+        string message = exception.Message;
 
         var response = BusinessCentral.Application.DTOs.Common.ApiResponse<object>.Exception(
             message,

@@ -64,11 +64,6 @@ namespace BusinessCentral.Infrastructure.Seed
                 return;
             }
 
-            if (fileName == "companies.json")
-            {
-                Console.WriteLine($"⚠️ {typeof(T).Name} ya tiene datos");
-
-            }
             var data = await LoadJsonAsync<T>(fileName);
 
             if (data == null || !data.Any())
