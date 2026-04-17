@@ -1,4 +1,4 @@
-namespace BusinessCentral.Infrastructure.Configuration
+namespace BusinessCentral.Infrastructure.Models
 {
     public class EmailOptions
     {

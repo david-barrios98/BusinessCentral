@@ -9,11 +9,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class SubscriptionRepository : SqlConfigServer, ISubscriptionRepository
     {
-        private readonly BusinessCentralDbContext _context;
 
-        public SubscriptionRepository(IConfiguration configuration, BusinessCentralDbContext context) : base(configuration)
+        public SubscriptionRepository(IConfiguration configuration) : base(configuration)
         {
-            _context = context;
         }
         public async Task<AccessResult> CheckAccessAsync(int companyId, string? moduleName)
         {

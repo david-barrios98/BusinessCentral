@@ -1,9 +1,9 @@
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Infrastructure.Configuration;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MailKit.Security;
 using MimeKit;
+using BusinessCentral.Infrastructure.Models;
 
 namespace BusinessCentral.Infrastructure.ExternalServices
 {

@@ -1,11 +1,12 @@
 using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
-using Microsoft.Data.SqlClient;
-using System.Data;
+using BusinessCentral.Infrastructure.Models;
 using Microsoft.Extensions.Configuration;
+using System.Data;
 
-namespace BusinessCentral.Infrastructure.Persistence.Adapters
+namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class UsersRepository : SqlConfigServer, IUserRepository
     {
@@ -29,8 +30,8 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             var insertedId = await ExecuteStoredProcedureSingleAsync(
-                "[auth].[sp_create_user]",
-                parameters,
+                StoredProcedures.User.sp_create_user, 
+                parameters,   
                 reader => Convert.ToInt32(reader.GetValue(0)));
 
             return insertedId;
@@ -44,7 +45,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureSingleAsync(
-                "[auth].[sp_get_user_by_id]",
+                StoredProcedures.User.sp_get_user_by_id,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<UserResponseDTO>(reader));
         }
@@ -67,7 +68,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@Active", dto.Active ? 1 : 0, SqlDbType.Bit)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[auth].[sp_update_user]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.User.sp_update_user, parameters);
         }
 
         public async Task DeleteUserAsync(int userId)
@@ -77,7 +78,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@UserId", userId, SqlDbType.Int)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[auth].[sp_delete_user]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.User.sp_delete_user, parameters);
         }
 
         public async Task<List<UserResponseDTO>> ListUsersAsync(int companyId, int page, int pageSize)
@@ -90,9 +91,22 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[auth].[sp_list_users]",
+                StoredProcedures.User.sp_list_users,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<UserResponseDTO>(reader));
+        }
+
+        public async Task<List<ValidateRolUser>> RolUsersAsync(int userId)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@UserId", userId, SqlDbType.Int)
+            };
+
+            return await ExecuteStoredProcedureAsync(
+                StoredProcedures.User.sp_get_rol_user,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<ValidateRolUser>(reader));
         }
     }
 }

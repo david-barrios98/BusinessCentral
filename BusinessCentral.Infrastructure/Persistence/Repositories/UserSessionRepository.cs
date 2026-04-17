@@ -1,8 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
+using BusinessCentral.Shared.Helpers;
+using Microsoft.EntityFrameworkCore;
 
-namespace BusinessCentral.Infrastructure.Persistence.Adapters
+namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class UserSessionRepository : IUserSessionRepository
     {
@@ -41,7 +43,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             foreach (var s in active)
             {
-                s.LogoutAt = DateTime.UtcNow;
+                s.LogoutAt = TimeZoneHelper.GetColombiaTimeNow();
                 s.IsSuccess = false; // opcional: marcamos como no exitosa por fuerza
             }
 
@@ -60,7 +62,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             foreach (var s in active)
             {
-                s.LogoutAt = DateTime.UtcNow;
+                s.LogoutAt = TimeZoneHelper.GetColombiaTimeNow();
                 s.IsSuccess = false;
             }
 

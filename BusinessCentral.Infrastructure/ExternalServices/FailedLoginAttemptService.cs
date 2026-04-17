@@ -2,7 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Infrastructure.Persistence.Configuration;
+using BusinessCentral.Infrastructure.Models;
 
 namespace BusinessCentral.Infrastructure.ExternalServices;
 

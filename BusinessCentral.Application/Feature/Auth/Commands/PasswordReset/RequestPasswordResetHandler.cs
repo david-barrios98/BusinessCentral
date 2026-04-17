@@ -1,9 +1,8 @@
 using BusinessCentral.Application.Common.Results;
-using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Shared.Helper;
 using MediatR;
 using System.Security.Cryptography;
+using BusinessCentral.Shared.Helpers;
 
 namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
 {

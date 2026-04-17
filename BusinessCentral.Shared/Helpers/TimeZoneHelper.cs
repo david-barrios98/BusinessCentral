@@ -1,6 +1,6 @@
 using System;
 
-namespace BusinessCentral.Shared.Helper
+namespace BusinessCentral.Shared.Helpers
 {
     public static class TimeZoneHelper
     {

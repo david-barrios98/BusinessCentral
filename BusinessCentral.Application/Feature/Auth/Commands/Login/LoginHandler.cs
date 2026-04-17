@@ -5,6 +5,7 @@ using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Core.Application.DTOs;
 using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Shared.Helper;
+using BusinessCentral.Shared.Helpers;
 using MediatR;
 
 namespace BusinessCentral.Application.Features.Auth.Commands.Login

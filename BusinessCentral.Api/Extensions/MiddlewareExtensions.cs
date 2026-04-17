@@ -1,6 +1,4 @@
 ﻿using BusinessCentral.Api.Middleware;
-using BusinessCentral.Api.Security;
-using Microsoft.AspNetCore.Authorization;
 
 namespace BusinessCentral.Api.Extensions;
 

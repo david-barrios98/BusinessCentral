@@ -11,11 +11,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class LoginRepository : SqlConfigServer, ILoginRepository
     {
-        private readonly BusinessCentralDbContext _context;
 
-        public LoginRepository(IConfiguration configuration, BusinessCentralDbContext context) : base(configuration)
+        public LoginRepository(IConfiguration configuration) : base(configuration)
         {
-            _context = context;
         }
 
         public async Task<LoginResponseDTO?> GetLoginUserAsync(LoginCommand request)

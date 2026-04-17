@@ -1,8 +1,9 @@
 using MediatR;
 using BusinessCentral.Application.Common.Results;
+using BusinessCentral.Application.Features.Auth.Commands.Logout;
 using BusinessCentral.Application.Ports.Outbound;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Logout
+namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
 {
     public class LogoutHandler : IRequestHandler<LogoutCommand, Result<bool>>
     {

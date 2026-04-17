@@ -1,9 +1,10 @@
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
-using BusinessCentral.Shared.Helper;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
+using BusinessCentral.Shared.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-namespace BusinessCentral.Infrastructure.Persistence.Adapters
+namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class RefreshTokenRepository : IRefreshTokenRepository
     {

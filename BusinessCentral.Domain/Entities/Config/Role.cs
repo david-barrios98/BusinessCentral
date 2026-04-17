@@ -22,5 +22,7 @@ namespace BusinessCentral.Domain.Entities.Config
         public string Name { get; set; } = null!; // Ej: "Administrador", "Cajero"
 
         public bool IsSystemRole { get; set; } = false; // Si es un rol protegido del sistema
+
+        public bool? Active { get; set; } = null;
     }
 }

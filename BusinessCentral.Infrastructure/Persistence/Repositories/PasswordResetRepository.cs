@@ -3,19 +3,16 @@ using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
 
-namespace BusinessCentral.Infrastructure.Persistence.Adapters
+namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
     public class PasswordResetRepository : SqlConfigServer, IPasswordResetRepository
     {
-        private readonly BusinessCentralDbContext _context;
-
-        public PasswordResetRepository(IConfiguration configuration, BusinessCentralDbContext context) : base(configuration)
+        public PasswordResetRepository(IConfiguration configuration) : base(configuration)
         {
-            _context = context;
         }
 
         public async Task<LoginResponseDTO?> GetUserByEmailAndCompanyAsync(string email, int companyId)

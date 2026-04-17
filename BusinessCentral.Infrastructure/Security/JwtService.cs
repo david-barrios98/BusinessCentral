@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using BusinessCentral.Core.Application.DTOs;
+using BusinessCentral.Shared.Helpers;
 
 namespace BusinessCentral.Shared.Helper
 {

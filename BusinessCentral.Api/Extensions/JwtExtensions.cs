@@ -8,7 +8,11 @@ public static class JwtExtensions
 {
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration config)
     {
-        var jwt = config.GetSection("JwtSettings");
+        var jwtSettings = config.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"];
+
+        if (string.IsNullOrEmpty(secretKey))
+            throw new InvalidOperationException("La SecretKey de JWT no está configurada.");
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -19,10 +23,26 @@ public static class JwtExtensions
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwt["Issuer"],
-                    ValidAudience = jwt["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwt["SecretKey"]))
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+
+                    // OPCIONAL: Elimina el margen de 5 minutos de gracia
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (context.Exception is SecurityTokenExpiredException)
+                        {
+                            // Forzamos el header antes de que cualquier otra cosa escriba la respuesta
+                            context.Response.Headers.Append("Token-Expired", "true");
+                            context.Response.Headers.Append("Access-Control-Expose-Headers", "Token-Expired");
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

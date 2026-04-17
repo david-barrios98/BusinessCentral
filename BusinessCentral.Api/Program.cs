@@ -24,20 +24,9 @@ builder.Services
     .AddSwaggerDocumentation()
     .AddControllers();
 
-builder.Services.AddCustomValidationResponse();
-
-// Registrar el AuthorizationHandler y la policy "SystemRole"
-builder.Services.AddScoped<IAuthorizationHandler, SystemRoleHandler>();
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("SystemRole", policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.Requirements.Add(new SystemRoleRequirement());
-    });
-});
-
-builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, BusinessCentral.Api.Security.CustomAuthorizationMiddlewareResultHandler>();
+builder.Services
+    .AddCustomValidationResponse()
+    .AddRoleExtensions();
 
 // ================= LOGGING =================
 builder.Logging.ClearProviders();

@@ -1,8 +1,7 @@
 ﻿using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Infrastructure.Configuration;
 using BusinessCentral.Infrastructure.ExternalServices;
+using BusinessCentral.Infrastructure.Models;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
-using BusinessCentral.Infrastructure.Persistence.Configuration;
 using BusinessCentral.Infrastructure.Persistence.Repositories;
 using BusinessCentral.Infrastructure.Security;
 using BusinessCentral.Shared.Helper;
@@ -25,7 +24,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IUserSessionRepository, UserSessionRepository>();
             services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
             services.AddScoped<IUserRepository, UsersRepository>();
-
+            services.AddScoped<UsersRepository>();
             // Services
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IHashPasswordService, HashPasswordService>();

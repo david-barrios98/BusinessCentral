@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 
@@ -37,23 +38,27 @@ public class GlobalExceptionMiddleware
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        int code = (int)HttpStatusCode.InternalServerError;
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = code;
+        // Determinamos el status code basado en el tipo de excepción
+        int statusCode = exception switch
+        {
+            UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+            System.ComponentModel.DataAnnotations.ValidationException => (int)HttpStatusCode.BadRequest,
+            ArgumentException => (int)HttpStatusCode.BadRequest,
+            _ => (int)HttpStatusCode.InternalServerError
+        };
 
-        var response = ApiResponse<object>.Exception(
-            exception.Message,
-            code
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = statusCode;
+
+        // Usamos el mensaje genérico para errores 500 por seguridad, 
+        // para el resto usamos el mensaje de la excepción.
+        string message = statusCode == 500 ? "Ha ocurrido un error inesperado" : exception.Message;
+
+        var response = BusinessCentral.Application.DTOs.Common.ApiResponse<object>.Exception(
+            message,
+            statusCode
         );
 
         return context.Response.WriteAsJsonAsync(response);
     }
-
-    private static string GetErrorMessage(Exception exception) => exception switch
-    {
-        UnauthorizedAccessException => "No autorizado",
-        ValidationException => "Validaci�n fallida",
-        ArgumentException => "Argumento inv�lido",
-        _ => "Ha ocurrido un error inesperado"
-    };
 }
