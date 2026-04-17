@@ -20,9 +20,8 @@ namespace BusinessCentral.Domain.Entities.Config
         [Required]
         [MaxLength(50)]
         public string Name { get; set; } = null!; // Ej: "Administrador", "Cajero"
-
         public bool IsSystemRole { get; set; } = false; // Si es un rol protegido del sistema
-
+        public bool IsSuperUser{ get; set; } = false; // Si es un Administrador tenant
         public bool? Active { get; set; } = null;
     }
 }

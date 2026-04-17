@@ -3,12 +3,14 @@
     "CompanyId": 1,
     "Name": "Administrador",
     "IsSystemRole": true,
-    "Active" : true
+    "IsSuperUser": true,
+    "Active": true
   },
   {
     "CompanyId": 1,
     "Name": "Manicurista",
     "IsSystemRole": false,
+    "IsSuperUser": false,
     "Active": true
   }
 ]

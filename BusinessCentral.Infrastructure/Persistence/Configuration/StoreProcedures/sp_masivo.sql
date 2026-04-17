@@ -360,6 +360,7 @@ SELECT
     ui.Id AS UserId,
     r.Name AS RoleName,
     r.IsSystemRole,
+    r.IsSuperUser,
     ui.Active AS UserActive,
     r.Active AS RolActive
 FROM [auth].[UsersInfo] ui WITH (NOLOCK)
