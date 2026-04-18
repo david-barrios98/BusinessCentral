@@ -27,6 +27,20 @@ namespace BusinessCentral.Infrastructure.Constants
         public static class Config
         {
             public const string sp_check_tenant_access = "[config].[sp_check_tenant_access]";
+            // MembershipPlan
+            public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
+            public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
+        }
+
+        public static class Common
+        {
+            // Geografía
+            public const string sp_list_countries = "[common].[sp_list_countries]";
+            public const string sp_list_departments_by_country = "[common].[sp_list_departments_by_country]";
+            public const string sp_list_cities_by_department = "[common].[sp_list_cities_by_department]";
+
+            // Documentos
+            public const string sp_list_document_types = "[common].[sp_list_document_types]";
         }
     }
 }

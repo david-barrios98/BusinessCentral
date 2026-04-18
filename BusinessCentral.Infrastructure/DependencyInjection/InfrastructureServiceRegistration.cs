@@ -26,6 +26,8 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
             services.AddScoped<IUserRepository, UsersRepository>();
             services.AddScoped<UsersRepository>();
+            services.AddScoped<ICommonRepository, CommonRepository>();
+
 
             // Services
             services.AddScoped<ITokenService, TokenService>();

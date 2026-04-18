@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using BusinessCentral.Application.DTOs.Auth;
-using BusinessCentral.Application.Features.Auth.Commands.Login;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
-using BusinessCentral.Infrastructure.Persistence.Adapters;
 using System.Data;
+using BusinessCentral.Application.Feature.Auth.Commands.Login;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {

@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BusinessCentral.Application.DTOs.Common
+{
+    public class CountryRequest
+    {
+        public string Name { get; set; }
+        public string IsoCode { get; set; }
+        public bool Active { get; set; }
+    }
+
+    public class CountryResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string IsoCode { get; set; }
+        public bool Active { get; set; }
+    }
+}

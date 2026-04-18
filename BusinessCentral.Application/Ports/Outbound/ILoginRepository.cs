@@ -1,5 +1,5 @@
 ﻿using BusinessCentral.Application.DTOs.Auth;
-using BusinessCentral.Application.Features.Auth.Commands.Login;
+using BusinessCentral.Application.Feature.Auth.Commands.Login;
 
 namespace BusinessCentral.Application.Ports.Outbound
 {

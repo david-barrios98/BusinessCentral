@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Login
+namespace BusinessCentral.Application.Feature.Auth.Commands.Login
 {
     public class LoginValidator : AbstractValidator<LoginCommand>
     {

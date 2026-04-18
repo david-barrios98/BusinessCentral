@@ -1,14 +1,14 @@
 ﻿using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Auth.Commands.Login;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Core.Application.DTOs;
 using BusinessCentral.Domain.Entities.Audit;
-using BusinessCentral.Shared.Helper;
 using BusinessCentral.Shared.Helpers;
 using MediatR;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Login
+namespace BusinessCentral.Application.Feature.Auth.Commands.Login
 {
     public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponseDTO>>
     {

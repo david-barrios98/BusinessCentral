@@ -1,6 +1,6 @@
 ﻿using BusinessCentral.Api.Common;
 using BusinessCentral.Application.DTOs.Auth;
-using BusinessCentral.Application.Features.Auth.Commands.Login;
+using BusinessCentral.Application.Feature.Auth.Commands.Login;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
