@@ -370,7 +370,7 @@ END
 GO
 
 -- ESQUEMA CONFIG
-CREATE PROCEDURE [config].[sp_get_membership_plan_by_id]
+CREATE OR ALTER PROCEDURE [config].[sp_get_membership_plan_by_id]
     @Id INT
 AS
 BEGIN
@@ -379,7 +379,7 @@ FROM [config].[MembershipPlan] WHERE Id = @Id;
 END
 GO
 
-CREATE PROCEDURE [config].[sp_list_membership_plans]
+CREATE OR ALTER PROCEDURE [config].[sp_list_membership_plans]
 AS
 BEGIN
     SELECT Id, Name, Price, BillingCycle, DurationDays, MaxUsers, IsPublic
@@ -388,14 +388,14 @@ END
 GO
 
 -- ESQUEMA COMMON
-CREATE PROCEDURE [common].[sp_list_countries]
+CREATE OR ALTER PROCEDURE [common].[sp_list_countries]
 AS
 BEGIN
     SELECT Id, Name, IsoCode, Active FROM [common].[Countries];
     END
 GO
 
-CREATE PROCEDURE [common].[sp_list_departments_by_country]
+CREATE OR ALTER PROCEDURE [common].[sp_list_departments_by_country]
     @CountryId INT
 AS
 BEGIN
@@ -410,7 +410,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE [common].[sp_list_cities_by_department]
+CREATE OR ALTER PROCEDURE [common].[sp_list_cities_by_department]
     @DepartmentId INT
 AS
 BEGIN
@@ -428,7 +428,7 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE [common].[sp_get_city_by_id]
+CREATE OR ALTER PROCEDURE [common].[sp_get_city_by_id]
     @Id INT
 AS
 BEGIN
@@ -446,14 +446,14 @@ WHERE ci.Id = @Id;
 END
 GO
 
-CREATE PROCEDURE [common].[sp_list_document_types]
+CREATE OR ALTER PROCEDURE [common].[sp_list_document_types]
 AS
 BEGIN
     SELECT Id, Name, Abbreviation, Active FROM [common].[DocumentType] WHERE Active = 1;
 END
 GO
 
-CREATE PROCEDURE [common].[sp_get_document_type_by_id]
+CREATE OR ALTER PROCEDURE [common].[sp_get_document_type_by_id]
     @Id INT
 AS
 BEGIN
