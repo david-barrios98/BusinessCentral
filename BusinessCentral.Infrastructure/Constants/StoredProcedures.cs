@@ -38,6 +38,8 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_countries = "[common].[sp_list_countries]";
             public const string sp_list_departments_by_country = "[common].[sp_list_departments_by_country]";
             public const string sp_list_cities_by_department = "[common].[sp_list_cities_by_department]";
+            public const string sp_get_city_by_id = "[common].[sp_get_city_by_id]";
+
 
             // Documentos
             public const string sp_list_document_types = "[common].[sp_list_document_types]";

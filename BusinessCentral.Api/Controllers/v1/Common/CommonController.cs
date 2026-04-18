@@ -38,6 +38,13 @@ namespace BusinessCentral.Api.Controllers.v1.Common
             return ProcessResult(result);
         }
 
+        [HttpGet("cities/{cityId:int}")]
+        public async Task<IActionResult> GetCityById(int cityId)
+        {
+            var result = await _mediator.Send(new GetCityByIdQuery(cityId));
+            return ProcessResult(result);
+        }
+
         #endregion
 
         #region Documentos y Configuración

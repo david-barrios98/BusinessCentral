@@ -399,7 +399,14 @@ CREATE PROCEDURE [common].[sp_list_departments_by_country]
     @CountryId INT
 AS
 BEGIN
-    SELECT Id, Name, CountryId FROM [common].[Department] WHERE CountryId = @CountryId;
+    SELECT
+        d.Id,
+        d.Name,
+        d.CountryId,
+        c.Name AS CountryName -- Nombre de la cascada
+    FROM [common].[Department] d
+        INNER JOIN [common].[Countries] c ON d.CountryId = c.Id
+    WHERE d.CountryId = @CountryId;
 END
 GO
 
@@ -407,7 +414,35 @@ CREATE PROCEDURE [common].[sp_list_cities_by_department]
     @DepartmentId INT
 AS
 BEGIN
-    SELECT Id, Name, DepartmentId FROM [common].[City] WHERE DepartmentId = @DepartmentId;
+    SELECT
+        ci.Id,
+        ci.Name,
+        ci.DepartmentId,
+        de.Name AS DepartmentName, -- Nombre de la cascada 1
+        de.CountryId,
+        co.Name AS CountryName      -- Nombre de la cascada 2
+    FROM [common].[City] ci
+        INNER JOIN [common].[Department] de ON ci.DepartmentId = de.Id
+        INNER JOIN [common].[Countries] co ON de.CountryId = co.Id
+    WHERE ci.DepartmentId = @DepartmentId;
+END
+GO
+
+CREATE PROCEDURE [common].[sp_get_city_by_id]
+    @Id INT
+AS
+BEGIN
+SELECT
+    ci.Id,
+    ci.Name,
+    ci.DepartmentId,
+    de.Name AS DepartmentName,
+    de.CountryId,
+    co.Name AS CountryName
+FROM [common].[City] ci
+    INNER JOIN [common].[Department] de ON ci.DepartmentId = de.Id
+    INNER JOIN [common].[Countries] co ON de.CountryId = co.Id
+WHERE ci.Id = @Id;
 END
 GO
 

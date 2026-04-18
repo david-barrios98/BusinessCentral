@@ -16,6 +16,7 @@ namespace BusinessCentral.Application.DTOs.Common
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int CountryId { get; set; }
+        public string CountryId { get; set; }
+        public string CountryName { get; set; }
     }
 }

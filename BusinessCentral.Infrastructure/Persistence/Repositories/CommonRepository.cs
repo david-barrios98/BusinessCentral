@@ -48,6 +48,19 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<CityResponse>(reader));
         }
+        
+        public async Task<CityResponse?> GetCityByIdAsync(int id)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@Id", id, SqlDbType.Int)
+            };
+
+            return await ExecuteStoredProcedureSingleAsync(
+                StoredProcedures.Common.sp_get_city_by_id,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<CityResponse>(reader));
+        }
 
         #endregion
 

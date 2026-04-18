@@ -7,6 +7,8 @@ namespace BusinessCentral.Application.Feature.Common
     public record GetCountriesDepartCitiesQuery() : IRequest<Result<List<CountryResponse>>>;
     public record GetCitiesByDepartmentQuery(int DepartmentId)
         : IRequest<Result<List<CityResponse>>>;
+    public record GetCityByIdQuery(int CityId)
+        : IRequest<Result<CityResponse?>>;
     public record GetDepartmentsByCountryQuery(int CountryId)
         : IRequest<Result<List<DepartmentResponse>>>;
 
