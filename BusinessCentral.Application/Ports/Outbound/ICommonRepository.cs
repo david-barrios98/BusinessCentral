@@ -13,6 +13,7 @@ namespace BusinessCentral.Application.Ports.Outbound
         Task<List<DepartmentResponse>> ListDepartmentsByCountryAsync(int countryId);
         Task<List<CityResponse>> ListCitiesByDepartmentAsync(int departmentId);
         Task<List<DocumentTypeResponse>> ListDocumentTypesAsync();
+        Task<DocumentTypeResponse?> GetDocumentTypeByIdAsync(int id);
         Task<MembershipPlanResponse?> GetMembershipPlanByIdAsync(int id);
         Task<List<MembershipPlanResponse>> ListMembershipPlansAsync();
     }

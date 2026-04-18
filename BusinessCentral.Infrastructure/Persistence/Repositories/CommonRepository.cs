@@ -61,6 +61,19 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 reader => SqlDataReaderMapper.MapToDto<DocumentTypeResponse>(reader));
         }
 
+        public async Task<DocumentTypeResponse?> GetDocumentTypeByIdAsync(int id)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@Id", id, SqlDbType.Int)
+            };
+
+            return await ExecuteStoredProcedureSingleAsync(
+                StoredProcedures.Common.sp_get_document_type_by_id,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<DocumentTypeResponse>(reader));
+        }
+
         public async Task<List<MembershipPlanResponse>> ListMembershipPlansAsync()
         {
             return await ExecuteStoredProcedureAsync(

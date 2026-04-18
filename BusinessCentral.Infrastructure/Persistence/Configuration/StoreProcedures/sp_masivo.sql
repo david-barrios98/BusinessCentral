@@ -417,3 +417,11 @@ BEGIN
     SELECT Id, Name, Abbreviation, Active FROM [common].[DocumentType] WHERE Active = 1;
 END
 GO
+
+CREATE PROCEDURE [common].[sp_get_document_type_by_id]
+    @Id INT
+AS
+BEGIN
+SELECT Id, Name, Abbreviation, Active FROM [common].[DocumentType] WHERE Id = @Id AND Active = 1;
+END
+GO

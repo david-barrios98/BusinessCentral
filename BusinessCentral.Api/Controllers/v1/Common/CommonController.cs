@@ -20,7 +20,7 @@ namespace BusinessCentral.Api.Controllers.v1.Common
         [HttpGet("countries")]
         public async Task<IActionResult> GetCountries()
         {
-            var result = await _mediator.Send(new GetCountriesQuery());
+            var result = await _mediator.Send(new GetCountriesDepartCitiesQuery());
             return ProcessResult(result);
         }
 
@@ -46,6 +46,13 @@ namespace BusinessCentral.Api.Controllers.v1.Common
         public async Task<IActionResult> GetDocumentTypes()
         {
             var result = await _mediator.Send(new GetDocumentTypesQuery());
+            return ProcessResult(result);
+        }
+        
+        [HttpGet("document-types/{id:int}")]
+        public async Task<IActionResult> GetDocumentTypeById(int id)
+        {
+            var result = await _mediator.Send(new GetDocumentTypeByIdQuery(id));
             return ProcessResult(result);
         }
 

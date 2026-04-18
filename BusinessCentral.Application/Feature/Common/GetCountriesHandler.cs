@@ -5,7 +5,7 @@ using MediatR;
 
 namespace BusinessCentral.Application.Feature.Common
 {
-    public class GetCountriesHandler : IRequestHandler<GetCountriesQuery, Result<List<CountryResponse>>>
+    public class GetCountriesHandler : IRequestHandler<GetCountriesDepartCitiesQuery, Result<List<CountryResponse>>>
     {
         private readonly ICommonRepository _repository;
 
@@ -14,7 +14,7 @@ namespace BusinessCentral.Application.Feature.Common
             _repository = repository;
         }
 
-        public async Task<Result<List<CountryResponse>>> Handle(GetCountriesQuery request, CancellationToken cancellationToken)
+        public async Task<Result<List<CountryResponse>>> Handle(GetCountriesDepartCitiesQuery request, CancellationToken cancellationToken)
         {
             var data = await _repository.ListCountriesAsync();
 

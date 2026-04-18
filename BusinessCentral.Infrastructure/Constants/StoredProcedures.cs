@@ -41,6 +41,8 @@ namespace BusinessCentral.Infrastructure.Constants
 
             // Documentos
             public const string sp_list_document_types = "[common].[sp_list_document_types]";
+            public const string sp_get_document_type_by_id = "[common].[sp_get_document_type_by_id]";
+
         }
     }
 }
