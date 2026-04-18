@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BusinessCentral.Api.Controllers.v1.Common
 {
-    [Route("api/v1/common")]
+    [Route("api/v1/public/common")]
     public class CommonController : ApiControllerBase
     {
         private readonly IMediator _mediator;

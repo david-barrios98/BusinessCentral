@@ -4,9 +4,9 @@ using BusinessCentral.Application.Feature.Auth.Commands.Login;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BusinessCentral.Api.Controllers.Auth
+namespace BusinessCentral.Api.Controllers.v1.Auth
 {
-    [Route("api/public/auth")]
+    [Route("api/v1/public/auth")]
     public class AuthController : ApiControllerBase
     {
         private readonly IMediator _mediator;
@@ -30,17 +30,17 @@ namespace BusinessCentral.Api.Controllers.Auth
         }
 
         [HttpPost("password/forgot")]
-        public async Task<IActionResult> RequestPasswordReset([FromBody] BusinessCentral.Application.DTOs.Auth.PasswordResetRequestDTO request)
+        public async Task<IActionResult> RequestPasswordReset([FromBody] PasswordResetRequestDTO request)
         {
-            var cmd = new BusinessCentral.Application.Features.Auth.Commands.PasswordReset.RequestPasswordResetCommand(request);
+            var cmd = new Application.Features.Auth.Commands.PasswordReset.RequestPasswordResetCommand(request);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 
         [HttpPost("password/reset")]
-        public async Task<IActionResult> ConfirmPasswordReset([FromBody] BusinessCentral.Application.DTOs.Auth.PasswordResetConfirmDTO request)
+        public async Task<IActionResult> ConfirmPasswordReset([FromBody] PasswordResetConfirmDTO request)
         {
-            var cmd = new BusinessCentral.Application.Features.Auth.Commands.PasswordReset.ConfirmPasswordResetCommand(request);
+            var cmd = new Application.Features.Auth.Commands.PasswordReset.ConfirmPasswordResetCommand(request);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }

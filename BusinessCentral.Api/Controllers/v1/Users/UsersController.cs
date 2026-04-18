@@ -7,9 +7,9 @@ using BusinessCentral.Application.Feature.Auth.Commands.Logout;
 using BusinessCentral.Application.Features.Auth.Commands.Refresh;
 using BusinessCentral.Application.Features.Auth.Commands.Users;
 
-namespace BusinessCentral.Api.Controllers
+namespace BusinessCentral.Api.Controllers.v1.Users
 {
-    [Route("api/private/users")]
+    [Route("api/v1/private/users")]
     [Authorize(Policy = "SystemRole")]
     public class UsersController : ApiControllerBase
     {
