@@ -1,11 +1,10 @@
 using BusinessCentral.Infrastructure.Persistence.Repositories;
-using BusinessCentral.Shared.Helper;
-using BusinessCentral.Shared.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
+using BusinessCentral.Infrastructure.Helpers;
 
 namespace BusinessCentral.Infrastructure.Security
 {

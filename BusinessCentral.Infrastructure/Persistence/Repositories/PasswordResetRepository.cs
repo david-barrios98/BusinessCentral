@@ -3,9 +3,10 @@ using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
+using BusinessCentral.Infrastructure.Helpers;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.Extensions.Configuration;
 using System.Data;
-using BusinessCentral.Infrastructure.Persistence.Adapters;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
@@ -29,14 +30,14 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 reader => SqlDataReaderMapper.MapToDto<LoginResponseDTO>(reader));
         }
 
-        public async Task<int?> InsertPasswordResetTokenAsync(int userId, string token, DateTime expiresAt, DateTime createdAt)
+        public async Task<int?> InsertPasswordResetTokenAsync(int userId, string token)
         {
             var parameters = new[]
             {
                 CreateParameter("@UserId", userId, SqlDbType.Int),
                 CreateParameter("@Token", token, SqlDbType.NVarChar),
-                CreateParameter("@ExpiresAt", expiresAt, SqlDbType.DateTime2),
-                CreateParameter("@CreatedAt", createdAt, SqlDbType.DateTime2)
+                CreateParameter("@ExpiresAt", TimeZoneHelper.GetColombiaTime().AddHours(2), SqlDbType.DateTime2),
+                CreateParameter("@CreatedAt", TimeZoneHelper.GetColombiaTime(), SqlDbType.DateTime2)
             };
 
             var result = await ExecuteStoredProcedureSingleAsync(

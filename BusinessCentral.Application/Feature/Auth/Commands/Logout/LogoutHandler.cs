@@ -1,7 +1,7 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
+using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Shared.Helpers;
+using BusinessCentral.Domain.Entities.Audit;
 
 namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
 {
@@ -24,8 +24,13 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
             if (!string.IsNullOrEmpty(request.RefreshToken))
             {
                 var token = await _refreshRepo.GetActiveByTokenAsync(request.RefreshToken);
-                if (token != null)
-                    await _refreshRepo.RevokeAsync(token, null);
+                RefreshToken tokenAudit = new RefreshToken();
+       
+                if (!string.IsNullOrEmpty(token?.RefreshToken))
+                {
+                    tokenAudit.Token = token.RefreshToken;
+                    await _refreshRepo.RevokeAsync(tokenAudit, null);
+                }
             }
 
             // Si pasa userId: revocamos todos los refresh tokens del usuario y cerramos sesiones
@@ -56,7 +61,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
 
             if (!string.IsNullOrEmpty(request.Token))
             {
-                await _redisService.RevokeTokenAsync(request.Token, new TimeSpan(TimeZoneHelper.GetColombiaTimeNow().Ticks));
+                await _redisService.RevokeTokenAsync(request.Token);
             }
 
             return Result<bool>.Success(true);

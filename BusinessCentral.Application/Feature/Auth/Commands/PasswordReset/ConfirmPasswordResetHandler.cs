@@ -1,9 +1,9 @@
-using BusinessCentral.Application.Common.Results;
+using BusinessCentral.Application.Feature.Auth.Commands.PasswordReset;
+using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Shared.Helper;
 using MediatR;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
+namespace BusinessCentral.Application.Feature.Auth.Commands.PasswordReset
 {
     public class ConfirmPasswordResetHandler : IRequestHandler<ConfirmPasswordResetCommand, Result<bool>>
     {

@@ -15,6 +15,7 @@ namespace BusinessCentral.Domain.Entities.Audit
         public int UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual UsersInfo User { get; set; } = null!;
+        public string? LoginField { get; set; } = null; // Para auditoría, aunque ya esté en UsersInfo
 
         [Required]
         public int CompanyId { get; set; } // Multi-tenant: saber a qué empresa entró

@@ -1,8 +1,8 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Common.Results;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Users
+namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 {
     public record GetUserQuery(int UserId) : IRequest<Result<UserResponseDTO>>;
 }

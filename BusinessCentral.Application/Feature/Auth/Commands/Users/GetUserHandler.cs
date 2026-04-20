@@ -1,9 +1,9 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Users
+namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 {
     public class GetUserHandler : IRequestHandler<GetUserQuery, Result<UserResponseDTO>>
     {

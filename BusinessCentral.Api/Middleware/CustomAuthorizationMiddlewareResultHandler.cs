@@ -1,13 +1,10 @@
 using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Shared.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using BusinessCentral.Shared.Helper;
 
 namespace BusinessCentral.Api.Middleware;
 

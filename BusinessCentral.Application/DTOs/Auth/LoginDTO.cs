@@ -43,6 +43,9 @@ public class LogoutRequestDTO
     [JsonPropertyName("userName")]
     public string? UserName { get; set; }
 
+    [JsonPropertyName("loginField")]
+    public string? LoginField { get; set; } = null;
+
     [JsonPropertyName("documentNumber")]
     public string? DocumentNumber { get; set; }
 

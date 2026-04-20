@@ -1,4 +1,5 @@
 ﻿using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System;
@@ -20,13 +21,13 @@ namespace BusinessCentral.Infrastructure.Security
             _logger = logger;
         }
 
-        public async Task RevokeTokenAsync(string jti, TimeSpan expiration)
+        public async Task RevokeTokenAsync(string jti)
         {
             // Guardamos el JTI en Redis. Si el JTI está presente, el token no sirve.
             await _redisCache.SetStringAsync(
                 $"revoked_token:{jti}",
                 "true",
-                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = expiration }
+                new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = new TimeSpan(TimeZoneHelper.GetColombiaTimeNow().Ticks) }
             );
             _logger.LogWarning("Token JTI {Jti} ha sido revocado permanentemente.", jti);
         }

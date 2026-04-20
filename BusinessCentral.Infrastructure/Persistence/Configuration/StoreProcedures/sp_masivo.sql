@@ -460,3 +460,191 @@ BEGIN
 SELECT Id, Name, Abbreviation, Active FROM [common].[DocumentType] WHERE Id = @Id AND Active = 1;
 END
 GO
+
+-- ESQUEMA AUDIT
+CREATE OR ALTER PROCEDURE [audit].[sp_insert_user_session]
+    @UserId INT,
+    @LoginField VARCHAR(50),
+    @CompanyId INT,
+    @Platform VARCHAR(50),
+    @DeviceFingerprint VARCHAR(255),
+    @IpAddress VARCHAR(45),
+    @UserAgent VARCHAR(500),
+    @LoginAt DATETIME,
+    @IsSuccess BIT,
+    @FailureReason VARCHAR(100)
+AS
+BEGIN
+INSERT INTO [audit].[UserSession] (UserId,LoginField, CompanyId, Platform, DeviceFingerprint, IpAddress, UserAgent, LoginAt, IsSuccess, FailureReason)
+VALUES (@UserId, @LoginField, @CompanyId, @Platform, @DeviceFingerprint, @IpAddress, @UserAgent, @LoginAt, @IsSuccess, @FailureReason);
+
+SELECT SCOPE_IDENTITY(); -- Retorna el Id (long) generado
+END
+GO
+
+CREATE OR ALTER PROCEDURE [audit].[sp_update_user_session]
+    @Id BIGINT,
+    @LogoutAt DATETIME,
+    @IsSuccess BIT,
+    @FailureReason VARCHAR(100)
+AS
+BEGIN
+UPDATE [audit].[UserSession]
+SET LogoutAt = @LogoutAt,
+    IsSuccess = @IsSuccess,
+    FailureReason = @FailureReason
+WHERE Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [audit].[sp_get_user_session_by_id]
+    @Id BIGINT
+AS
+BEGIN
+SELECT * FROM [audit].[UserSession] WHERE Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [audit].[sp_close_all_user_sessions]
+    @UserId INT,
+    @LogoutAt DATETIME
+AS
+BEGIN
+UPDATE [audit].[UserSession]
+SET LogoutAt = @LogoutAt,
+    IsSuccess = 0
+WHERE UserId = @UserId AND LogoutAt IS NULL AND IsSuccess = 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [audit].[sp_close_company_sessions]
+    @CompanyId INT,
+    @LogoutAt DATETIME
+AS
+BEGIN
+UPDATE [audit].[UserSession]
+SET LogoutAt = @LogoutAt,
+    IsSuccess = 0
+WHERE CompanyId = @CompanyId AND LogoutAt IS NULL AND IsSuccess = 1;
+END
+GO
+
+-- ESQUEMA AUTH
+CREATE OR ALTER PROCEDURE [auth].[sp_insert_refresh_token]
+    @UserId INT,
+    @LoginField VARCHAR(50),
+    @Token VARCHAR(255),
+    @ExpiresAt DATETIME,
+    @CreatedAt DATETIME,
+    @CompanyId INT,
+    @JwtId VARCHAR(50) = NULL,
+    @AccessTokenExpiresAt DATETIME = NULL
+AS
+BEGIN
+INSERT INTO [audit].[RefreshToken] (
+    UserId, LoginField, Token, ExpiresAt, CreatedAt,
+    RevokedAt, ReplacedByToken, CompanyId, JwtId, AccessTokenExpiresAt, Active
+)
+VALUES (
+    @UserId, @LoginField, @Token, @ExpiresAt, @CreatedAt,
+    NULL, NULL, @CompanyId, @JwtId, @AccessTokenExpiresAt, 1
+    );
+
+SELECT CAST(SCOPE_IDENTITY() AS BIGINT); -- Retorna BIGINT para mapear con long
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_get_active_refresh_token]
+    @Token NVARCHAR(500), -- Cambiado a NVARCHAR para coincidir con tu C#
+    @CurrentTime DATETIME
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+SELECT
+    -- Datos del Token
+    rt.Token AS RefreshToken,
+    rt.CompanyId,
+    rt.JwtId,
+    rt.AccessTokenExpiresAt,
+    rt.LoginField,
+
+    -- Datos del Usuario con Lógica Dinámica
+    u.Id AS UserId,
+    u.DocumentNumber,
+    u.FirstName,
+    u.LastName,
+    u.Email,
+    u.Phone,
+    u.Password,
+    u.RoleId,
+    c.Name AS CompanyName,
+    -- Si el campo LoginField dice 'phone', 'email' o 'document', 
+    -- podrías querer devolver una columna específica de la tabla UsersInfo
+    CASE
+        WHEN rt.LoginField = 'email' THEN u.Email
+        WHEN rt.LoginField = 'phone' THEN u.Phone -- Asumiendo que tienes esta columna
+        WHEN rt.LoginField = 'document' THEN u.DocumentNumber -- Asumiendo que tienes esta columna
+        END AS UserName,
+
+    -- Datos de la Empresa
+    c.Name AS CompanyName
+FROM [audit].[RefreshToken] rt WITH (NOLOCK)
+    INNER JOIN [auth].[UsersInfo] u WITH (NOLOCK) ON rt.UserId = u.Id
+    LEFT JOIN [business].[Companies] c WITH (NOLOCK) ON rt.CompanyId = c.Id
+WHERE rt.Token = @Token
+  AND rt.RevokedAt IS NULL
+  AND rt.ExpiresAt > @CurrentTime
+  AND rt.Active = 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_revoke_refresh_token]
+    @Token VARCHAR(MAX),
+    @RevokedAt DATETIME,
+    @ReplacedByToken VARCHAR(MAX) = NULL
+AS
+BEGIN
+UPDATE [audit].[RefreshToken]
+SET RevokedAt = @RevokedAt,
+    ReplacedByToken = @ReplacedByToken,
+    Active = 0
+WHERE Token = @Token;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_user]
+    @UserId INT,
+    @RevokedAt DATETIME,
+    @CurrentTime DATETIME,
+    @ReplacedByToken VARCHAR(MAX) = NULL
+AS
+BEGIN
+UPDATE [audit].[RefreshToken]
+SET RevokedAt = @RevokedAt,
+    ReplacedByToken = @ReplacedByToken,
+    Active = 0
+WHERE UserId = @UserId
+  AND RevokedAt IS NULL
+  AND ExpiresAt > @CurrentTime
+  And Active = 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_company]
+    @CompanyId INT,
+    @RevokedAt DATETIME,
+    @CurrentTime DATETIME,
+    @ReplacedByToken VARCHAR(MAX) = NULL
+AS
+BEGIN
+UPDATE [audit].[RefreshToken]
+SET RevokedAt = @RevokedAt,
+    ReplacedByToken = @ReplacedByToken,
+    Active = 0
+WHERE CompanyId = @CompanyId
+  AND RevokedAt IS NULL
+  AND ExpiresAt > @CurrentTime
+  And Active = 1;
+END
+GO

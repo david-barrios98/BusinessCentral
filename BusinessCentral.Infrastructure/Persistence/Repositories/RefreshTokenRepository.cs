@@ -1,81 +1,91 @@
+using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Domain.Entities.Audit;
-using BusinessCentral.Infrastructure.Persistence.Adapters;
-using BusinessCentral.Shared.Helpers;
-using Microsoft.EntityFrameworkCore;
+using BusinessCentral.Infrastructure.Constants;
+using BusinessCentral.Infrastructure.Extensions;
+using BusinessCentral.Infrastructure.Helpers;
+using Microsoft.Extensions.Configuration;
+using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories
 {
-    public class RefreshTokenRepository : IRefreshTokenRepository
+    public class RefreshTokenRepository : SqlConfigServer, IRefreshTokenRepository
     {
-        private readonly BusinessCentralDbContext _context;
-        private readonly DateTime _getColombiaTimeNow;
-
-        public RefreshTokenRepository(BusinessCentralDbContext context)
-        {
-            _context = context;
-            _getColombiaTimeNow = TimeZoneHelper.GetColombiaTimeNow();
-        }
+        public RefreshTokenRepository(IConfiguration configuration) : base(configuration) { }
 
         public async Task AddAsync(RefreshToken token)
         {
-            await _context.RefreshTokens.AddAsync(token);
-            await _context.SaveChangesAsync();
+            var parameters = new[]
+            {
+                CreateParameter("@UserId", token.UserId, SqlDbType.Int),
+                CreateParameter("@LoginField", token.LoginField, SqlDbType.VarChar),
+                CreateParameter("@Token", token.Token, SqlDbType.NVarChar, 500),
+                CreateParameter("@ExpiresAt", TimeZoneHelper.ConvertToColombiaTime(DateTime.UtcNow.AddMinutes(30)), SqlDbType.DateTime),
+                CreateParameter("@CreatedAt", TimeZoneHelper.GetColombiaTimeNow(), SqlDbType.DateTime),
+                CreateParameter("@CompanyId", token.CompanyId ?? (object)DBNull.Value, SqlDbType.Int),
+                CreateParameter("@JwtId", token.JwtId ?? (object)DBNull.Value, SqlDbType.VarChar),
+                CreateParameter("@AccessTokenExpiresAt", token.AccessTokenExpiresAt ?? (object)DBNull.Value, SqlDbType.DateTime)
+            };
+
+            // Mapeo directo a long
+            token.Id = await ExecuteStoredProcedureSingleAsync(
+                StoredProcedures.Auth.sp_insert_refresh_token,
+                parameters,
+                reader => Convert.ToInt64(reader.GetValue(0)));
         }
 
-        public async Task<RefreshToken?> GetActiveByTokenAsync(string token)
+        public async Task<LoginResponseDTO?> GetActiveByTokenAsync(string token)
         {
-            return await _context.RefreshTokens
-                .Include(rt => rt.User)
-                .FirstOrDefaultAsync(rt => rt.Token == token && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow);
+            var parameters = new[]
+            {
+                CreateParameter("@Token", token, SqlDbType.NVarChar, 500),
+                CreateParameter("@CurrentTime", TimeZoneHelper.GetColombiaTimeNow(), SqlDbType.DateTime)
+            };
+
+            return await ExecuteStoredProcedureSingleAsync(
+                StoredProcedures.Auth.sp_get_active_refresh_token,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<LoginResponseDTO>(reader));
         }
 
         public async Task RevokeAsync(RefreshToken token, string? replacedByToken = null)
         {
-            token.RevokedAt = TimeZoneHelper.GetColombiaTimeNow();
-            token.ReplacedByToken = replacedByToken;
-            _context.RefreshTokens.Update(token);
-            await _context.SaveChangesAsync();
+            var parameters = new[]
+            {
+                CreateParameter("@Token", token.Token, SqlDbType.NVarChar, 500),
+                CreateParameter("@RevokedAt", TimeZoneHelper.GetColombiaTimeNow(), SqlDbType.DateTime),
+                CreateParameter("@ReplacedByToken", replacedByToken ?? (object)DBNull.Value, SqlDbType.NVarChar)
+            };
+
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_refresh_token, parameters);
         }
 
-        // Revoke all active tokens for a user (used before issuing a new refresh token)
         public async Task RevokeAllByUserAsync(int userId, string? replacedByToken = null)
         {
-            var activeTokens = await _context.RefreshTokens
-                .Where(rt => rt.UserId == userId && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow)
-                .ToListAsync();
-
-            if (!activeTokens.Any())
-                return;
-
-            foreach (var tk in activeTokens)
+            var now = TimeZoneHelper.GetColombiaTimeNow();
+            var parameters = new[]
             {
-                tk.RevokedAt = _getColombiaTimeNow;
-                tk.ReplacedByToken = replacedByToken;
-            }
+                CreateParameter("@UserId", userId, SqlDbType.Int),
+                CreateParameter("@RevokedAt", now, SqlDbType.DateTime),
+                CreateParameter("@CurrentTime", now, SqlDbType.DateTime),
+                CreateParameter("@ReplacedByToken", replacedByToken ?? (object)DBNull.Value, SqlDbType.VarChar)
+            };
 
-            _context.RefreshTokens.UpdateRange(activeTokens);
-            await _context.SaveChangesAsync();
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_all_tokens_by_user, parameters);
         }
 
-        // Revoke all active tokens for a company (works if tokens have CompanyId snapshot filled)
         public async Task RevokeAllByCompanyAsync(int companyId, string? replacedByToken = null)
         {
-            var activeTokens = await _context.RefreshTokens
-                .Where(rt => rt.CompanyId == companyId && rt.RevokedAt == null && rt.ExpiresAt > _getColombiaTimeNow)
-                .ToListAsync();
-
-            if (!activeTokens.Any())
-                return;
-
-            foreach (var tk in activeTokens)
+            var now = TimeZoneHelper.GetColombiaTimeNow();
+            var parameters = new[]
             {
-                tk.RevokedAt = _getColombiaTimeNow;
-                tk.ReplacedByToken = replacedByToken;
-            }
+                CreateParameter("@CompanyId", companyId, SqlDbType.Int),
+                CreateParameter("@RevokedAt", now, SqlDbType.DateTime),
+                CreateParameter("@CurrentTime", now, SqlDbType.DateTime),
+                CreateParameter("@ReplacedByToken", replacedByToken ?? (object)DBNull.Value, SqlDbType.VarChar)
+            };
 
-            _context.RefreshTokens.UpdateRange(activeTokens);
-            await _context.SaveChangesAsync();
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_all_tokens_by_company, parameters);
         }
     }
 }

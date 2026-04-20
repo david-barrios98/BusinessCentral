@@ -1,5 +1,5 @@
 ﻿
-namespace BusinessCentral.Application.Common.Results
+namespace BusinessCentral.Application.Feature.Common.Results
 {
     public class Result<T>
     {

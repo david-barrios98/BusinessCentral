@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Common;
+using BusinessCentral.Application.Feature.Common.Results;
 
 namespace BusinessCentral.Api.Common
 {

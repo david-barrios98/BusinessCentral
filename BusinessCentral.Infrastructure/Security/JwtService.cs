@@ -1,13 +1,11 @@
-﻿using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Core.Application.DTOs;
-using BusinessCentral.Shared.Helpers;
+﻿using BusinessCentral.Core.Application.DTOs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Org.BouncyCastle.Asn1.Ocsp;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using BusinessCentral.Infrastructure.Helpers;
 
 namespace BusinessCentral.Shared.Helper
 {
@@ -34,6 +32,7 @@ namespace BusinessCentral.Shared.Helper
                 new Claim("userName", user.userName),
                 new Claim("companyId", user.companyId),
                 new Claim("companyName", user.companyName),
+                new Claim("loginField", user.LoginField ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

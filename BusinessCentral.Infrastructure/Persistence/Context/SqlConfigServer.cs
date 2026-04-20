@@ -77,9 +77,16 @@ public class SqlConfigServer
         return default; // null si no encuentra nada
     }
 
-    protected SqlParameter CreateParameter(string name, object value, SqlDbType dbType)
+    protected SqlParameter CreateParameter(string name, object value, SqlDbType dbType, int size = 0)
     {
-        return new SqlParameter(name, dbType) { Value = value ?? DBNull.Value };
+        var param = new SqlParameter(name, dbType) { Value = value ?? DBNull.Value };
+
+        if (size != 0)
+        {
+            param.Size = size;
+        }
+
+        return param;
     }
 
     protected async Task ExecuteInTransactionAsync(Func<SqlTransaction, Task> operation)

@@ -5,6 +5,16 @@ namespace BusinessCentral.Infrastructure.Constants
     /// </summary>
     public static class StoredProcedures
     {
+        public static class Audit
+        {
+            //Auditoria
+            public const string sp_insert_user_session = "[audit].[sp_insert_user_session]";
+            public const string sp_update_user_session = "[audit].[sp_update_user_session]";
+            public const string sp_get_user_session_by_id = "[audit].[sp_get_user_session_by_id]";
+            public const string sp_close_all_user_sessions = "[audit].[sp_close_all_user_sessions]";
+            public const string sp_close_company_sessions = "[audit].[sp_close_company_sessions]";
+
+        }
         public static class Auth
         {
             //Login
@@ -14,6 +24,12 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_get_active_password_reset_token = "[auth].[sp_get_active_password_reset_token]";
             public const string sp_mark_password_reset_used = "[auth].[sp_mark_password_reset_used]";
             public const string sp_update_user_password = "[auth].[sp_update_user_password]";
+
+            public const string sp_insert_refresh_token = "[auth].[sp_insert_refresh_token]";
+            public const string sp_get_active_refresh_token = "[auth].[sp_get_active_refresh_token]";
+            public const string sp_revoke_refresh_token = "[auth].[sp_revoke_refresh_token]";
+            public const string sp_revoke_all_tokens_by_user = "[auth].[sp_revoke_all_tokens_by_user]";
+            public const string sp_revoke_all_tokens_by_company = "[auth].[sp_revoke_all_tokens_by_company]";
         }
         public static class User
         {

@@ -1,8 +1,8 @@
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Core.Application.DTOs;
 using BusinessCentral.Shared.Helper;
-using BusinessCentral.Shared.Helpers;
 using System.Security.Claims;
+using BusinessCentral.Infrastructure.Helpers;
 
 namespace BusinessCentral.Infrastructure.Security;
 
@@ -43,10 +43,10 @@ public class TokenService : ITokenService
     }
     public async Task<bool> IsTokenExpired(string token)
     {
-        bool isTokenExpired =  _jwtHelper.IsTokenExpired(token);
+        bool isTokenExpired = _jwtHelper.IsTokenExpired(token);
         if (isTokenExpired)
         {
-            _redisService.RevokeTokenAsync(token, new TimeSpan(TimeZoneHelper.GetColombiaTimeNow().Ticks));
+            _redisService.RevokeTokenAsync(token);
         }
         return isTokenExpired;
     }

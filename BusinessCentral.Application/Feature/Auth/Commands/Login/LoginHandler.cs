@@ -1,12 +1,11 @@
-﻿using BusinessCentral.Application.Common.Results;
-using BusinessCentral.Application.Constants;
+﻿using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Auth;
-using BusinessCentral.Application.Feature.Auth.Commands.Login;
+using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Core.Application.DTOs;
 using BusinessCentral.Domain.Entities.Audit;
-using BusinessCentral.Shared.Helpers;
 using MediatR;
+using System.Text.RegularExpressions;
 
 namespace BusinessCentral.Application.Feature.Auth.Commands.Login
 {
@@ -38,6 +37,20 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
         public async Task<Result<LoginResponseDTO>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var username = request.userLogin.UserName;
+            string loginFieldType = "email"; // Valor por defecto
+
+            if (Regex.IsMatch(username, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                loginFieldType = "email";
+            }
+            else if (Regex.IsMatch(username, @"^3[0-9]{9}$"))
+            {
+                loginFieldType = "phone";
+            }
+            else if (Regex.IsMatch(username, @"^[0-9]{5,12}$"))
+            {
+                loginFieldType = "document";
+            }
 
             // 0. Verificar si la cuenta está bloqueada por varios intentos fallidos
             if (await _failedLoginAttemptService.IsAccountLockedAsync(username))
@@ -83,7 +96,8 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                 userId = user.UserId,
                 userName = user.UserName,
                 companyId = user.CompanyId.ToString(),
-                companyName = user.CompanyName?.ToString() ?? string.Empty
+                companyName = user.CompanyName?.ToString() ?? string.Empty,
+                LoginField = loginFieldType,
             };
 
             var accessToken = _tokenService.GenerateAccessToken(jwtUser);
@@ -98,9 +112,8 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             {
                 UserId = user.UserId,
                 Token = refreshValue,
-                ExpiresAt = TimeZoneHelper.ConvertToColombiaTime(DateTime.UtcNow.AddMinutes(30)),
-                CreatedAt = TimeZoneHelper.GetColombiaTimeNow(),
-                CompanyId = user.CompanyId
+                CompanyId = user.CompanyId,
+                LoginField = loginFieldType
             };
 
             await _refreshTokenRepository.AddAsync(refreshEntity);
@@ -109,21 +122,21 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             var session = new UserSession
             {
                 UserId = user.UserId,
+                LoginField = loginFieldType,
                 CompanyId = user.CompanyId,
                 Platform = request.Platform,
                 DeviceFingerprint = null,
                 IpAddress = request.IpAddress,
                 UserAgent = request.UserAgent,
-                LoginAt = TimeZoneHelper.GetColombiaTimeNow(),
                 IsSuccess = true
             };
 
             await _userSessionRepository.AddAsync(session);
 
+            user.LoginField = loginFieldType;
             user.AccessToken = accessToken;
             user.RefreshToken = refreshValue;
             user.ExpiresIn = _tokenService.GetAccessTokenExpirationSeconds();
-            user.IssuedAt = TimeZoneHelper.GetColombiaTimeNow();
 
             return Result<LoginResponseDTO>.Success(user);
         }

@@ -1,8 +1,8 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Common.Results;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.PasswordReset
+namespace BusinessCentral.Application.Feature.Auth.Commands.PasswordReset
 {
     public record ConfirmPasswordResetCommand(PasswordResetConfirmDTO Request) : IRequest<Result<bool>>;
 }

@@ -20,6 +20,7 @@ namespace BusinessCentral.Domain.Entities.Audit
         public int UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual UsersInfo User { get; set; } = null!;
+        public string? LoginField { get; set; } = null;
 
         [Required]
         [MaxLength(255)]
@@ -52,5 +53,7 @@ namespace BusinessCentral.Domain.Entities.Audit
         /// Fecha de expiración del access token relacionado (opcional).
         /// </summary>
         public DateTime? AccessTokenExpiresAt { get; set; }
+
+        public bool? Active { get; set; } = null;
     }
 }

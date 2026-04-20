@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using BusinessCentral.Application.Common.Results;
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.Feature.Common.Results;
 
 namespace BusinessCentral.Application.Feature.Auth.Commands.Login
 {

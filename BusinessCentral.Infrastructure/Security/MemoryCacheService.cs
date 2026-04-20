@@ -1,4 +1,4 @@
-﻿using BusinessCentral.Shared.Helpers;
+﻿using BusinessCentral.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 

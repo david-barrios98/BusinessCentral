@@ -8,7 +8,7 @@ namespace BusinessCentral.Application.Ports.Outbound
 {
     public interface IRedisService
     {
-        Task RevokeTokenAsync(string jti, TimeSpan expiration);
+        Task RevokeTokenAsync(string jti);
         Task<bool> IsTokenRevokedAsync(string jti);
     }
 }

@@ -1,8 +1,8 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
+using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Users
+namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 {
     public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, Result<bool>>
     {

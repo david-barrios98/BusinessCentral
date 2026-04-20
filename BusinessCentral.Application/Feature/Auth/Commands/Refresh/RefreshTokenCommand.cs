@@ -1,8 +1,8 @@
 using MediatR;
-using BusinessCentral.Application.Common.Results;
+using BusinessCentral.Application.Feature.Common.Results;
 
-namespace BusinessCentral.Application.Features.Auth.Commands.Refresh
+namespace BusinessCentral.Application.Feature.Auth.Commands.Refresh
 {
-    public record RefreshTokenCommand(string RefreshToken)
+    public record RefreshTokenCommand(string RefreshToken, string Token)
         : IRequest<Result<BusinessCentral.Application.DTOs.Auth.LoginResponseDTO>>;
 }

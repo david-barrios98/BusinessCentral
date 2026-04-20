@@ -18,7 +18,7 @@ namespace BusinessCentral.Application.DTOs.Common
         public string Name { get; set; }
         public int DepartmentId { get; set; }
         public string DepartmentName { get; set; }
-        public string CountryId { get; set; }
+        public int CountryId { get; set; }
         public string CountryName { get; set; }
     }
 }

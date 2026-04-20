@@ -1,6 +1,7 @@
 ﻿using BusinessCentral.Api.Common;
 using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Feature.Auth.Commands.Login;
+using BusinessCentral.Application.Feature.Auth.Commands.PasswordReset;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,7 +33,7 @@ namespace BusinessCentral.Api.Controllers.v1.Auth
         [HttpPost("password/forgot")]
         public async Task<IActionResult> RequestPasswordReset([FromBody] PasswordResetRequestDTO request)
         {
-            var cmd = new Application.Features.Auth.Commands.PasswordReset.RequestPasswordResetCommand(request);
+            var cmd = new RequestPasswordResetCommand(request);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
@@ -40,7 +41,7 @@ namespace BusinessCentral.Api.Controllers.v1.Auth
         [HttpPost("password/reset")]
         public async Task<IActionResult> ConfirmPasswordReset([FromBody] PasswordResetConfirmDTO request)
         {
-            var cmd = new Application.Features.Auth.Commands.PasswordReset.ConfirmPasswordResetCommand(request);
+            var cmd = new ConfirmPasswordResetCommand(request);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }

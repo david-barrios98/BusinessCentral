@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using BusinessCentral.Api.Common;
 using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.Feature.Auth.Commands.Logout;
-using BusinessCentral.Application.Features.Auth.Commands.Refresh;
-using BusinessCentral.Application.Features.Auth.Commands.Users;
+using BusinessCentral.Application.Feature.Auth.Commands.Refresh;
+using BusinessCentral.Application.Feature.Auth.Commands.Users;
 
 namespace BusinessCentral.Api.Controllers.v1.Users
 {
@@ -18,9 +18,12 @@ namespace BusinessCentral.Api.Controllers.v1.Users
 
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh(RefreshTokenCommand command)
+        public async Task<IActionResult> Refresh(RefreshTokenRequestDTO command)
         {
-            var result = await _mediator.Send(command);
+            var authHeader = Request.Headers["Authorization"].ToString();
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var cmd = new RefreshTokenCommand(command.RefreshToken, token);
+            var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 
