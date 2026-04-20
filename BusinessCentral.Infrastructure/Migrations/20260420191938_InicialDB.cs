@@ -495,37 +495,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "RefreshToken",
-                schema: "audit",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginField = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Token = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReplacedByToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CompanyId = table.Column<int>(type: "int", nullable: true),
-                    JwtId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    AccessTokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Active = table.Column<bool>(type: "bit", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshToken", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RefreshToken_UsersInfo_UserId",
-                        column: x => x.UserId,
-                        principalSchema: "auth",
-                        principalTable: "UsersInfo",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UserAddress",
                 schema: "auth",
                 columns: table => new
@@ -587,6 +556,35 @@ namespace BusinessCentral.Infrastructure.Migrations
                         column: x => x.UserId,
                         principalSchema: "auth",
                         principalTable: "UsersInfo",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshToken",
+                schema: "audit",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserSessionId = table.Column<long>(type: "bigint", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReplacedByToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JwtId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    AccessTokenExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Active = table.Column<bool>(type: "bit", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshToken", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshToken_UserSession_UserSessionId",
+                        column: x => x.UserSessionId,
+                        principalSchema: "audit",
+                        principalTable: "UserSession",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -676,10 +674,10 @@ namespace BusinessCentral.Infrastructure.Migrations
                 column: "ModuleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshToken_UserId",
+                name: "IX_RefreshToken_UserSessionId",
                 schema: "audit",
                 table: "RefreshToken",
-                column: "UserId");
+                column: "UserSessionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RolePermission_PermissionId",
@@ -765,16 +763,16 @@ namespace BusinessCentral.Infrastructure.Migrations
                 schema: "auth");
 
             migrationBuilder.DropTable(
-                name: "UserSession",
-                schema: "audit");
-
-            migrationBuilder.DropTable(
                 name: "Facility",
                 schema: "business");
 
             migrationBuilder.DropTable(
                 name: "MembershipPlan",
                 schema: "config");
+
+            migrationBuilder.DropTable(
+                name: "UserSession",
+                schema: "audit");
 
             migrationBuilder.DropTable(
                 name: "Permission",
@@ -785,12 +783,12 @@ namespace BusinessCentral.Infrastructure.Migrations
                 schema: "common");
 
             migrationBuilder.DropTable(
-                name: "UsersInfo",
-                schema: "auth");
-
-            migrationBuilder.DropTable(
                 name: "FacilityType",
                 schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "UsersInfo",
+                schema: "auth");
 
             migrationBuilder.DropTable(
                 name: "Module",

@@ -106,18 +106,6 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             await _refreshTokenRepository.RevokeAllByUserAsync(user.UserId, null);
             await _userSessionRepository.CloseSessionsByUserAsync(user.UserId);
 
-            // Crear refresh token con snapshot
-            var refreshValue = _tokenService.GenerateRefreshToken();
-            var refreshEntity = new RefreshToken
-            {
-                UserId = user.UserId,
-                Token = refreshValue,
-                CompanyId = user.CompanyId,
-                LoginField = loginFieldType
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshEntity);
-
             // Registrar sesión
             var session = new UserSession
             {
@@ -131,8 +119,20 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                 IsSuccess = true
             };
 
-            await _userSessionRepository.AddAsync(session);
+            var userSessionId = await _userSessionRepository.AddAsync(session);
 
+            // Crear refresh token con snapshot
+            var refreshValue = _tokenService.GenerateRefreshToken();
+            var refreshEntity = new RefreshToken
+            {
+                UserSessionId = userSessionId,
+                Token = refreshValue
+            };
+
+            await _refreshTokenRepository.AddAsync(refreshEntity);
+
+
+            user.UserSessionId = userSessionId;
             user.LoginField = loginFieldType;
             user.AccessToken = accessToken;
             user.RefreshToken = refreshValue;

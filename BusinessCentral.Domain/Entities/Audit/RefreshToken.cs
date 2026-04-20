@@ -17,10 +17,9 @@ namespace BusinessCentral.Domain.Entities.Audit
         public long Id { get; set; }
 
         [Required]
-        public int UserId { get; set; }
-        [ForeignKey("UserId")]
-        public virtual UsersInfo User { get; set; } = null!;
-        public string? LoginField { get; set; } = null;
+        public long UserSessionId { get; set; }
+        [ForeignKey("UserSessionId")]
+        public virtual UserSession UserSession { get; set; } = null!;
 
         [Required]
         [MaxLength(255)]
@@ -37,11 +36,6 @@ namespace BusinessCentral.Domain.Entities.Audit
         public string? ReplacedByToken { get; set; } // Para auditoría de rotación de tokens
 
         public bool IsActive => RevokedAt == null && DateTime.UtcNow < ExpiresAt;
-
-        /// <summary>
-        /// Guardamos companyId aquí para auditoría (aunque exista FK en UsersInfo).
-        /// </summary>
-        public int? CompanyId { get; set; }
 
         /// <summary>
         /// Opcional: JTI del access token (si quieres trazar tokens por jti).

@@ -35,8 +35,11 @@ public class LogoutRequestDTO
 /// <summary>
     /// DTO de salida: NO incluye contraseña ni datos sensibles
     /// </summary>
-    public class LoginResponseDTO
+public class LoginResponseDTO
 {
+    [JsonPropertyName("userSessionId")]
+    public long UserSessionId { get; set; }
+
     [JsonPropertyName("userId")]
     public int UserId { get; set; }
 

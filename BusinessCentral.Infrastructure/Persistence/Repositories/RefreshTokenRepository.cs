@@ -17,12 +17,10 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
         {
             var parameters = new[]
             {
-                CreateParameter("@UserId", token.UserId, SqlDbType.Int),
-                CreateParameter("@LoginField", token.LoginField, SqlDbType.VarChar),
+                CreateParameter("@UserSessionId", token.UserSessionId, SqlDbType.BigInt),
                 CreateParameter("@Token", token.Token, SqlDbType.NVarChar, 500),
                 CreateParameter("@ExpiresAt", TimeZoneHelper.ConvertToColombiaTime(DateTime.UtcNow.AddMinutes(30)), SqlDbType.DateTime),
                 CreateParameter("@CreatedAt", TimeZoneHelper.GetColombiaTimeNow(), SqlDbType.DateTime),
-                CreateParameter("@CompanyId", token.CompanyId ?? (object)DBNull.Value, SqlDbType.Int),
                 CreateParameter("@JwtId", token.JwtId ?? (object)DBNull.Value, SqlDbType.VarChar),
                 CreateParameter("@AccessTokenExpiresAt", token.AccessTokenExpiresAt ?? (object)DBNull.Value, SqlDbType.DateTime)
             };
@@ -60,12 +58,12 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
             await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_refresh_token, parameters);
         }
 
-        public async Task RevokeAllByUserAsync(int userId, string? replacedByToken = null)
+        public async Task RevokeAllByUserAsync(long userSessionId, string? replacedByToken = null)
         {
             var now = TimeZoneHelper.GetColombiaTimeNow();
             var parameters = new[]
             {
-                CreateParameter("@UserId", userId, SqlDbType.Int),
+                CreateParameter("@UserSessionId", userSessionId, SqlDbType.BigInt),
                 CreateParameter("@RevokedAt", now, SqlDbType.DateTime),
                 CreateParameter("@CurrentTime", now, SqlDbType.DateTime),
                 CreateParameter("@ReplacedByToken", replacedByToken ?? (object)DBNull.Value, SqlDbType.VarChar)

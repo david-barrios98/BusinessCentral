@@ -12,7 +12,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
     {
         public UserSessionRepository(IConfiguration configuration) : base(configuration) { }
 
-        public async Task AddAsync(UserSession session)
+        public async Task<Int64> AddAsync(UserSession session)
         {
             var parameters = new[]
             {
@@ -28,7 +28,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 CreateParameter("@FailureReason", session.FailureReason ?? (object)DBNull.Value, SqlDbType.VarChar)
             };
 
-            session.Id = await ExecuteStoredProcedureSingleAsync(
+            return await ExecuteStoredProcedureSingleAsync(
                 StoredProcedures.Audit.sp_insert_user_session,
                 parameters,
                 reader => Convert.ToInt64(reader.GetValue(0)));

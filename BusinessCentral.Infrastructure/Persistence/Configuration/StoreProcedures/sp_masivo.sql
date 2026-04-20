@@ -531,23 +531,21 @@ GO
 
 -- ESQUEMA AUTH
 CREATE OR ALTER PROCEDURE [auth].[sp_insert_refresh_token]
-    @UserId INT,
-    @LoginField VARCHAR(50),
+    @UserSessionId BIGINT,
     @Token VARCHAR(255),
     @ExpiresAt DATETIME,
     @CreatedAt DATETIME,
-    @CompanyId INT,
     @JwtId VARCHAR(50) = NULL,
     @AccessTokenExpiresAt DATETIME = NULL
 AS
 BEGIN
 INSERT INTO [audit].[RefreshToken] (
-    UserId, LoginField, Token, ExpiresAt, CreatedAt,
-    RevokedAt, ReplacedByToken, CompanyId, JwtId, AccessTokenExpiresAt, Active
+    UserSessionId, Token, ExpiresAt, CreatedAt,
+    RevokedAt, ReplacedByToken, JwtId, AccessTokenExpiresAt, Active
 )
 VALUES (
-    @UserId, @LoginField, @Token, @ExpiresAt, @CreatedAt,
-    NULL, NULL, @CompanyId, @JwtId, @AccessTokenExpiresAt, 1
+    @UserSessionId, @Token, @ExpiresAt, @CreatedAt,
+    NULL, NULL, @JwtId, @AccessTokenExpiresAt, 1
     );
 
 SELECT CAST(SCOPE_IDENTITY() AS BIGINT); -- Retorna BIGINT para mapear con long
@@ -564,10 +562,9 @@ BEGIN
 SELECT
     -- Datos del Token
     rt.Token AS RefreshToken,
-    rt.CompanyId,
     rt.JwtId,
     rt.AccessTokenExpiresAt,
-    rt.LoginField,
+    rt.UserSessionId,
 
     -- Datos del Usuario con Lógica Dinámica
     u.Id AS UserId,
@@ -578,20 +575,23 @@ SELECT
     u.Phone,
     u.Password,
     u.RoleId,
+    c.Id AS CompanyId,
     c.Name AS CompanyName,
+    us.LoginField,
     -- Si el campo LoginField dice 'phone', 'email' o 'document', 
     -- podrías querer devolver una columna específica de la tabla UsersInfo
     CASE
-        WHEN rt.LoginField = 'email' THEN u.Email
-        WHEN rt.LoginField = 'phone' THEN u.Phone -- Asumiendo que tienes esta columna
-        WHEN rt.LoginField = 'document' THEN u.DocumentNumber -- Asumiendo que tienes esta columna
+        WHEN us.LoginField = 'email' THEN u.Email
+        WHEN us.LoginField = 'phone' THEN u.Phone -- Asumiendo que tienes esta columna
+        WHEN us.LoginField = 'document' THEN u.DocumentNumber -- Asumiendo que tienes esta columna
         END AS UserName,
 
     -- Datos de la Empresa
     c.Name AS CompanyName
 FROM [audit].[RefreshToken] rt WITH (NOLOCK)
-    INNER JOIN [auth].[UsersInfo] u WITH (NOLOCK) ON rt.UserId = u.Id
-    LEFT JOIN [business].[Companies] c WITH (NOLOCK) ON rt.CompanyId = c.Id
+    INNER JOIN [audit].[UserSession] us WITH (NOLOCK) ON rt.UserSessionId = us.Id
+    INNER JOIN [auth].[UsersInfo] u WITH (NOLOCK) ON us.UserId = u.Id
+    LEFT JOIN [business].[Companies] c WITH (NOLOCK) ON us.CompanyId = c.Id
 WHERE rt.Token = @Token
   AND rt.RevokedAt IS NULL
   AND rt.ExpiresAt > @CurrentTime
@@ -614,7 +614,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_user]
-    @UserId INT,
+    @UserSessionId INT,
     @RevokedAt DATETIME,
     @CurrentTime DATETIME,
     @ReplacedByToken VARCHAR(MAX) = NULL
@@ -624,7 +624,7 @@ UPDATE [audit].[RefreshToken]
 SET RevokedAt = @RevokedAt,
     ReplacedByToken = @ReplacedByToken,
     Active = 0
-WHERE UserId = @UserId
+WHERE UserSessionId = @UserSessionId
   AND RevokedAt IS NULL
   AND ExpiresAt > @CurrentTime
   And Active = 1;
@@ -635,16 +635,20 @@ CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_company]
     @CompanyId INT,
     @RevokedAt DATETIME,
     @CurrentTime DATETIME,
-    @ReplacedByToken VARCHAR(MAX) = NULL
+    @ReplacedByToken NVARCHAR(500) = NULL -- Cambiado de MAX a 500 por rendimiento
 AS
 BEGIN
-UPDATE [audit].[RefreshToken]
-SET RevokedAt = @RevokedAt,
-    ReplacedByToken = @ReplacedByToken,
-    Active = 0
-WHERE CompanyId = @CompanyId
-  AND RevokedAt IS NULL
-  AND ExpiresAt > @CurrentTime
-  And Active = 1;
+    SET NOCOUNT ON;
+
+UPDATE rt
+SET rt.RevokedAt = @RevokedAt,
+    rt.ReplacedByToken = @ReplacedByToken,
+    rt.Active = 0
+    FROM [audit].[RefreshToken] rt with (NOLOCK)
+    INNER JOIN [audit].[UserSession] us WITH (NOLOCK) ON rt.UserSessionId = us.Id
+WHERE us.CompanyId = @CompanyId
+  AND rt.RevokedAt IS NULL
+  AND rt.ExpiresAt > @CurrentTime
+  AND rt.Active = 1;
 END
 GO

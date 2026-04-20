@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    [Migration("20260420174518_InicialDB")]
+    [Migration("20260420191938_InicialDB")]
     partial class InicialDB
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -73,9 +73,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<bool?>("Active")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("CompanyId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -85,9 +82,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<string>("JwtId")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("LoginField")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ReplacedByToken")
                         .HasColumnType("nvarchar(max)");
@@ -100,12 +94,12 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<long>("UserSessionId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserSessionId");
 
                     b.ToTable("RefreshToken", "audit");
                 });
@@ -831,13 +825,13 @@ namespace BusinessCentral.Infrastructure.Migrations
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Audit.RefreshToken", b =>
                 {
-                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
+                    b.HasOne("BusinessCentral.Domain.Entities.Audit.UserSession", "UserSession")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UserSessionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("UserSession");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Audit.UserSession", b =>

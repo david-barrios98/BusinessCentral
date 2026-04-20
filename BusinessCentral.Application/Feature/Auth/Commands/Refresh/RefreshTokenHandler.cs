@@ -47,15 +47,13 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Refresh
             var newRefreshTokenValue = _tokenService.GenerateRefreshToken();
 
             // 3. Rotación: Revocamos tokens anteriores
-            await _refreshRepo.RevokeAllByUserAsync(existing.UserId, newRefreshTokenValue);
+            await _refreshRepo.RevokeAllByUserAsync(existing.UserSessionId, newRefreshTokenValue);
 
             // 4. Crear nueva entidad de Refresh Token
             var newRefreshEntity = new RefreshToken
             {
-                UserId = existing.UserId,
+                UserSessionId = existing.UserSessionId,
                 Token = newRefreshTokenValue,
-                CompanyId = existing.CompanyId,
-                LoginField = existing.LoginField,
                 JwtId = null,
                 AccessTokenExpiresAt = null
             };
