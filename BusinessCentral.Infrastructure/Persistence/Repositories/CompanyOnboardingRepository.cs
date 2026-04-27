@@ -54,6 +54,46 @@ public sealed class CompanyOnboardingRepository : SqlConfigServer, ICompanyOnboa
             });
     }
 
+    public async Task<List<CompanyBusinessNatureDTO>> ListCompanyBusinessNaturesAsync(int companyId)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int)
+        };
+
+        return await ExecuteStoredProcedureAsync(
+            StoredProcedures.Config.sp_list_company_business_natures,
+            parameters,
+            reader => new CompanyBusinessNatureDTO
+            {
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                BusinessNatureId = Convert.ToInt32(reader["BusinessNatureId"]),
+                NatureCode = reader["NatureCode"]?.ToString() ?? string.Empty,
+                NatureName = reader["NatureName"]?.ToString() ?? string.Empty,
+                IsPrimary = Convert.ToBoolean(reader["IsPrimary"]),
+                CreatedAt = Convert.ToDateTime(reader["CreatedAt"])
+            });
+    }
+
+    public async Task<bool> SetCompanyBusinessNatureAsync(int companyId, string natureCode, bool isPrimary, bool enabled)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@nature_code", natureCode, SqlDbType.NVarChar, 50),
+            CreateParameter("@is_primary", isPrimary, SqlDbType.Bit),
+            CreateParameter("@enabled", enabled, SqlDbType.Bit)
+        };
+
+        var ok = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Config.sp_set_company_business_nature,
+            parameters,
+            reader => Convert.ToBoolean(reader["Success"])
+        );
+
+        return ok == true;
+    }
+
     public async Task<OnboardCompanyResultDTO> OnboardCompanyAsync(OnboardCompanyRequestDTO request, string passwordHash)
     {
         var parameters = new[]

@@ -34,6 +34,27 @@ public sealed class CompanyOnboardingController : ApiControllerBase
         return Ok(ApiResponse<object>.Success(data, "OK", 200));
     }
 
+    [HttpGet("companies/{companyId:int}/business-natures")]
+    public async Task<IActionResult> ListCompanyBusinessNatures([FromRoute] int companyId)
+    {
+        var data = await _onboarding.ListCompanyBusinessNaturesAsync(companyId);
+        return Ok(ApiResponse<object>.Success(data, "OK", 200));
+    }
+
+    [HttpPut("companies/{companyId:int}/business-natures/{natureCode}")]
+    public async Task<IActionResult> SetCompanyBusinessNature(
+        [FromRoute] int companyId,
+        [FromRoute] string natureCode,
+        [FromQuery] bool enabled = true,
+        [FromQuery] bool primary = false)
+    {
+        var ok = await _onboarding.SetCompanyBusinessNatureAsync(companyId, natureCode, primary, enabled);
+        if (!ok)
+            return StatusCode(400, ApiResponse<object>.Failure("No se pudo actualizar la naturaleza.", 400));
+
+        return Ok(ApiResponse<object>.Success(new { companyId, natureCode, enabled, primary }, "OK", 200));
+    }
+
     [HttpPost("companies")]
     public async Task<IActionResult> OnboardCompany([FromBody] OnboardCompanyRequestDTO request)
     {

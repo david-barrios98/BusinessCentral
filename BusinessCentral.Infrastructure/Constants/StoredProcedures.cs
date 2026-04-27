@@ -51,6 +51,8 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_business_natures = "[config].[sp_list_business_natures]";
             public const string sp_list_business_nature_modules = "[config].[sp_list_business_nature_modules]";
             public const string sp_onboard_company = "[config].[sp_onboard_company]";
+            public const string sp_list_company_business_natures = "[config].[sp_list_company_business_natures]";
+            public const string sp_set_company_business_nature = "[config].[sp_set_company_business_nature]";
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";

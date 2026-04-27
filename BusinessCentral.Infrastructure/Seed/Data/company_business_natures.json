@@ -1,0 +1,5 @@
+[
+  { "CompanyId": 1, "NatureCode": "COMMERCE", "IsPrimary": true, "CreatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "NatureCode": "SERVICES", "IsPrimary": false, "CreatedAt": "2026-01-01T08:00:00Z" }
+]
+

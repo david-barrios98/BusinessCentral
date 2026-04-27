@@ -47,6 +47,7 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedPlanModulesMerge(context, "plan_module.json");
             await SeedRolesMerge(context, "roles.json");
             await SeedCompanyModulesMerge(context, "company_modules.json");
+            await SeedCompanyBusinessNaturesMerge(context, "company_business_natures.json");
 
             // --- 5. SEGURIDAD DETALLADA (Dependen de Roles/Permissions) ---
             await SeedEntity<RolePermission>(context, "role_permissions.json");
@@ -777,6 +778,86 @@ namespace BusinessCentral.Infrastructure.Seed
             public bool IsEnabled { get; set; } = true;
             public DateTime CreatedAt { get; set; }
             public DateTime UpdatedAt { get; set; }
+        }
+
+        private sealed class CompanyBusinessNatureSeedRow
+        {
+            public int CompanyId { get; set; }
+            public string NatureCode { get; set; } = string.Empty;
+            public bool IsPrimary { get; set; } = false;
+            public DateTime CreatedAt { get; set; }
+        }
+
+        private static async Task SeedCompanyBusinessNaturesMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<CompanyBusinessNatureSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<CompanyBusinessNatureSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var natureCodeToId = await context.Set<BusinessNature>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var dbSet = context.Set<CompanyBusinessNature>();
+
+            var existing = await dbSet
+                .Select(x => new { x.CompanyId, x.BusinessNatureId })
+                .ToListAsync();
+
+            var existingSet = new HashSet<string>(existing.Select(x => $"{x.CompanyId}|{x.BusinessNatureId}"));
+
+            var now = DateTime.UtcNow;
+            var toInsert = new List<CompanyBusinessNature>();
+
+            foreach (var r in raw)
+            {
+                var nk = r.NatureCode?.Trim().ToLowerInvariant();
+                if (r.CompanyId <= 0 || string.IsNullOrWhiteSpace(nk) || !natureCodeToId.TryGetValue(nk, out var bnId))
+                    continue;
+
+                if (existingSet.Contains($"{r.CompanyId}|{bnId}"))
+                    continue;
+
+                toInsert.Add(new CompanyBusinessNature
+                {
+                    CompanyId = r.CompanyId,
+                    BusinessNatureId = bnId,
+                    IsPrimary = r.IsPrimary,
+                    CreatedAt = r.CreatedAt == default ? now : r.CreatedAt
+                });
+            }
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ CompanyBusinessNature ya contiene todos los registros del seed");
+                return;
+            }
+
+            try
+            {
+                await dbSet.AddRangeAsync(toInsert);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+                Console.WriteLine($"✅ Seed merge CompanyBusinessNature insertado: {toInsert.Count} nuevos");
+            }
+            catch (Exception ex)
+            {
+                context.ChangeTracker.Clear();
+                throw new Exception("❌ Error en Seed merge de CompanyBusinessNature", ex);
+            }
         }
 
         // =============================

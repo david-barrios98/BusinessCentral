@@ -315,6 +315,10 @@ BEGIN
 
         DECLARE @company_id INT = CAST(SCOPE_IDENTITY() AS INT);
 
+        -- Multi-naturaleza: registra la naturaleza primaria (permite agregar más después)
+        INSERT INTO [config].[CompanyBusinessNature] (CompanyId, BusinessNatureId, IsPrimary, CreatedAt)
+        VALUES (@company_id, @bn_id, 1, @now);
+
         -- Create main facility (Priority = 1)
         INSERT INTO [business].[Facility]
             (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, Create, [Update], Active)
@@ -389,6 +393,94 @@ BEGIN
         DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
         RAISERROR(@msg, 16, 1);
     END CATCH
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_company_business_natures]
+(
+    @company_id INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        cbn.CompanyId,
+        cbn.BusinessNatureId,
+        bn.Code AS NatureCode,
+        bn.Name AS NatureName,
+        cbn.IsPrimary,
+        cbn.CreatedAt
+    FROM [config].[CompanyBusinessNature] cbn WITH (NOLOCK)
+    INNER JOIN [config].[BusinessNature] bn WITH (NOLOCK) ON bn.Id = cbn.BusinessNatureId
+    WHERE cbn.CompanyId = @company_id
+    ORDER BY cbn.IsPrimary DESC, bn.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_set_company_business_nature]
+(
+    @company_id INT,
+    @nature_code NVARCHAR(50),
+    @is_primary BIT = 0,
+    @enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @bn_id INT;
+    SELECT TOP 1 @bn_id = bn.Id
+    FROM [config].[BusinessNature] bn WITH (NOLOCK)
+    WHERE LOWER(bn.Code) = LOWER(@nature_code) AND bn.Active = 1;
+
+    IF @bn_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'BusinessNature not found' AS Message;
+        RETURN;
+    END
+
+    IF @enabled = 0
+    BEGIN
+        -- No permitimos borrar si es la única naturaleza o si es primaria
+        IF EXISTS (SELECT 1 FROM [config].[CompanyBusinessNature] WHERE CompanyId = @company_id AND BusinessNatureId = @bn_id AND IsPrimary = 1)
+        BEGIN
+            SELECT CAST(0 AS BIT) AS Success, N'Cannot remove primary nature' AS Message;
+            RETURN;
+        END
+
+        DELETE FROM [config].[CompanyBusinessNature]
+        WHERE CompanyId = @company_id AND BusinessNatureId = @bn_id;
+
+        SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM [config].[CompanyBusinessNature] WHERE CompanyId = @company_id AND BusinessNatureId = @bn_id)
+    BEGIN
+        INSERT INTO [config].[CompanyBusinessNature] (CompanyId, BusinessNatureId, IsPrimary, CreatedAt)
+        VALUES (@company_id, @bn_id, @is_primary, SYSUTCDATETIME());
+    END
+    ELSE
+    BEGIN
+        UPDATE [config].[CompanyBusinessNature]
+        SET IsPrimary = @is_primary
+        WHERE CompanyId = @company_id AND BusinessNatureId = @bn_id;
+    END
+
+    -- Si se marca primaria, desmarca otras y mantiene Companies.BusinessNatureId sincronizado.
+    IF @is_primary = 1
+    BEGIN
+        UPDATE [config].[CompanyBusinessNature]
+        SET IsPrimary = 0
+        WHERE CompanyId = @company_id AND BusinessNatureId <> @bn_id;
+
+        UPDATE [business].[Companies]
+        SET BusinessNatureId = @bn_id, [Update] = SYSUTCDATETIME()
+        WHERE Id = @company_id;
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
 END
 GO
 

@@ -54,6 +54,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<CompanyModule> CompanyModules { get; set; } = null!;
         public DbSet<BusinessNature> BusinessNatures { get; set; } = null!;
         public DbSet<BusinessNatureModule> BusinessNatureModules { get; set; } = null!;
+        public DbSet<CompanyBusinessNature> CompanyBusinessNatures { get; set; } = null!;
         public DbSet<Permission> Permission { get; set; } = null!;
         public DbSet<PlanModule> PlanModule { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
@@ -117,6 +118,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             modelBuilder.Entity<BusinessNatureModule>()
                 .HasKey(x => new { x.BusinessNatureId, x.ModuleId });
+
+            modelBuilder.Entity<CompanyBusinessNature>()
+                .HasKey(x => new { x.CompanyId, x.BusinessNatureId });
 
             modelBuilder.Entity<ProductCategory>()
                 .HasKey(x => new { x.CompanyId, x.ProductId, x.CategoryId });
