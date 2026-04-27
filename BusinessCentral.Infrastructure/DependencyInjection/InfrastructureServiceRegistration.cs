@@ -29,6 +29,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<ICommonRepository, CommonRepository>();
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<ICompanyModuleRepository, CompanyModuleRepository>();
+            services.AddScoped<ICompanyOnboardingRepository, CompanyOnboardingRepository>();
             services.AddScoped<IHrRepository, HrRepository>();
             services.AddScoped<IFarmRepository, FarmRepository>();
             services.AddScoped<IServicesRepository, ServicesRepository>();

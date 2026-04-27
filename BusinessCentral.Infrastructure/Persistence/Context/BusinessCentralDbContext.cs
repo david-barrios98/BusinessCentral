@@ -50,6 +50,8 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<MembershipPlan> MembershipPlan { get; set; } = null!;
         public DbSet<Module> Modules { get; set; } = null!;
         public DbSet<CompanyModule> CompanyModules { get; set; } = null!;
+        public DbSet<BusinessNature> BusinessNatures { get; set; } = null!;
+        public DbSet<BusinessNatureModule> BusinessNatureModules { get; set; } = null!;
         public DbSet<Permission> Permission { get; set; } = null!;
         public DbSet<PlanModule> PlanModule { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
@@ -96,6 +98,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             // Claves compuestas / constraints necesarias para migraciones
             modelBuilder.Entity<CompanyModule>()
                 .HasKey(x => new { x.CompanyId, x.ModuleId });
+
+            modelBuilder.Entity<BusinessNatureModule>()
+                .HasKey(x => new { x.BusinessNatureId, x.ModuleId });
 
             modelBuilder.Entity<ProductCategory>()
                 .HasKey(x => new { x.CompanyId, x.ProductId, x.CategoryId });

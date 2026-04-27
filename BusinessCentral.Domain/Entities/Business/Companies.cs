@@ -1,4 +1,5 @@
 ﻿using BusinessCentral.Domain.Entities.Common;
+using BusinessCentral.Domain.Entities.Config;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
@@ -48,6 +49,12 @@ namespace BusinessCentral.Domain.Entities.Business
 
         [MaxLength(50)]
         public string? Subdomain { get; set; } // Ej: "miempresa.tuapp.com"
+
+        // --- Naturaleza del negocio (plantilla de módulos + defaults) ---
+        public int? BusinessNatureId { get; set; }
+
+        [ForeignKey(nameof(BusinessNatureId))]
+        public virtual BusinessNature? BusinessNature { get; set; }
 
         public DateTime Create { get; set; }
 

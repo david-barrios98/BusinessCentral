@@ -47,7 +47,7 @@ BEGIN
     FROM [config].[CompanySubscription] WITH (NOLOCK)
     WHERE CompanyId = @company_id
       AND @CurrentDate BETWEEN StartDate AND EndDate
-      AND [Status] = 'Active';
+      AND LOWER([Status]) = 'active';
 
     IF @PlanId IS NULL
     BEGIN
@@ -194,6 +194,201 @@ AS
 BEGIN
     SELECT Id, Name, Price, BillingCycle, DurationDays, MaxUsers, IsPublic
     FROM [config].[MembershipPlan];
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_business_natures]
+    @only_active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        bn.Id,
+        bn.Code,
+        bn.Name,
+        bn.Description,
+        bn.Active
+    FROM [config].[BusinessNature] bn
+    WHERE (@only_active = 0 OR bn.Active = 1)
+    ORDER BY bn.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_business_nature_modules]
+    @nature_code NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @nature_id INT;
+    SELECT TOP 1 @nature_id = bn.Id
+    FROM [config].[BusinessNature] bn
+    WHERE LOWER(bn.Code) = LOWER(@nature_code)
+      AND bn.Active = 1;
+
+    IF @nature_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Business nature not found' AS Message;
+        RETURN;
+    END
+
+    SELECT
+        bnm.BusinessNatureId,
+        m.Id AS ModuleId,
+        m.Code AS ModuleCode,
+        m.Name AS ModuleName,
+        bnm.IsDefaultEnabled,
+        bnm.SortOrder
+    FROM [config].[BusinessNatureModule] bnm
+    INNER JOIN [config].[Module] m ON m.Id = bnm.ModuleId
+    WHERE bnm.BusinessNatureId = @nature_id
+      AND m.Active = 1
+    ORDER BY bnm.SortOrder, m.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_onboard_company]
+(
+    -- Company
+    @CompanyName NVARCHAR(200),
+    @TradeName NVARCHAR(200) = NULL,
+    @Subdomain NVARCHAR(50) = NULL,
+    @DocumentTypeId INT = NULL,
+    @DocumentNumber NVARCHAR(50) = NULL,
+    @Email NVARCHAR(150) = NULL,
+    @Phone NVARCHAR(20) = NULL,
+    @BusinessNatureCode NVARCHAR(50),
+
+    -- Subscription
+    @MembershipPlanId INT,
+    @StartDate DATETIME2 = NULL,
+    @AutoRenew BIT = 1,
+
+    -- Main facility
+    @FacilityTypeId INT,
+    @FacilityName NVARCHAR(200),
+    @FacilityCode NVARCHAR(200) = NULL,
+    @FacilityEmail NVARCHAR(150) = NULL,
+    @FacilityPhone NVARCHAR(20) = NULL,
+
+    -- Owner user (SuperUser)
+    @OwnerDocumentTypeId INT,
+    @OwnerDocumentNumber NVARCHAR(50),
+    @OwnerFirstName NVARCHAR(150),
+    @OwnerLastName NVARCHAR(150),
+    @OwnerEmail NVARCHAR(150),
+    @OwnerPhone NVARCHAR(20),
+    @OwnerPasswordHash NVARCHAR(255),
+    @OwnerAuthProvider NVARCHAR(50) = 'local',
+    @OwnerExternalId NVARCHAR(150) = NULL,
+    @OwnerRoleId INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @now DATETIME2 = SYSUTCDATETIME();
+        DECLARE @bn_id INT;
+        SELECT TOP 1 @bn_id = bn.Id
+        FROM [config].[BusinessNature] bn
+        WHERE LOWER(bn.Code) = LOWER(@BusinessNatureCode)
+          AND bn.Active = 1;
+
+        IF @bn_id IS NULL
+            THROW 50001, 'BusinessNature not found', 1;
+
+        IF @StartDate IS NULL SET @StartDate = @now;
+
+        IF @Subdomain IS NOT NULL AND EXISTS (
+            SELECT 1 FROM [business].[Companies] c WHERE LOWER(c.Subdomain) = LOWER(@Subdomain) AND c.Active = 1
+        )
+            THROW 50002, 'Subdomain already exists', 1;
+
+        INSERT INTO [business].[Companies]
+            (Name, TradeName, DocumentTypeId, DocumentNumber, Email, Phone, Subdomain, BusinessNatureId, Create, [Update], Active)
+        VALUES
+            (@CompanyName, @TradeName, @DocumentTypeId, @DocumentNumber, @Email, @Phone, @Subdomain, @bn_id, @now, @now, 1);
+
+        DECLARE @company_id INT = CAST(SCOPE_IDENTITY() AS INT);
+
+        -- Create main facility (Priority = 1)
+        INSERT INTO [business].[Facility]
+            (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, Create, [Update], Active)
+        VALUES
+            (@company_id, @FacilityTypeId, @FacilityName, @FacilityCode, @FacilityEmail, @FacilityPhone, 1, @now, @now, 1);
+
+        DECLARE @durationDays INT;
+        SELECT @durationDays = DurationDays FROM [config].[MembershipPlan] WHERE Id = @MembershipPlanId;
+        IF @durationDays IS NULL OR @durationDays <= 0
+            THROW 50003, 'Invalid MembershipPlan', 1;
+
+        DECLARE @endDate DATETIME2 = DATEADD(DAY, @durationDays, @StartDate);
+
+        INSERT INTO [config].[CompanySubscription]
+            (CompanyId, MembershipPlanId, StartDate, EndDate, [Status], AutoRenew)
+        VALUES
+            (@company_id, @MembershipPlanId, @StartDate, @endDate, 'active', @AutoRenew);
+
+        -- Default login method for this company/application (API)
+        INSERT INTO [config].[ApplicationCompanies]
+            (CompanyId, ApplicationCode, LoginField, Priority, IsEnabled, Create, [Update], Active)
+        VALUES
+            (@company_id, 'API', 'email', 1, 1, @now, @now, 1);
+
+        -- Enable modules from nature template
+        INSERT INTO [config].[CompanyModule] (CompanyId, ModuleId, IsEnabled, CreatedAt, UpdatedAt)
+        SELECT
+            @company_id,
+            bnm.ModuleId,
+            bnm.IsDefaultEnabled,
+            @now,
+            @now
+        FROM [config].[BusinessNatureModule] bnm
+        WHERE bnm.BusinessNatureId = @bn_id
+          AND NOT EXISTS (
+              SELECT 1 FROM [config].[CompanyModule] cm
+              WHERE cm.CompanyId = @company_id AND cm.ModuleId = bnm.ModuleId
+          );
+
+        -- Create owner user through existing SP
+        DECLARE @InsertedOwner TABLE (InsertedId INT);
+        INSERT INTO @InsertedOwner(InsertedId)
+        EXEC [auth].[sp_create_user]
+            @CompanyId = @company_id,
+            @DocumentTypeId = @OwnerDocumentTypeId,
+            @DocumentNumber = @OwnerDocumentNumber,
+            @FirstName = @OwnerFirstName,
+            @LastName = @OwnerLastName,
+            @Email = @OwnerEmail,
+            @Phone = @OwnerPhone,
+            @PasswordHash = @OwnerPasswordHash,
+            @AuthProvider = @OwnerAuthProvider,
+            @ExternalId = @OwnerExternalId,
+            @RoleId = @OwnerRoleId;
+
+        DECLARE @owner_user_id INT;
+        SELECT TOP 1 @owner_user_id = InsertedId FROM @InsertedOwner;
+
+        COMMIT;
+
+        SELECT
+            CAST(1 AS BIT) AS Success,
+            @company_id AS CompanyId,
+            @owner_user_id AS OwnerUserId,
+            @bn_id AS BusinessNatureId,
+            @MembershipPlanId AS MembershipPlanId,
+            @StartDate AS StartDate,
+            @endDate AS EndDate;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK;
+        DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@msg, 16, 1);
+    END CATCH
 END
 GO
 

@@ -27,6 +27,7 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<MembershipPlan>(context, "membership_plans.json");
             // Modules: seed por "merge" (no se detiene si ya hay data)
             await SeedModulesMerge(context, "modules.json");
+            await SeedBusinessNaturesMerge(context, "business_natures.json");
             await SeedEntity<FacilityType>(context, "facility_type.json");
 
             // --- 2. GEOGRAFÍA (Nivel 1 - Dependen de Countries) ---
@@ -54,6 +55,7 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<UserAddress>(context, "user_addresses.json");
 
             // --- 7. DATOS DE PRUEBA (módulos) ---
+            await SeedBusinessNatureModulesMerge(context, "business_nature_modules.json");
             // HR
             await SeedEntity<EmployeeProfile>(context, "hr_employee_profiles.json");
             await SeedEntity<PayScheme>(context, "hr_pay_schemes.json");
@@ -174,6 +176,142 @@ namespace BusinessCentral.Infrastructure.Seed
             {
                 context.ChangeTracker.Clear();
                 throw new Exception("❌ Error en Seed merge de Module", ex);
+            }
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: BusinessNature (por Code)
+        // =============================
+        private static async Task SeedBusinessNaturesMerge(BusinessCentralDbContext context, string fileName)
+        {
+            var dbSet = context.Set<BusinessNature>();
+            var data = await LoadJsonAsync<BusinessNature>(fileName);
+
+            if (data == null || !data.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var existingCodes = await dbSet.Select(x => x.Code).ToListAsync();
+            var existing = new HashSet<string>(
+                existingCodes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.ToLowerInvariant())
+            );
+
+            var toInsert = data
+                .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+                .Where(x => !existing.Contains(x.Code.Trim().ToLowerInvariant()))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ BusinessNature ya contiene todos los registros del seed");
+                return;
+            }
+
+            var now = DateTime.UtcNow;
+            foreach (var x in toInsert)
+            {
+                if (x.CreatedAt == default) x.CreatedAt = now;
+                if (x.UpdatedAt == default) x.UpdatedAt = now;
+            }
+
+            try
+            {
+                await dbSet.AddRangeAsync(toInsert);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+                Console.WriteLine($"✅ Seed merge BusinessNature insertado: {toInsert.Count} nuevos");
+            }
+            catch (Exception ex)
+            {
+                context.ChangeTracker.Clear();
+                throw new Exception("❌ Error en Seed merge de BusinessNature", ex);
+            }
+        }
+
+        private sealed class BusinessNatureModuleSeedRow
+        {
+            public string NatureCode { get; set; } = string.Empty;
+            public string ModuleCode { get; set; } = string.Empty;
+            public bool IsDefaultEnabled { get; set; } = true;
+            public int SortOrder { get; set; } = 0;
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: BusinessNatureModule (por NatureId + ModuleId)
+        // =============================
+        private static async Task SeedBusinessNatureModulesMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<BusinessNatureModuleSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<BusinessNatureModuleSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var natureCodeToId = await context.Set<BusinessNature>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var moduleCodeToId = await context.Set<Module>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code!.ToLowerInvariant(), x => x.Id);
+
+            var rows = raw
+                .Select(r =>
+                {
+                    var nk = r.NatureCode?.Trim().ToLowerInvariant();
+                    var mk = r.ModuleCode?.Trim().ToLowerInvariant();
+                    var natureId = (!string.IsNullOrWhiteSpace(nk) && natureCodeToId.TryGetValue(nk, out var nId)) ? nId : 0;
+                    var moduleId = (!string.IsNullOrWhiteSpace(mk) && moduleCodeToId.TryGetValue(mk, out var mId)) ? mId : 0;
+                    return new BusinessNatureModule
+                    {
+                        BusinessNatureId = natureId,
+                        ModuleId = moduleId,
+                        IsDefaultEnabled = r.IsDefaultEnabled,
+                        SortOrder = r.SortOrder,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                })
+                .Where(x => x.BusinessNatureId > 0 && x.ModuleId > 0)
+                .ToList();
+
+            var dbSet = context.Set<BusinessNatureModule>();
+            var existing = await dbSet.Select(x => new { x.BusinessNatureId, x.ModuleId }).ToListAsync();
+            var existingSet = new HashSet<string>(existing.Select(x => $"{x.BusinessNatureId}|{x.ModuleId}"));
+
+            var toInsert = rows
+                .Where(x => !existingSet.Contains($"{x.BusinessNatureId}|{x.ModuleId}"))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ BusinessNatureModule ya contiene todos los registros del seed");
+                return;
+            }
+
+            try
+            {
+                await dbSet.AddRangeAsync(toInsert);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+                Console.WriteLine($"✅ Seed merge BusinessNatureModule insertado: {toInsert.Count} nuevos");
+            }
+            catch (Exception ex)
+            {
+                context.ChangeTracker.Clear();
+                throw new Exception("❌ Error en Seed merge de BusinessNatureModule", ex);
             }
         }
 

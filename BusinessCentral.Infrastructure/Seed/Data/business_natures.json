@@ -1,0 +1,27 @@
+[
+  {
+    "Code": "FARM",
+    "Name": "Producción (Finca)",
+    "Description": "Producción agrícola/cafetera con trazabilidad y costos.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "SERVICES",
+    "Name": "Servicios",
+    "Description": "Prestación de servicios (lavadero, talleres) con órdenes y catálogo.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "COMMERCE",
+    "Name": "Compra/Venta",
+    "Description": "Compra y venta de productos con inventario y POS.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  }
+]
+
