@@ -12,6 +12,7 @@ public sealed record UpsertStorageLocationCommand(
     string Type,
     long? ParentLocationId,
     string? Notes,
-    bool Active
+    bool Active,
+    int? PerformedByUserId
 ) : IRequest<Result<long>>;
 

@@ -9,6 +9,7 @@ public sealed record UpsertProductCommand(
     string Name,
     string? Unit,
     decimal Price,
-    bool Active
+    bool Active,
+    int? PerformedByUserId
 ) : IRequest<Result<bool>>;
 

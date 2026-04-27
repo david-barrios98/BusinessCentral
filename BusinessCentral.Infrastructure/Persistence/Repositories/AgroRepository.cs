@@ -14,7 +14,7 @@ public sealed class AgroRepository : SqlConfigServer, IAgroRepository
     {
     }
 
-    public async Task<long> CreateLotAsync(int companyId, string kind, string code, string? name, DateTime startDate, int initialUnits, decimal? initialAvgWeightKg, string? notes)
+    public async Task<long> CreateLotAsync(int companyId, string kind, string code, string? name, DateTime startDate, int initialUnits, decimal? initialAvgWeightKg, string? notes, int? createdByUserId)
     {
         var parameters = new[]
         {
@@ -25,7 +25,8 @@ public sealed class AgroRepository : SqlConfigServer, IAgroRepository
             CreateParameter("@start_date", startDate, SqlDbType.DateTime2),
             CreateParameter("@initial_units", initialUnits, SqlDbType.Int),
             CreateParameter("@initial_avg_weight_kg", (object?)initialAvgWeightKg ?? DBNull.Value, SqlDbType.Decimal),
-            CreateParameter("@notes", (object?)notes ?? DBNull.Value, SqlDbType.NVarChar, 500)
+            CreateParameter("@notes", (object?)notes ?? DBNull.Value, SqlDbType.NVarChar, 500),
+            CreateParameter("@created_by_user_id", (object?)createdByUserId ?? DBNull.Value, SqlDbType.Int),
         };
 
         var id = await ExecuteStoredProcedureSingleAsync(

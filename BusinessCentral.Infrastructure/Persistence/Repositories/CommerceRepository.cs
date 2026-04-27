@@ -14,7 +14,7 @@ public sealed class CommerceRepository : SqlConfigServer, ICommerceRepository
     {
     }
 
-    public async Task<bool> UpsertProductAsync(int companyId, string sku, string name, string? unit, decimal price, bool active)
+    public async Task<bool> UpsertProductAsync(int companyId, string sku, string name, string? unit, decimal price, bool active, int? performedByUserId)
     {
         var parameters = new[]
         {
@@ -24,6 +24,7 @@ public sealed class CommerceRepository : SqlConfigServer, ICommerceRepository
             CreateParameter("@unit", (object?)unit ?? DBNull.Value, SqlDbType.NVarChar, 20),
             CreateParameter("@price", price, SqlDbType.Decimal),
             CreateParameter("@active", active, SqlDbType.Bit),
+            CreateParameter("@performed_by_user_id", (object?)performedByUserId ?? DBNull.Value, SqlDbType.Int),
         };
 
         var success = await ExecuteStoredProcedureSingleAsync(

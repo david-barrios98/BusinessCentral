@@ -18,7 +18,15 @@ public sealed class UpsertProductHandler : IRequestHandler<UpsertProductCommand,
         if (string.IsNullOrWhiteSpace(request.Sku) || string.IsNullOrWhiteSpace(request.Name))
             return Result<bool>.Failure("Sku y Name son requeridos.", "COM_PRODUCT_VALIDATION", "Validation");
 
-        var ok = await _commerce.UpsertProductAsync(request.CompanyId, request.Sku, request.Name, request.Unit, request.Price, request.Active);
+        var ok = await _commerce.UpsertProductAsync(
+            request.CompanyId,
+            request.Sku,
+            request.Name,
+            request.Unit,
+            request.Price,
+            request.Active,
+            request.PerformedByUserId
+        );
         return ok
             ? Result<bool>.Success(true)
             : Result<bool>.Failure("No se pudo guardar el producto.", "COM_PRODUCT_UPSERT_FAILED", "Conflict");

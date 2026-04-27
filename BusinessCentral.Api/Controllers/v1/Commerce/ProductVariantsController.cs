@@ -56,7 +56,8 @@ public sealed class ProductVariantsController : SecureCompanyControllerBase
             req.VariantName,
             req.PriceOverride,
             req.CostOverride,
-            req.Active
+            req.Active,
+            UserId == 0 ? null : UserId
         ));
         return ProcessResult(result);
     }

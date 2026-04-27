@@ -33,7 +33,8 @@ public sealed class UpsertVariantHandler : IRequestHandler<UpsertVariantCommand,
             request.VariantName,
             request.PriceOverride,
             request.CostOverride,
-            request.Active
+            request.Active,
+            request.PerformedByUserId
         );
 
         return Result<long>.Success(id);

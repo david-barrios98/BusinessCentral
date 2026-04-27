@@ -14,7 +14,7 @@ public sealed class ProductVariantRepository : SqlConfigServer, IProductVariantR
     {
     }
 
-    public async Task<long> UpsertAsync(int companyId, long? id, int productId, string sku, string? barcode, string? variantName, decimal? priceOverride, decimal? costOverride, bool active)
+    public async Task<long> UpsertAsync(int companyId, long? id, int productId, string sku, string? barcode, string? variantName, decimal? priceOverride, decimal? costOverride, bool active, int? performedByUserId)
     {
         var parameters = new[]
         {
@@ -26,7 +26,8 @@ public sealed class ProductVariantRepository : SqlConfigServer, IProductVariantR
             CreateParameter("@variant_name", (object?)variantName ?? DBNull.Value, SqlDbType.NVarChar, 200),
             CreateParameter("@price_override", (object?)priceOverride ?? DBNull.Value, SqlDbType.Decimal),
             CreateParameter("@cost_override", (object?)costOverride ?? DBNull.Value, SqlDbType.Decimal),
-            CreateParameter("@active", active, SqlDbType.Bit)
+            CreateParameter("@active", active, SqlDbType.Bit),
+            CreateParameter("@performed_by_user_id", (object?)performedByUserId ?? DBNull.Value, SqlDbType.Int),
         };
 
         var insertedId = await ExecuteStoredProcedureSingleAsync(

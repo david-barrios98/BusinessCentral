@@ -11,6 +11,7 @@ public sealed record CreateLotCommand(
     DateTime StartDate,
     int InitialUnits,
     decimal? InitialAvgWeightKg,
-    string? Notes
+    string? Notes,
+    int? CreatedByUserId
 ) : IRequest<Result<long>>;
 

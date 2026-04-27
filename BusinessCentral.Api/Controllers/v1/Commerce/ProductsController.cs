@@ -48,7 +48,8 @@ public sealed class ProductsController : SecureCompanyControllerBase
             req.Name,
             req.Unit,
             req.Price,
-            req.Active
+            req.Active,
+            UserId == 0 ? null : UserId
         ));
         return ProcessResult(result);
     }

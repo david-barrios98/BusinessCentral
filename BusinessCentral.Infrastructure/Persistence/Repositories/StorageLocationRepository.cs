@@ -14,7 +14,7 @@ public sealed class StorageLocationRepository : SqlConfigServer, IStorageLocatio
     {
     }
 
-    public async Task<long> UpsertAsync(int companyId, long? id, int? facilityId, string code, string name, string type, long? parentLocationId, string? notes, bool active)
+    public async Task<long> UpsertAsync(int companyId, long? id, int? facilityId, string code, string name, string type, long? parentLocationId, string? notes, bool active, int? performedByUserId)
     {
         var parameters = new[]
         {
@@ -26,7 +26,8 @@ public sealed class StorageLocationRepository : SqlConfigServer, IStorageLocatio
             CreateParameter("@type", type, SqlDbType.NVarChar, 30),
             CreateParameter("@parent_location_id", (object?)parentLocationId ?? DBNull.Value, SqlDbType.BigInt),
             CreateParameter("@notes", (object?)notes ?? DBNull.Value, SqlDbType.NVarChar, 500),
-            CreateParameter("@active", active, SqlDbType.Bit)
+            CreateParameter("@active", active, SqlDbType.Bit),
+            CreateParameter("@performed_by_user_id", (object?)performedByUserId ?? DBNull.Value, SqlDbType.Int),
         };
 
         var insertedId = await ExecuteStoredProcedureSingleAsync(

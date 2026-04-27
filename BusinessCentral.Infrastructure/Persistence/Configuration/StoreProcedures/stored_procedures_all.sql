@@ -966,7 +966,8 @@ CREATE OR ALTER PROCEDURE [business].[sp_upsert_storage_location]
     @type NVARCHAR(30),
     @parent_location_id BIGINT = NULL,
     @notes NVARCHAR(500) = NULL,
-    @active BIT = 1
+    @active BIT = 1,
+    @performed_by_user_id INT = NULL
 )
 AS
 BEGIN
@@ -975,9 +976,9 @@ BEGIN
     IF @id IS NULL OR @id = 0
     BEGIN
         INSERT INTO [business].[StorageLocation]
-            (CompanyId, FacilityId, Code, Name, [Type], ParentLocationId, Notes, Active, CreatedAt, UpdatedAt)
+            (CompanyId, FacilityId, Code, Name, [Type], ParentLocationId, Notes, Active, CreatedAt, CreatedByUserId, UpdatedAt, UpdatedByUserId)
         VALUES
-            (@company_id, @facility_id, @code, @name, @type, @parent_location_id, @notes, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+            (@company_id, @facility_id, @code, @name, @type, @parent_location_id, @notes, @active, SYSUTCDATETIME(), @performed_by_user_id, SYSUTCDATETIME(), @performed_by_user_id);
 
         SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
         RETURN;
@@ -991,7 +992,8 @@ BEGIN
         ParentLocationId = @parent_location_id,
         Notes = @notes,
         Active = @active,
-        UpdatedAt = SYSUTCDATETIME()
+        UpdatedAt = SYSUTCDATETIME(),
+        UpdatedByUserId = @performed_by_user_id
     WHERE Id = @id AND CompanyId = @company_id;
 
     SELECT @id AS InsertedId;
@@ -2221,18 +2223,19 @@ CREATE OR ALTER PROCEDURE [com].[sp_upsert_product]
     @name NVARCHAR(200),
     @unit NVARCHAR(20) = NULL,
     @price DECIMAL(18,2),
-    @active BIT = 1
+    @active BIT = 1,
+    @performed_by_user_id INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     IF EXISTS (SELECT 1 FROM [com].[Product] WHERE CompanyId=@company_id AND Sku=@sku)
         UPDATE [com].[Product]
-        SET Name=@name, Unit=@unit, Price=@price, Active=@active, UpdatedAt=SYSUTCDATETIME()
+        SET Name=@name, Unit=@unit, Price=@price, Active=@active, UpdatedAt=SYSUTCDATETIME(), UpdatedByUserId=@performed_by_user_id
         WHERE CompanyId=@company_id AND Sku=@sku;
     ELSE
-        INSERT INTO [com].[Product] (CompanyId, Sku, Name, Unit, Price, Active)
-        VALUES (@company_id, @sku, @name, @unit, @price, @active);
+        INSERT INTO [com].[Product] (CompanyId, Sku, Name, Unit, Price, Active, CreatedAt, CreatedByUserId, UpdatedAt, UpdatedByUserId)
+        VALUES (@company_id, @sku, @name, @unit, @price, @active, SYSUTCDATETIME(), @performed_by_user_id, SYSUTCDATETIME(), @performed_by_user_id);
 
     SELECT CAST(1 AS BIT) AS Success;
 END
@@ -2382,7 +2385,8 @@ CREATE OR ALTER PROCEDURE [com].[sp_upsert_supplier]
     @phone NVARCHAR(20) = NULL,
     @email NVARCHAR(150) = NULL,
     @notes NVARCHAR(500) = NULL,
-    @active BIT = 1
+    @active BIT = 1,
+    @performed_by_user_id INT = NULL
 )
 AS
 BEGIN
@@ -2391,9 +2395,9 @@ BEGIN
     IF @id IS NULL OR @id = 0
     BEGIN
         INSERT INTO [com].[Supplier]
-            (CompanyId, Name, DocumentNumber, Phone, Email, Notes, Active, CreatedAt, UpdatedAt)
+            (CompanyId, Name, DocumentNumber, Phone, Email, Notes, Active, CreatedAt, CreatedByUserId, UpdatedAt, UpdatedByUserId)
         VALUES
-            (@company_id, @name, @document_number, @phone, @email, @notes, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+            (@company_id, @name, @document_number, @phone, @email, @notes, @active, SYSUTCDATETIME(), @performed_by_user_id, SYSUTCDATETIME(), @performed_by_user_id);
 
         SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
         RETURN;
@@ -2406,7 +2410,8 @@ BEGIN
         Email = @email,
         Notes = @notes,
         Active = @active,
-        UpdatedAt = SYSUTCDATETIME()
+        UpdatedAt = SYSUTCDATETIME(),
+        UpdatedByUserId = @performed_by_user_id
     WHERE Id = @id AND CompanyId = @company_id;
 
     SELECT @id AS InsertedId;
@@ -2469,7 +2474,8 @@ CREATE OR ALTER PROCEDURE [com].[sp_upsert_product_variant]
     @variant_name NVARCHAR(200) = NULL,
     @price_override DECIMAL(18,2) = NULL,
     @cost_override DECIMAL(18,2) = NULL,
-    @active BIT = 1
+    @active BIT = 1,
+    @performed_by_user_id INT = NULL
 )
 AS
 BEGIN
@@ -2478,9 +2484,9 @@ BEGIN
     IF @id IS NULL OR @id = 0
     BEGIN
         INSERT INTO [com].[ProductVariant]
-            (CompanyId, ProductId, Sku, Barcode, VariantName, PriceOverride, CostOverride, Active, CreatedAt, UpdatedAt)
+            (CompanyId, ProductId, Sku, Barcode, VariantName, PriceOverride, CostOverride, Active, CreatedAt, CreatedByUserId, UpdatedAt, UpdatedByUserId)
         VALUES
-            (@company_id, @product_id, @sku, @barcode, @variant_name, @price_override, @cost_override, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+            (@company_id, @product_id, @sku, @barcode, @variant_name, @price_override, @cost_override, @active, SYSUTCDATETIME(), @performed_by_user_id, SYSUTCDATETIME(), @performed_by_user_id);
 
         SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
         RETURN;
@@ -2494,7 +2500,8 @@ BEGIN
         PriceOverride = @price_override,
         CostOverride = @cost_override,
         Active = @active,
-        UpdatedAt = SYSUTCDATETIME()
+        UpdatedAt = SYSUTCDATETIME(),
+        UpdatedByUserId = @performed_by_user_id
     WHERE Id = @id AND CompanyId = @company_id;
 
     SELECT @id AS InsertedId;
@@ -2910,16 +2917,17 @@ CREATE OR ALTER PROCEDURE [agro].[sp_create_lot]
     @start_date DATETIME2,
     @initial_units INT,
     @initial_avg_weight_kg DECIMAL(18,4) = NULL,
-    @notes NVARCHAR(500) = NULL
+    @notes NVARCHAR(500) = NULL,
+    @created_by_user_id INT = NULL
 )
 AS
 BEGIN
     SET NOCOUNT ON;
 
     INSERT INTO [agro].[AgroLot]
-        (CompanyId, Kind, Code, Name, StartDate, InitialUnits, CurrentUnits, InitialAvgWeightKg, [Status], Notes, CreatedAt, UpdatedAt)
+        (CompanyId, Kind, Code, Name, StartDate, InitialUnits, CurrentUnits, InitialAvgWeightKg, [Status], Notes, CreatedAt, CreatedByUserId, UpdatedAt, UpdatedByUserId)
     VALUES
-        (@company_id, @kind, @code, @name, @start_date, @initial_units, @initial_units, @initial_avg_weight_kg, 'open', @notes, SYSUTCDATETIME(), SYSUTCDATETIME());
+        (@company_id, @kind, @code, @name, @start_date, @initial_units, @initial_units, @initial_avg_weight_kg, 'open', @notes, SYSUTCDATETIME(), @created_by_user_id, SYSUTCDATETIME(), @created_by_user_id);
 
     SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
 END

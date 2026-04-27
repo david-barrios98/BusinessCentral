@@ -14,7 +14,7 @@ public sealed class SupplierRepository : SqlConfigServer, ISupplierRepository
     {
     }
 
-    public async Task<long> UpsertAsync(int companyId, long? id, string name, string? documentNumber, string? phone, string? email, string? notes, bool active)
+    public async Task<long> UpsertAsync(int companyId, long? id, string name, string? documentNumber, string? phone, string? email, string? notes, bool active, int? performedByUserId)
     {
         var parameters = new[]
         {
@@ -25,7 +25,8 @@ public sealed class SupplierRepository : SqlConfigServer, ISupplierRepository
             CreateParameter("@phone", (object?)phone ?? DBNull.Value, SqlDbType.NVarChar, 20),
             CreateParameter("@email", (object?)email ?? DBNull.Value, SqlDbType.NVarChar, 150),
             CreateParameter("@notes", (object?)notes ?? DBNull.Value, SqlDbType.NVarChar, 500),
-            CreateParameter("@active", active, SqlDbType.Bit)
+            CreateParameter("@active", active, SqlDbType.Bit),
+            CreateParameter("@performed_by_user_id", (object?)performedByUserId ?? DBNull.Value, SqlDbType.Int),
         };
 
         var insertedId = await ExecuteStoredProcedureSingleAsync(

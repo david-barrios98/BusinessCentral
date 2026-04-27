@@ -33,7 +33,8 @@ public sealed class UpsertStorageLocationHandler : IRequestHandler<UpsertStorage
             request.Type.Trim().ToUpperInvariant(),
             request.ParentLocationId,
             request.Notes,
-            request.Active
+            request.Active,
+            request.PerformedByUserId
         );
 
         return Result<long>.Success(id);

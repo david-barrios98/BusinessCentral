@@ -26,7 +26,8 @@ public sealed class CreateLotHandler : IRequestHandler<CreateLotCommand, Result<
             request.StartDate,
             request.InitialUnits,
             request.InitialAvgWeightKg,
-            request.Notes
+            request.Notes,
+            request.CreatedByUserId
         );
 
         return Result<long>.Success(id);

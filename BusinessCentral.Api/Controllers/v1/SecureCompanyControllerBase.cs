@@ -12,5 +12,14 @@ public abstract class SecureCompanyControllerBase : ApiControllerBase
             return int.TryParse(companyId, out var id) ? id : 0;
         }
     }
+
+    protected int UserId
+    {
+        get
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst("sub")?.Value;
+            return int.TryParse(userId, out var id) ? id : 0;
+        }
+    }
 }
 

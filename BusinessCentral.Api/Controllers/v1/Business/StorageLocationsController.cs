@@ -55,7 +55,8 @@ public sealed class StorageLocationsController : SecureCompanyControllerBase
             req.Type,
             req.ParentLocationId,
             req.Notes,
-            req.Active
+            req.Active,
+            UserId == 0 ? null : UserId
         ));
         return ProcessResult(result);
     }

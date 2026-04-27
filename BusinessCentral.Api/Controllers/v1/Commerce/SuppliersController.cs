@@ -53,7 +53,8 @@ public sealed class SuppliersController : SecureCompanyControllerBase
             req.Phone,
             req.Email,
             req.Notes,
-            req.Active
+            req.Active,
+            UserId == 0 ? null : UserId
         ));
         return ProcessResult(result);
     }

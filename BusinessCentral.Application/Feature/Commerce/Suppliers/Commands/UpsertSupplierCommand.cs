@@ -11,6 +11,7 @@ public sealed record UpsertSupplierCommand(
     string? Phone,
     string? Email,
     string? Notes,
-    bool Active
+    bool Active,
+    int? PerformedByUserId
 ) : IRequest<Result<long>>;
 

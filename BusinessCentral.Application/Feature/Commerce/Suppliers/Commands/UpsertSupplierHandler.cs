@@ -29,7 +29,8 @@ public sealed class UpsertSupplierHandler : IRequestHandler<UpsertSupplierComman
             request.Phone,
             request.Email,
             request.Notes,
-            request.Active
+            request.Active,
+            request.PerformedByUserId
         );
 
         return Result<long>.Success(id);

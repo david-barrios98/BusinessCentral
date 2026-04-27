@@ -46,7 +46,7 @@ public sealed class AgroController : SecureCompanyControllerBase
     public async Task<IActionResult> CreateLot([FromBody] CreateLotRequest req)
     {
         var result = await _mediator.Send(new CreateLotCommand(
-            CompanyId, req.Kind, req.Code, req.Name, req.StartDate, req.InitialUnits, req.InitialAvgWeightKg, req.Notes
+            CompanyId, req.Kind, req.Code, req.Name, req.StartDate, req.InitialUnits, req.InitialAvgWeightKg, req.Notes, UserId == 0 ? null : UserId
         ));
         return ProcessResult(result);
     }

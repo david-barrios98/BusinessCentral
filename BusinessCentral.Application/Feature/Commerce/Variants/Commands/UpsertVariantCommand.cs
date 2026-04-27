@@ -12,6 +12,7 @@ public sealed record UpsertVariantCommand(
     string? VariantName,
     decimal? PriceOverride,
     decimal? CostOverride,
-    bool Active
+    bool Active,
+    int? PerformedByUserId
 ) : IRequest<Result<long>>;
 

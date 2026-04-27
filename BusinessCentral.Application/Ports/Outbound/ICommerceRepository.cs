@@ -5,7 +5,7 @@ namespace BusinessCentral.Application.Ports.Outbound;
 
 public interface ICommerceRepository
 {
-    Task<bool> UpsertProductAsync(int companyId, string sku, string name, string? unit, decimal price, bool active);
+    Task<bool> UpsertProductAsync(int companyId, string sku, string name, string? unit, decimal price, bool active, int? performedByUserId);
     Task<PagedResult<ProductDTO>> ListProductsAsync(int companyId, bool onlyActive, int page, int pageSize, string? q = null);
 
     Task<long> CreateCashSessionAsync(int companyId, int? openedByUserId, decimal openingAmount);

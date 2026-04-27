@@ -31,7 +31,9 @@ public sealed class Supplier
 
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; }
+    public int? CreatedByUserId { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public int? UpdatedByUserId { get; set; }
 
     [ForeignKey(nameof(CompanyId))]
     public Companies? Company { get; set; }
