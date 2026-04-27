@@ -1,14 +1,20 @@
 [
   {
-    "RoleId": 1,
-    "PermissionId": 1
+    "CompanyId": 1,
+    "RoleName": "Administrador",
+    "ModuleCode": "AUTH",
+    "PermissionCode": "USERS_READ"
   },
   {
-    "RoleId": 1,
-    "PermissionId": 2
+    "CompanyId": 1,
+    "RoleName": "Administrador",
+    "ModuleCode": "AUTH",
+    "PermissionCode": "USERS_WRITE"
   },
   {
-    "RoleId": 1,
-    "PermissionId": 3
+    "CompanyId": 1,
+    "RoleName": "Administrador",
+    "ModuleCode": "SERV",
+    "PermissionCode": "SERVICES_MANAGE"
   }
 ]

@@ -1,5 +1,4 @@
 ﻿using Microsoft.OpenApi;
-using BusinessCentral.Api.Filters;
 
 namespace BusinessCentral.Api.Extensions;
 
@@ -17,8 +16,14 @@ public static class SwaggerExtensions
                 Version = "v1"
             });
 
-            // 🔥 AQUÍ VA TU FILTRO
-            options.SchemaFilter<SwaggerSchemaFilter>();
+            // Evita colisiones cuando varios controladores tienen clases anidadas con el mismo nombre (p. ej. AddLineRequest).
+            options.CustomSchemaIds(type =>
+            {
+                var id = type.FullName ?? type.Name;
+                return id.Replace('+', '.');
+            });
+
+            options.SchemaFilter<Filters.SwaggerSchemaFilter>();
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {

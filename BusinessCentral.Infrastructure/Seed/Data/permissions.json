@@ -1,17 +1,17 @@
 ﻿[
   {
-    "ModuleId": 1,
+    "ModuleCode": "AUTH",
     "Name": "Users.Read",
     "Code": "USERS_READ"
   },
   {
-    "ModuleId": 1,
+    "ModuleCode": "AUTH",
     "Name": "Users.Write",
     "Code": "USERS_WRITE"
   },
   {
-    "ModuleId": 2,
+    "ModuleCode": "SERV",
     "Name": "Services.Manage",
-    "Code": "USERS_WRITE"
+    "Code": "SERVICES_MANAGE"
   }
 ]

@@ -52,7 +52,7 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedCompanyBusinessNaturesMerge(context, "company_business_natures.json");
 
             // --- 5. SEGURIDAD DETALLADA (Dependen de Roles/Permissions) ---
-            await SeedEntity<RolePermission>(context, "role_permissions.json");
+            await SeedRolePermissionsMerge(context, "role_permissions.json");
 
             // --- 6. USUARIOS Y SESIONES (Nivel Final - Dependen de Companies/Roles) ---
             await SeedEntity<UsersInfo>(context, "users_info.json");
@@ -783,34 +783,65 @@ namespace BusinessCentral.Infrastructure.Seed
         }
 
         // =============================
-        // 🧩 SEED MERGE: Permission (por ModuleId + Code/Name)
+        // 🧩 SEED MERGE: Permission (ModuleCode + Code/Name → ModuleId real)
         // =============================
         private static async Task SeedPermissionsMerge(BusinessCentralDbContext context, string fileName)
         {
             var dbSet = context.Set<Permission>();
-            var data = await LoadJsonAsync<Permission>(fileName);
+            var raw = await LoadJsonAsync<PermissionSeedRow>(fileName);
 
-            if (data == null || !data.Any())
+            if (raw == null || !raw.Any())
             {
                 Console.WriteLine($"⚠️ {fileName} vacío");
                 return;
             }
 
+            var moduleCodeToId = await context.Set<Module>()
+                .Where(m => m.Code != null && m.Code != "")
+                .ToDictionaryAsync(m => m.Code!.Trim().ToLowerInvariant(), m => m.Id);
+
+            static string Norm(string? s) => (s ?? string.Empty).Trim().ToLowerInvariant();
+
             var existing = await dbSet
                 .Select(p => new { p.ModuleId, p.Code, p.Name })
                 .ToListAsync();
-
-            static string Norm(string? s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
             var existingSet = new HashSet<string>(
                 existing.Select(x => $"{x.ModuleId}|{Norm(x.Code)}|{Norm(x.Name)}")
             );
 
-            var toInsert = data
-                .Where(p => p.ModuleId > 0)
-                .Where(p => !string.IsNullOrWhiteSpace(p.Name))
-                .Where(p => !existingSet.Contains($"{p.ModuleId}|{Norm(p.Code)}|{Norm(p.Name)}"))
-                .ToList();
+            var toInsert = new List<Permission>();
+            foreach (var row in raw)
+            {
+                if (string.IsNullOrWhiteSpace(row.Name))
+                    continue;
+
+                int moduleId = 0;
+                if (row.ModuleId > 0)
+                    moduleId = row.ModuleId;
+                else if (!string.IsNullOrWhiteSpace(row.ModuleCode) &&
+                         moduleCodeToId.TryGetValue(row.ModuleCode.Trim().ToLowerInvariant(), out var resolved))
+                    moduleId = resolved;
+
+                if (moduleId <= 0)
+                {
+                    Console.WriteLine($"⚠️ Permission seed omitido (ModuleId/Code inválido): {row.Name} ModuleCode={row.ModuleCode}");
+                    continue;
+                }
+
+                var entity = new Permission
+                {
+                    ModuleId = moduleId,
+                    Name = row.Name.Trim(),
+                    Code = string.IsNullOrWhiteSpace(row.Code) ? null : row.Code.Trim()
+                };
+
+                if (!existingSet.Contains($"{moduleId}|{Norm(entity.Code)}|{Norm(entity.Name)}"))
+                {
+                    toInsert.Add(entity);
+                    existingSet.Add($"{moduleId}|{Norm(entity.Code)}|{Norm(entity.Name)}");
+                }
+            }
 
             if (!toInsert.Any())
             {
@@ -829,6 +860,111 @@ namespace BusinessCentral.Infrastructure.Seed
             {
                 context.ChangeTracker.Clear();
                 throw new Exception("❌ Error en Seed merge de Permission", ex);
+            }
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: RolePermission (RoleName+CompanyId + ModuleCode+PermissionCode)
+        // =============================
+        private static async Task SeedRolePermissionsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            var raw = await LoadJsonAsync<RolePermissionSeedRow>(fileName);
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var dbSet = context.Set<RolePermission>();
+
+            var existingRp = await dbSet
+                .Select(rp => new { rp.RoleId, rp.PermissionId })
+                .ToListAsync();
+
+            var existingRpSet = new HashSet<string>(
+                existingRp.Select(x => $"{x.RoleId}|{x.PermissionId}")
+            );
+
+            static string Norm(string? s) => (s ?? string.Empty).Trim().ToLowerInvariant();
+
+            var permRows = await (
+                from p in context.Set<Permission>()
+                join m in context.Set<Module>() on p.ModuleId equals m.Id
+                select new { p.Id, PCode = p.Code ?? "", MCode = m.Code ?? "" }
+            ).ToListAsync();
+
+            var permKeyToId = permRows
+                .GroupBy(x => $"{Norm(x.MCode)}|{Norm(x.PCode)}")
+                .ToDictionary(g => g.Key, g => g.First().Id);
+
+            var roles = await context.Set<Role>().ToListAsync();
+
+            var toInsert = new List<RolePermission>();
+
+            foreach (var r in raw)
+            {
+                int? roleId = null;
+                if (r.RoleId > 0)
+                    roleId = r.RoleId;
+                else if (r.CompanyId > 0 && !string.IsNullOrWhiteSpace(r.RoleName))
+                {
+                    var rn = Norm(r.RoleName);
+                    roleId = roles.FirstOrDefault(x => x.CompanyId == r.CompanyId && Norm(x.Name) == rn)?.Id;
+                }
+
+                if (roleId is null or <= 0)
+                {
+                    Console.WriteLine($"⚠️ RolePermission seed omitido (rol no encontrado): RoleName={r.RoleName} CompanyId={r.CompanyId}");
+                    continue;
+                }
+
+                int? permissionId = null;
+                if (r.PermissionId > 0)
+                    permissionId = r.PermissionId;
+                else if (!string.IsNullOrWhiteSpace(r.ModuleCode) && !string.IsNullOrWhiteSpace(r.PermissionCode))
+                {
+                    var k = $"{Norm(r.ModuleCode)}|{Norm(r.PermissionCode)}";
+                    if (permKeyToId.TryGetValue(k, out var pid))
+                        permissionId = pid;
+                }
+
+                if (permissionId is null or <= 0)
+                {
+                    Console.WriteLine($"⚠️ RolePermission seed omitido (permiso no encontrado): ModuleCode={r.ModuleCode} PermissionCode={r.PermissionCode}");
+                    continue;
+                }
+
+                var key = $"{roleId}|{permissionId}";
+                if (existingRpSet.Contains(key))
+                    continue;
+
+                toInsert.Add(new RolePermission
+                {
+                    RoleId = roleId.Value,
+                    PermissionId = permissionId.Value,
+                    IsGranted = r.IsGranted
+                });
+                existingRpSet.Add(key);
+            }
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ RolePermission ya contiene todos los registros del seed");
+                return;
+            }
+
+            try
+            {
+                await dbSet.AddRangeAsync(toInsert);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+                Console.WriteLine($"✅ Seed merge RolePermission insertado: {toInsert.Count} nuevos");
+            }
+            catch (Exception ex)
+            {
+                context.ChangeTracker.Clear();
+                throw new Exception("❌ Error en Seed merge de RolePermission", ex);
             }
         }
 
@@ -1021,6 +1157,32 @@ namespace BusinessCentral.Infrastructure.Seed
                 context.ChangeTracker.Clear();
                 throw new Exception("❌ Error en Seed merge de CompanyModule", ex);
             }
+        }
+
+        private sealed class PermissionSeedRow
+        {
+            /// <summary>Opcional si se usa ModuleCode.</summary>
+            public int ModuleId { get; set; }
+
+            public string? ModuleCode { get; set; }
+            public string Name { get; set; } = string.Empty;
+            public string? Code { get; set; }
+        }
+
+        private sealed class RolePermissionSeedRow
+        {
+            /// <summary>Modo legacy si RoleName no se usa.</summary>
+            public int RoleId { get; set; }
+
+            public int CompanyId { get; set; }
+            public string? RoleName { get; set; }
+
+            /// <summary>Modo legacy si ModuleCode+PermissionCode no se usan.</summary>
+            public int PermissionId { get; set; }
+
+            public string? ModuleCode { get; set; }
+            public string? PermissionCode { get; set; }
+            public bool IsGranted { get; set; } = true;
         }
 
         private sealed class PlanModuleSeedRow

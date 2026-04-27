@@ -1,9 +1,6 @@
-using BusinessCentral.Application.Constants;
 using BusinessCentral.Application.DTOs.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 namespace BusinessCentral.Api.Middleware;
@@ -55,7 +52,7 @@ public class GlobalExceptionMiddleware
             ? "Ocurrió un error interno. Intenta nuevamente."
             : exception.Message;
 
-        var response = BusinessCentral.Application.DTOs.Common.ApiResponse<object>.Exception(
+        var response = ApiResponse<object>.Exception(
             message,
             statusCode,
             context.TraceIdentifier
