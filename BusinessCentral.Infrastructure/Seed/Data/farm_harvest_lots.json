@@ -1,0 +1,12 @@
+[
+  {
+    "CompanyId": 1,
+    "ZoneId": 1,
+    "HarvestDate": "2026-04-05T00:00:00",
+    "ProductForm": "CHERRY",
+    "QuantityKg": 120.5,
+    "Notes": "Cosecha inicial de prueba",
+    "CreatedAt": "2026-04-05T08:00:00Z"
+  }
+]
+

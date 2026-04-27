@@ -1,0 +1,6 @@
+[
+  { "CompanyId": 1, "Code": "DAILY", "Name": "Pago por jornal", "Unit": "DAY", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "BY_WEIGHT", "Name": "Pago por kilogramo", "Unit": "KG", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "BY_SERVICE", "Name": "Pago por servicio", "Unit": "SERVICE", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+

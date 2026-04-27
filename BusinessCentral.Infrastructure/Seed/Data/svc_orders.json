@@ -1,0 +1,13 @@
+[
+  {
+    "CompanyId": 1,
+    "OrderDate": "2026-04-10T10:00:00Z",
+    "VehicleType": "Car",
+    "Plate": "ABC123",
+    "CustomerName": "Cliente Prueba",
+    "Status": "open",
+    "Total": 0,
+    "CreatedAt": "2026-04-10T10:00:00Z"
+  }
+]
+

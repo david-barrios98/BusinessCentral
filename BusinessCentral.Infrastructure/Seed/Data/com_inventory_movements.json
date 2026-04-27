@@ -1,0 +1,13 @@
+[
+  {
+    "CompanyId": 1,
+    "ProductId": 1,
+    "MoveDate": "2026-04-10T09:10:30Z",
+    "Type": "OUT",
+    "Quantity": 2,
+    "ReferenceType": "POS_TICKET",
+    "ReferenceId": "1",
+    "Notes": "Salida por venta POS (seed)"
+  }
+]
+

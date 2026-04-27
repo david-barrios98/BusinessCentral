@@ -1,0 +1,11 @@
+[
+  {
+    "CompanyId": 1,
+    "OrderId": 1,
+    "ServiceId": 1,
+    "Quantity": 1,
+    "UnitPrice": 20000,
+    "EmployeeUserId": 1
+  }
+]
+

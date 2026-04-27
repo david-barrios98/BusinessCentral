@@ -1,0 +1,15 @@
+[
+  {
+    "CompanyId": 1,
+    "UserId": 1,
+    "WorkDate": "2026-04-01T00:00:00",
+    "PaySchemeId": 1,
+    "Quantity": 1,
+    "Unit": "DAY",
+    "ReferenceType": "INIT",
+    "ReferenceId": "1",
+    "Notes": "Registro inicial de prueba",
+    "CreatedAt": "2026-04-01T08:00:00Z"
+  }
+]
+

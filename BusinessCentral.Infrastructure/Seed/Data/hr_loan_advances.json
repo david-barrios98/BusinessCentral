@@ -1,0 +1,12 @@
+[
+  {
+    "CompanyId": 1,
+    "UserId": 1,
+    "Date": "2026-04-02T00:00:00",
+    "Amount": 50000,
+    "Notes": "Avance de prueba",
+    "Status": "open",
+    "CreatedAt": "2026-04-02T08:00:00Z"
+  }
+]
+

@@ -1,14 +1,34 @@
 [
   {
     "MembershipPlanId": 1,
-    "ModuleId": 1
+    "ModuleCode": "AUTH"
   },
   {
     "MembershipPlanId": 1,
-    "ModuleId": 2
+    "ModuleCode": "BUSS"
   },
   {
     "MembershipPlanId": 1,
-    "ModuleId": 3
+    "ModuleCode": "SERV"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "HR"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "FARM"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "SERVICES"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "COMMERCE"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "POS"
   }
 ]

@@ -1,0 +1,13 @@
+[
+  {
+    "CompanyId": 1,
+    "HarvestLotId": 1,
+    "StepDate": "2026-04-06T00:00:00",
+    "StepType": "PULPING",
+    "InputKg": 120.5,
+    "OutputKg": 95.2,
+    "Notes": "Despulpado de prueba",
+    "CreatedAt": "2026-04-06T08:00:00Z"
+  }
+]
+

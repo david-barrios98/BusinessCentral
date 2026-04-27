@@ -1,0 +1,12 @@
+[
+  {
+    "CompanyId": 1,
+    "UserId": 1,
+    "Date": "2026-04-03T00:00:00",
+    "Amount": 10000,
+    "Type": "OTHER",
+    "Notes": "Deducción de prueba",
+    "CreatedAt": "2026-04-03T08:00:00Z"
+  }
+]
+

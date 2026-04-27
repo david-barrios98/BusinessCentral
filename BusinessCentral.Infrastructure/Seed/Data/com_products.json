@@ -1,0 +1,4 @@
+[
+  { "CompanyId": 1, "Sku": "CAFE-001", "Name": "Café (libra)", "Unit": "UN", "Price": 18000, "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+

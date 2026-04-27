@@ -1,0 +1,8 @@
+[
+  { "CompanyId": 1, "ModuleCode": "HR", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "FARM", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "SERVICES", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "COMMERCE", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "POS", "IsEnabled": true }
+]
+
