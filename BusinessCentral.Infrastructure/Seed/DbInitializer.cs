@@ -89,6 +89,9 @@ namespace BusinessCentral.Infrastructure.Seed
 
             // FIN (PUC)
             await SeedPucAccountsMerge(context, "fin_puc_accounts.json");
+
+            // BUSINESS (Ubicaciones opcionales)
+            await SeedStorageLocationsMerge(context, "business_storage_locations.json");
         }
 
         // =============================
@@ -340,6 +343,103 @@ namespace BusinessCentral.Infrastructure.Seed
             }
 
             Console.WriteLine($"✅ Seed merge PUC Account insertado: {inserted} nuevos");
+        }
+
+        private sealed class StorageLocationSeedRow
+        {
+            public int CompanyId { get; set; }
+            public int? FacilityId { get; set; }
+            public string Code { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string Type { get; set; } = "WAREHOUSE";
+            public string? ParentCode { get; set; }
+            public string? Notes { get; set; }
+            public bool Active { get; set; } = true;
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: StorageLocation (por CompanyId + Code)
+        // =============================
+        private static async Task SeedStorageLocationsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<StorageLocationSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<StorageLocationSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            static string Norm(string? s) => (s ?? string.Empty).Trim();
+
+            var existing = await context.Set<StorageLocation>()
+                .Select(x => new { x.CompanyId, x.Code, x.Id })
+                .ToListAsync();
+
+            var map = existing
+                .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+                .ToDictionary(x => $"{x.CompanyId}|{Norm(x.Code)}", x => x.Id);
+
+            var ordered = raw
+                .Where(r => r.CompanyId > 0 && !string.IsNullOrWhiteSpace(r.Code))
+                .OrderBy(r => string.IsNullOrWhiteSpace(r.ParentCode) ? 0 : 1)
+                .ThenBy(r => r.Code.Length)
+                .ToList();
+
+            var now = DateTime.UtcNow;
+            var inserted = 0;
+
+            foreach (var r in ordered)
+            {
+                var key = $"{r.CompanyId}|{Norm(r.Code)}";
+                if (map.ContainsKey(key))
+                    continue;
+
+                long? parentId = null;
+                if (!string.IsNullOrWhiteSpace(r.ParentCode))
+                {
+                    var pKey = $"{r.CompanyId}|{Norm(r.ParentCode)}";
+                    if (map.TryGetValue(pKey, out var pid))
+                        parentId = pid;
+                }
+
+                var entity = new StorageLocation
+                {
+                    CompanyId = r.CompanyId,
+                    FacilityId = r.FacilityId,
+                    Code = Norm(r.Code),
+                    Name = r.Name?.Trim() ?? string.Empty,
+                    Type = string.IsNullOrWhiteSpace(r.Type) ? "WAREHOUSE" : r.Type.Trim().ToUpperInvariant(),
+                    ParentLocationId = parentId,
+                    Notes = r.Notes,
+                    Active = r.Active,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                context.Set<StorageLocation>().Add(entity);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+
+                var newId = await context.Set<StorageLocation>()
+                    .Where(x => x.CompanyId == r.CompanyId && x.Code == entity.Code)
+                    .Select(x => x.Id)
+                    .FirstAsync();
+
+                map[key] = newId;
+                inserted++;
+            }
+
+            Console.WriteLine($"✅ Seed merge StorageLocation insertado: {inserted} nuevos");
         }
 
         // =============================

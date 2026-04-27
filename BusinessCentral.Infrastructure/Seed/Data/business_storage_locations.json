@@ -1,0 +1,7 @@
+[
+  { "CompanyId": 1, "FacilityId": 1, "Code": "W1", "Name": "Bodega Principal", "Type": "WAREHOUSE", "ParentCode": null, "Notes": "Ubicación raíz", "Active": true },
+  { "CompanyId": 1, "FacilityId": 1, "Code": "W1-Z1", "Name": "Zona 1", "Type": "ZONE", "ParentCode": "W1", "Notes": null, "Active": true },
+  { "CompanyId": 1, "FacilityId": 1, "Code": "W1-Z1-SHELF-J", "Name": "Estante J", "Type": "SHELF", "ParentCode": "W1-Z1", "Notes": "Ej: zapatos talla/variantes", "Active": true },
+  { "CompanyId": 1, "FacilityId": 1, "Code": "SHOW-1", "Name": "Vitrina 1", "Type": "SHOWCASE", "ParentCode": null, "Notes": "Frente de tienda", "Active": true }
+]
+

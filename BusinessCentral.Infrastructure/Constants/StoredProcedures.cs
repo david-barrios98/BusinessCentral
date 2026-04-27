@@ -56,6 +56,12 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
         }
 
+        public static class Business
+        {
+            public const string sp_upsert_storage_location = "[business].[sp_upsert_storage_location]";
+            public const string sp_list_storage_locations = "[business].[sp_list_storage_locations]";
+        }
+
         public static class Hr
         {
             public const string sp_upsert_employee_profile = "[hr].[sp_upsert_employee_profile]";
@@ -102,6 +108,7 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_create_pos_ticket = "[com].[sp_create_pos_ticket]";
             public const string sp_add_pos_ticket_line = "[com].[sp_add_pos_ticket_line]";
             public const string sp_pay_pos_ticket = "[com].[sp_pay_pos_ticket]";
+            public const string sp_report_inventory_by_location = "[com].[sp_report_inventory_by_location]";
         }
 
         public static class Finance

@@ -860,6 +860,129 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   BUSINESS (Ubicaciones: bodega/zona/estante/vitrina/bin)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [business].[sp_upsert_storage_location]
+(
+    @company_id INT,
+    @id BIGINT = NULL,
+    @facility_id INT = NULL,
+    @code NVARCHAR(50),
+    @name NVARCHAR(200),
+    @type NVARCHAR(30),
+    @parent_location_id BIGINT = NULL,
+    @notes NVARCHAR(500) = NULL,
+    @active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @id IS NULL OR @id = 0
+    BEGIN
+        INSERT INTO [business].[StorageLocation]
+            (CompanyId, FacilityId, Code, Name, [Type], ParentLocationId, Notes, Active, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @facility_id, @code, @name, @type, @parent_location_id, @notes, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+        RETURN;
+    END
+
+    UPDATE [business].[StorageLocation]
+    SET FacilityId = @facility_id,
+        Code = @code,
+        Name = @name,
+        [Type] = @type,
+        ParentLocationId = @parent_location_id,
+        Notes = @notes,
+        Active = @active,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE Id = @id AND CompanyId = @company_id;
+
+    SELECT @id AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [business].[sp_list_storage_locations]
+(
+    @company_id INT,
+    @facility_id INT = NULL,
+    @only_active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        l.Id,
+        l.CompanyId,
+        l.FacilityId,
+        l.Code,
+        l.Name,
+        l.[Type],
+        l.ParentLocationId,
+        l.Notes,
+        l.Active,
+        l.CreatedAt,
+        l.UpdatedAt
+    FROM [business].[StorageLocation] l WITH (NOLOCK)
+    WHERE l.CompanyId = @company_id
+      AND (@facility_id IS NULL OR l.FacilityId = @facility_id OR l.FacilityId IS NULL)
+      AND (@only_active = 0 OR l.Active = 1)
+    ORDER BY l.Code;
+END
+GO
+
+/* =========================================================
+   COMMERCE (Inventario por ubicación)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [com].[sp_report_inventory_by_location]
+(
+    @company_id INT,
+    @as_of DATETIME2,
+    @location_id BIGINT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Mov AS (
+        SELECT
+            m.ProductId,
+            COALESCE(m.ToLocationId, m.FromLocationId) AS LocationId,
+            CASE
+                WHEN m.Type = 'IN' THEN m.Quantity
+                WHEN m.Type = 'OUT' THEN -m.Quantity
+                WHEN m.Type = 'ADJUST' THEN m.Quantity
+                ELSE 0
+            END AS SignedQty
+        FROM [com].[InventoryMovement] m WITH (NOLOCK)
+        WHERE m.CompanyId = @company_id
+          AND m.MoveDate < DATEADD(DAY, 1, @as_of)
+          AND (m.ToLocationId IS NOT NULL OR m.FromLocationId IS NOT NULL)
+          AND (@location_id IS NULL OR m.ToLocationId = @location_id OR m.FromLocationId = @location_id)
+    )
+    SELECT
+        p.Id AS ProductId,
+        p.Sku,
+        p.Name AS ProductName,
+        m.LocationId,
+        l.Code AS LocationCode,
+        l.Name AS LocationName,
+        SUM(m.SignedQty) AS QuantityOnHand
+    FROM Mov m
+    INNER JOIN [com].[Product] p WITH (NOLOCK) ON p.Id = m.ProductId AND p.CompanyId = @company_id
+    LEFT JOIN [business].[StorageLocation] l WITH (NOLOCK) ON l.Id = m.LocationId AND l.CompanyId = @company_id
+    GROUP BY p.Id, p.Sku, p.Name, m.LocationId, l.Code, l.Name
+    HAVING ABS(SUM(m.SignedQty)) > 0.00001
+    ORDER BY l.Code, p.Sku;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [common].[sp_list_departments_by_country]
     @CountryId INT
 AS

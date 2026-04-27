@@ -16,6 +16,10 @@ public sealed class InventoryMovement
     [Required]
     public int ProductId { get; set; }
 
+    // Ubicaciones opcionales: si no usas ubicaciones, quedan NULL y no afecta.
+    public long? FromLocationId { get; set; }
+    public long? ToLocationId { get; set; }
+
     public DateTime MoveDate { get; set; }
 
     [Required]
@@ -32,5 +36,11 @@ public sealed class InventoryMovement
 
     [ForeignKey(nameof(ProductId))]
     public Product? Product { get; set; }
+
+    [ForeignKey(nameof(FromLocationId))]
+    public BusinessCentral.Domain.Entities.Business.StorageLocation? FromLocation { get; set; }
+
+    [ForeignKey(nameof(ToLocationId))]
+    public BusinessCentral.Domain.Entities.Business.StorageLocation? ToLocation { get; set; }
 }
 

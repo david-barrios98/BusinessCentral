@@ -36,6 +36,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<FacilityType> FacilityType { get; set; } = null!;
         public DbSet<Facility> Facility { get; set; } = null!;
         public DbSet<FacilityAddress> FacilityAddress { get; set; } = null!;
+        public DbSet<StorageLocation> StorageLocations { get; set; } = null!;
 
 
         // Esquema COMMON
