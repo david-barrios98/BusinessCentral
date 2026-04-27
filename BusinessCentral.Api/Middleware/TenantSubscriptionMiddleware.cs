@@ -15,7 +15,11 @@ namespace BusinessCentral.Api.Middleware
             _next = next;
         }
 
-        public async Task InvokeAsync(HttpContext context, ISubscriptionRepository subscriptionService, ITenantContext tenantContext)
+        public async Task InvokeAsync(
+            HttpContext context,
+            ISubscriptionRepository subscriptionService,
+            ICompanyModuleRepository companyModuleRepository,
+            ITenantContext tenantContext)
         {
             // Si no hay tenant, es ruta pública (ej: health) o petición sin contexto.
             if (tenantContext.CompanyId is null)
@@ -26,6 +30,21 @@ namespace BusinessCentral.Api.Middleware
 
             var endpoint = context.GetEndpoint();
             var requiredModule = endpoint?.Metadata.GetMetadata<RequiresModuleAttribute>()?.ModuleName;
+
+            // Si el endpoint requiere módulo, verificamos que esté habilitado para la compañía (parametrización).
+            if (!string.IsNullOrWhiteSpace(requiredModule))
+            {
+                var enabled = await companyModuleRepository.IsCompanyModuleEnabledAsync(
+                    tenantContext.CompanyId.Value,
+                    requiredModule
+                );
+
+                if (!enabled)
+                {
+                    await HandleBlockedAccessAsync(context, AccessResult.ModuleNotIncluded);
+                    return;
+                }
+            }
 
             // VALIDACIÓN CRÍTICA: Aquí es donde el SP verifica si la empresa está activa/paga
             var accessStatus = await subscriptionService.CheckAccessAsync(tenantContext.CompanyId.Value, requiredModule);

@@ -44,6 +44,10 @@ namespace BusinessCentral.Infrastructure.Constants
         {
             public const string sp_check_tenant_access = "[config].[sp_check_tenant_access]";
             public const string sp_get_company_id_by_subdomain = "[config].[sp_get_company_id_by_subdomain]";
+            public const string sp_list_modules = "[config].[sp_list_modules]";
+            public const string sp_list_company_modules = "[config].[sp_list_company_modules]";
+            public const string sp_set_company_module = "[config].[sp_set_company_module]";
+            public const string sp_is_company_module_enabled = "[config].[sp_is_company_module_enabled]";
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";

@@ -666,3 +666,128 @@ BEGIN
       AND LOWER(c.Subdomain) = LOWER(@subdomain);
 END
 GO
+CREATE OR ALTER PROCEDURE [config].[sp_list_company_modules]
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    /*
+      NOTE:
+      Esta SP asume la existencia de la tabla [config].[CompanyModule].
+      Si aún no existe, crea la tabla con el script correspondiente.
+    */
+    SELECT
+        cm.CompanyId,
+        cm.ModuleId,
+        m.Code AS ModuleCode,
+        m.Name AS ModuleName,
+        cm.IsEnabled
+    FROM [config].[CompanyModule] cm
+    INNER JOIN [config].[Module] m ON m.Id = cm.ModuleId
+    WHERE cm.CompanyId = @company_id
+    ORDER BY m.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_is_company_module_enabled]
+    @company_id INT,
+    @module_code NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @module_id INT;
+    SELECT TOP 1 @module_id = m.Id
+    FROM [config].[Module] m
+    WHERE LOWER(m.Code) = LOWER(@module_code)
+      AND m.Active = 1;
+
+    IF @module_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS IsEnabled;
+        RETURN;
+    END
+
+    -- Si no existe registro, por defecto NO habilitado (fail closed)
+    IF EXISTS (
+        SELECT 1
+        FROM [config].[CompanyModule] cm
+        WHERE cm.CompanyId = @company_id
+          AND cm.ModuleId = @module_id
+          AND cm.IsEnabled = 1
+    )
+        SELECT CAST(1 AS BIT) AS IsEnabled;
+    ELSE
+        SELECT CAST(0 AS BIT) AS IsEnabled;
+END
+GO
+CREATE OR ALTER PROCEDURE [config].[sp_list_modules]
+    @only_active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        m.Id,
+        m.Code,
+        m.Name,
+        m.Description,
+        m.Active
+    FROM [config].[Module] m
+    WHERE (@only_active = 0 OR m.Active = 1)
+    ORDER BY m.Name;
+END
+GO
+CREATE OR ALTER PROCEDURE [config].[sp_set_company_module]
+    @company_id INT,
+    @module_code NVARCHAR(50),
+    @is_enabled BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @module_id INT;
+    SELECT TOP 1 @module_id = m.Id
+    FROM [config].[Module] m
+    WHERE LOWER(m.Code) = LOWER(@module_code);
+
+    IF @module_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Module not found' AS Message;
+        RETURN;
+    END
+
+    IF EXISTS (SELECT 1 FROM [config].[CompanyModule] WHERE CompanyId = @company_id AND ModuleId = @module_id)
+    BEGIN
+        UPDATE [config].[CompanyModule]
+        SET IsEnabled = @is_enabled, UpdatedAt = SYSUTCDATETIME()
+        WHERE CompanyId = @company_id AND ModuleId = @module_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [config].[CompanyModule] (CompanyId, ModuleId, IsEnabled, CreatedAt, UpdatedAt)
+        VALUES (@company_id, @module_id, @is_enabled, SYSUTCDATETIME(), SYSUTCDATETIME());
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
+END
+GO
+/*
+  Tabla: CompanyModule
+  Permite habilitar/deshabilitar módulos por compañía (además del plan).
+*/
+
+IF OBJECT_ID('[config].[CompanyModule]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [config].[CompanyModule] (
+        [CompanyId] INT NOT NULL,
+        [ModuleId] INT NOT NULL,
+        [IsEnabled] BIT NOT NULL CONSTRAINT DF_CompanyModule_IsEnabled DEFAULT (1),
+        [CreatedAt] DATETIME2(7) NOT NULL CONSTRAINT DF_CompanyModule_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        [UpdatedAt] DATETIME2(7) NOT NULL CONSTRAINT DF_CompanyModule_UpdatedAt DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT PK_CompanyModule PRIMARY KEY ([CompanyId], [ModuleId]),
+        CONSTRAINT FK_CompanyModule_Companies FOREIGN KEY ([CompanyId]) REFERENCES [business].[Companies]([Id]),
+        CONSTRAINT FK_CompanyModule_Module FOREIGN KEY ([ModuleId]) REFERENCES [config].[Module]([Id])
+    );
+END
