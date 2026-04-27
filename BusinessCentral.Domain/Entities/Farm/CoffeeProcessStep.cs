@@ -23,6 +23,8 @@ public sealed class CoffeeProcessStep
     [MaxLength(50)]
     public string StepType { get; set; } = string.Empty;
 
+    public int? ProcessTypeId { get; set; }
+
     public decimal? InputKg { get; set; }
     public decimal? OutputKg { get; set; }
     public string? Notes { get; set; }
@@ -34,5 +36,8 @@ public sealed class CoffeeProcessStep
 
     [ForeignKey(nameof(HarvestLotId))]
     public HarvestLot? HarvestLot { get; set; }
+
+    [ForeignKey(nameof(ProcessTypeId))]
+    public CoffeeProcessType? ProcessType { get; set; }
 }
 

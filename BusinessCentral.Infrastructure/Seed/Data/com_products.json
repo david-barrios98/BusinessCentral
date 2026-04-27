@@ -1,4 +1,18 @@
 [
-  { "CompanyId": 1, "Sku": "CAFE-001", "Name": "Café (libra)", "Unit": "UN", "Price": 18000, "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+  {
+    "CompanyId": 1,
+    "Sku": "CAFE-001",
+    "Name": "Café (libra)",
+    "Description": "Producto de prueba para ventas rápidas POS.",
+    "Barcode": "770000000001",
+    "Unit": "UN",
+    "Price": 18000,
+    "Cost": 12000,
+    "TaxCode": "IVA_19",
+    "TrackInventory": true,
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  }
 ]
 

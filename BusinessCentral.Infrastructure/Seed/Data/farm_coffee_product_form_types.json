@@ -1,0 +1,7 @@
+[
+  { "CompanyId": 1, "Code": "CHERRY", "Name": "Cereza", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "PULP", "Name": "Pulpa", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "DRY_PARCHMENT", "Name": "Pergamino seco", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "GREEN", "Name": "Trillado (verde)", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+

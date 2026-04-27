@@ -21,10 +21,28 @@ public sealed class Product
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
+    [MaxLength(1000)]
+    public string? Description { get; set; }
+
+    [MaxLength(50)]
+    public string? Barcode { get; set; }
+
     [MaxLength(20)]
     public string? Unit { get; set; }
 
+    // Precio de venta (base). Más adelante puedes manejar listas de precios.
     public decimal Price { get; set; }
+
+    // Costo referencial (para margen / kardex futuro).
+    public decimal? Cost { get; set; }
+
+    // Impuestos (simple): código o etiqueta (ej: IVA_19). Mantiene flexibilidad.
+    [MaxLength(50)]
+    public string? TaxCode { get; set; }
+
+    // Si false: no descuenta inventario (servicios, combos virtuales, etc.)
+    public bool TrackInventory { get; set; } = true;
+
     public bool Active { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

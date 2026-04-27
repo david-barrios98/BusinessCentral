@@ -62,16 +62,21 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<Deduction>(context, "hr_deductions.json");
 
             // FARM
+            await SeedEntity<CoffeeProductFormType>(context, "farm_coffee_product_form_types.json");
+            await SeedEntity<CoffeeProcessType>(context, "farm_coffee_process_types.json");
             await SeedEntity<FarmZone>(context, "farm_zones.json");
             await SeedEntity<HarvestLot>(context, "farm_harvest_lots.json");
             await SeedEntity<CoffeeProcessStep>(context, "farm_process_steps.json");
 
             // SERVICES
+            await SeedEntity<Customer>(context, "svc_customers.json");
+            await SeedEntity<Vehicle>(context, "svc_vehicles.json");
             await SeedEntity<ServiceCatalog>(context, "svc_catalog.json");
             await SeedEntity<ServiceOrder>(context, "svc_orders.json");
             await SeedEntity<ServiceOrderLine>(context, "svc_order_lines.json");
 
             // COMMERCE / POS
+            await SeedEntity<Category>(context, "com_categories.json");
             await SeedEntity<Product>(context, "com_products.json");
             await SeedEntity<CashSession>(context, "com_cash_sessions.json");
             await SeedEntity<PosTicket>(context, "com_pos_tickets.json");

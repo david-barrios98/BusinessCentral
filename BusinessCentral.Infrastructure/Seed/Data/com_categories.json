@@ -1,0 +1,5 @@
+[
+  { "CompanyId": 1, "Code": "CAFE", "Name": "Café", "ParentCategoryId": null, "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "INSUMOS", "Name": "Insumos", "ParentCategoryId": null, "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+

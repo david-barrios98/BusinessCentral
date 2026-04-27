@@ -67,13 +67,19 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<FarmZone> FarmZones { get; set; } = null!;
         public DbSet<HarvestLot> HarvestLots { get; set; } = null!;
         public DbSet<CoffeeProcessStep> CoffeeProcessSteps { get; set; } = null!;
+        public DbSet<CoffeeProductFormType> CoffeeProductFormTypes { get; set; } = null!;
+        public DbSet<CoffeeProcessType> CoffeeProcessTypes { get; set; } = null!;
 
         // Esquema SERVICES
+        public DbSet<Customer> Customers { get; set; } = null!;
+        public DbSet<Vehicle> Vehicles { get; set; } = null!;
         public DbSet<ServiceCatalog> ServiceCatalog { get; set; } = null!;
         public DbSet<ServiceOrder> ServiceOrders { get; set; } = null!;
         public DbSet<ServiceOrderLine> ServiceOrderLines { get; set; } = null!;
 
         // Esquema COMMERCE/POS
+        public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<ProductCategory> ProductCategories { get; set; } = null!;
         public DbSet<Product> Products { get; set; } = null!;
         public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
         public DbSet<CashSession> CashSessions { get; set; } = null!;
@@ -90,6 +96,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             // Claves compuestas / constraints necesarias para migraciones
             modelBuilder.Entity<CompanyModule>()
                 .HasKey(x => new { x.CompanyId, x.ModuleId });
+
+            modelBuilder.Entity<ProductCategory>()
+                .HasKey(x => new { x.CompanyId, x.ProductId, x.CategoryId });
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {

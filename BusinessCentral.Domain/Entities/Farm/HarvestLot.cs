@@ -22,6 +22,9 @@ public sealed class HarvestLot
     [MaxLength(50)]
     public string ProductForm { get; set; } = string.Empty;
 
+    // Opcional: referencia a catálogo (si lo usas). Mantengo ProductForm string por compatibilidad.
+    public int? ProductFormTypeId { get; set; }
+
     [Required]
     public decimal QuantityKg { get; set; }
 
@@ -34,5 +37,8 @@ public sealed class HarvestLot
 
     [ForeignKey(nameof(ZoneId))]
     public FarmZone? Zone { get; set; }
+
+    [ForeignKey(nameof(ProductFormTypeId))]
+    public CoffeeProductFormType? ProductFormType { get; set; }
 }
 

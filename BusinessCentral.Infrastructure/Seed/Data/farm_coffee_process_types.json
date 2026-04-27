@@ -1,0 +1,7 @@
+[
+  { "CompanyId": 1, "Code": "PULPING", "Name": "Despulpado", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "FERMENT", "Name": "Fermentación", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "WASH", "Name": "Lavado", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" },
+  { "CompanyId": 1, "Code": "DRY", "Name": "Secado", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+
