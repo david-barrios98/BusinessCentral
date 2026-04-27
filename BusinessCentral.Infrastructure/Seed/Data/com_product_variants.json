@@ -1,0 +1,15 @@
+[
+  {
+    "CompanyId": 1,
+    "ProductId": 1,
+    "Sku": "CAFE-001-NEGRO-42",
+    "Barcode": "770000000101",
+    "VariantName": "Negro / 42",
+    "PriceOverride": 18500,
+    "CostOverride": 12500,
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  }
+]
+

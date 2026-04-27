@@ -1,0 +1,4 @@
+[
+  { "CompanyId": 1, "Name": "Proveedor Demo", "DocumentNumber": "900000000-1", "Phone": "3000000000", "Email": "proveedor@demo.com", "Notes": "Seed demo", "Active": true, "CreatedAt": "2026-01-01T08:00:00Z", "UpdatedAt": "2026-01-01T08:00:00Z" }
+]
+

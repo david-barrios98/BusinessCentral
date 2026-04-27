@@ -2153,3 +2153,270 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   COMMERCE (Proveedores, Variantes, Compras / Ingreso Inventario)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [com].[sp_upsert_supplier]
+(
+    @company_id INT,
+    @id BIGINT = NULL,
+    @name NVARCHAR(200),
+    @document_number NVARCHAR(50) = NULL,
+    @phone NVARCHAR(20) = NULL,
+    @email NVARCHAR(150) = NULL,
+    @notes NVARCHAR(500) = NULL,
+    @active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @id IS NULL OR @id = 0
+    BEGIN
+        INSERT INTO [com].[Supplier]
+            (CompanyId, Name, DocumentNumber, Phone, Email, Notes, Active, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @name, @document_number, @phone, @email, @notes, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+        RETURN;
+    END
+
+    UPDATE [com].[Supplier]
+    SET Name = @name,
+        DocumentNumber = @document_number,
+        Phone = @phone,
+        Email = @email,
+        Notes = @notes,
+        Active = @active,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE Id = @id AND CompanyId = @company_id;
+
+    SELECT @id AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_list_suppliers]
+(
+    @company_id INT,
+    @only_active BIT = 1,
+    @q NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        s.Id,
+        s.CompanyId,
+        s.Name,
+        s.DocumentNumber,
+        s.Phone,
+        s.Email,
+        s.Notes,
+        s.Active,
+        s.CreatedAt,
+        s.UpdatedAt
+    FROM [com].[Supplier] s WITH (NOLOCK)
+    WHERE s.CompanyId = @company_id
+      AND (@only_active = 0 OR s.Active = 1)
+      AND (
+          @q IS NULL OR s.Name LIKE '%' + @q + '%'
+          OR s.DocumentNumber LIKE '%' + @q + '%'
+      )
+    ORDER BY s.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_upsert_product_variant]
+(
+    @company_id INT,
+    @id BIGINT = NULL,
+    @product_id INT,
+    @sku NVARCHAR(80),
+    @barcode NVARCHAR(50) = NULL,
+    @variant_name NVARCHAR(200) = NULL,
+    @price_override DECIMAL(18,2) = NULL,
+    @cost_override DECIMAL(18,2) = NULL,
+    @active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @id IS NULL OR @id = 0
+    BEGIN
+        INSERT INTO [com].[ProductVariant]
+            (CompanyId, ProductId, Sku, Barcode, VariantName, PriceOverride, CostOverride, Active, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @product_id, @sku, @barcode, @variant_name, @price_override, @cost_override, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+        RETURN;
+    END
+
+    UPDATE [com].[ProductVariant]
+    SET ProductId = @product_id,
+        Sku = @sku,
+        Barcode = @barcode,
+        VariantName = @variant_name,
+        PriceOverride = @price_override,
+        CostOverride = @cost_override,
+        Active = @active,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE Id = @id AND CompanyId = @company_id;
+
+    SELECT @id AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_list_product_variants]
+(
+    @company_id INT,
+    @product_id INT = NULL,
+    @only_active BIT = 1,
+    @q NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        v.Id,
+        v.CompanyId,
+        v.ProductId,
+        p.Sku AS ProductSku,
+        p.Name AS ProductName,
+        v.Sku,
+        v.Barcode,
+        v.VariantName,
+        v.PriceOverride,
+        v.CostOverride,
+        v.Active
+    FROM [com].[ProductVariant] v WITH (NOLOCK)
+    INNER JOIN [com].[Product] p WITH (NOLOCK) ON p.Id = v.ProductId AND p.CompanyId = v.CompanyId
+    WHERE v.CompanyId = @company_id
+      AND (@product_id IS NULL OR v.ProductId = @product_id)
+      AND (@only_active = 0 OR v.Active = 1)
+      AND (
+          @q IS NULL OR v.Sku LIKE '%' + @q + '%'
+          OR v.Barcode LIKE '%' + @q + '%'
+          OR v.VariantName LIKE '%' + @q + '%'
+      )
+    ORDER BY v.Sku;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_create_purchase_receipt]
+(
+    @company_id INT,
+    @supplier_id BIGINT = NULL,
+    @receipt_date DATETIME2,
+    @supplier_invoice_number NVARCHAR(50) = NULL,
+    @default_to_location_id BIGINT = NULL,
+    @created_by_user_id INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [com].[PurchaseReceipt]
+        (CompanyId, SupplierId, ReceiptDate, SupplierInvoiceNumber, [Status], Total, DefaultToLocationId, CreatedByUserId, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @supplier_id, @receipt_date, @supplier_invoice_number, 'draft', 0, @default_to_location_id, @created_by_user_id, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_add_purchase_receipt_line]
+(
+    @company_id INT,
+    @receipt_id BIGINT,
+    @product_id INT,
+    @variant_id BIGINT = NULL,
+    @quantity DECIMAL(18,4),
+    @unit_cost DECIMAL(18,2),
+    @to_location_id BIGINT = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [com].[PurchaseReceipt] r WITH (NOLOCK)
+        WHERE r.Id = @receipt_id AND r.CompanyId = @company_id AND LOWER(r.[Status]) = 'draft'
+    )
+    BEGIN
+        RAISERROR('PurchaseReceipt not found or not in draft status.', 16, 1);
+        RETURN;
+    END
+
+    DECLARE @line_total DECIMAL(18,2) = CAST(@quantity * @unit_cost AS DECIMAL(18,2));
+
+    INSERT INTO [com].[PurchaseReceiptLine]
+        (CompanyId, ReceiptId, ProductId, VariantId, Quantity, UnitCost, LineTotal, ToLocationId, Notes, CreatedAt)
+    VALUES
+        (@company_id, @receipt_id, @product_id, @variant_id, @quantity, @unit_cost, @line_total, @to_location_id, @notes, SYSUTCDATETIME());
+
+    UPDATE [com].[PurchaseReceipt]
+    SET Total = (SELECT ISNULL(SUM(LineTotal),0) FROM [com].[PurchaseReceiptLine] WHERE CompanyId = @company_id AND ReceiptId = @receipt_id),
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @receipt_id;
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_post_purchase_receipt]
+(
+    @company_id INT,
+    @receipt_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [com].[PurchaseReceipt] r WITH (NOLOCK)
+        WHERE r.Id = @receipt_id AND r.CompanyId = @company_id AND LOWER(r.[Status]) = 'draft'
+    )
+    BEGIN
+        RAISERROR('PurchaseReceipt not found or not in draft status.', 16, 1);
+        RETURN;
+    END
+
+    DECLARE @receipt_date DATETIME2;
+    DECLARE @default_loc BIGINT;
+    SELECT @receipt_date = ReceiptDate, @default_loc = DefaultToLocationId
+    FROM [com].[PurchaseReceipt]
+    WHERE CompanyId = @company_id AND Id = @receipt_id;
+
+    -- Insert inventory movements (IN) per line
+    INSERT INTO [com].[InventoryMovement]
+        (CompanyId, ProductId, VariantId, FromLocationId, ToLocationId, MoveDate, [Type], Quantity, ReferenceType, ReferenceId, Notes)
+    SELECT
+        l.CompanyId,
+        l.ProductId,
+        l.VariantId,
+        NULL,
+        COALESCE(l.ToLocationId, @default_loc),
+        @receipt_date,
+        'IN',
+        l.Quantity,
+        'PURCHASE_RECEIPT',
+        CAST(@receipt_id AS NVARCHAR(100)),
+        l.Notes
+    FROM [com].[PurchaseReceiptLine] l
+    WHERE l.CompanyId = @company_id AND l.ReceiptId = @receipt_id;
+
+    UPDATE [com].[PurchaseReceipt]
+    SET [Status] = 'posted', UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @receipt_id;
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+

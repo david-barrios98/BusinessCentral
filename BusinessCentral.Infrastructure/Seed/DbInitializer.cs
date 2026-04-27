@@ -81,6 +81,8 @@ namespace BusinessCentral.Infrastructure.Seed
             // COMMERCE / POS
             await SeedEntity<Category>(context, "com_categories.json");
             await SeedEntity<Product>(context, "com_products.json");
+            await SeedEntity<Supplier>(context, "com_suppliers.json");
+            await SeedEntity<ProductVariant>(context, "com_product_variants.json");
             await SeedEntity<CashSession>(context, "com_cash_sessions.json");
             await SeedEntity<PosTicket>(context, "com_pos_tickets.json");
             await SeedEntity<PosTicketLine>(context, "com_pos_ticket_lines.json");

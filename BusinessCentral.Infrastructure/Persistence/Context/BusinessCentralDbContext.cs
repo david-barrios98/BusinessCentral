@@ -85,6 +85,13 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<ProductCategory> ProductCategories { get; set; } = null!;
         public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<Supplier> Suppliers { get; set; } = null!;
+        public DbSet<ProductAttribute> ProductAttributes { get; set; } = null!;
+        public DbSet<ProductAttributeOption> ProductAttributeOptions { get; set; } = null!;
+        public DbSet<ProductVariant> ProductVariants { get; set; } = null!;
+        public DbSet<ProductVariantOption> ProductVariantOptions { get; set; } = null!;
+        public DbSet<PurchaseReceipt> PurchaseReceipts { get; set; } = null!;
+        public DbSet<PurchaseReceiptLine> PurchaseReceiptLines { get; set; } = null!;
         public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
         public DbSet<CashSession> CashSessions { get; set; } = null!;
         public DbSet<PosTicket> PosTickets { get; set; } = null!;
@@ -113,6 +120,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             modelBuilder.Entity<ProductCategory>()
                 .HasKey(x => new { x.CompanyId, x.ProductId, x.CategoryId });
+
+            modelBuilder.Entity<ProductVariantOption>()
+                .HasKey(x => new { x.CompanyId, x.VariantId, x.AttributeId, x.OptionId });
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {

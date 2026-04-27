@@ -38,6 +38,9 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IPucAccountingRepository, PucAccountingRepository>();
             services.AddScoped<IStorageLocationRepository, StorageLocationRepository>();
             services.AddScoped<IInventoryLocationReportRepository, InventoryLocationReportRepository>();
+            services.AddScoped<ISupplierRepository, SupplierRepository>();
+            services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
+            services.AddScoped<IPurchaseReceivingRepository, PurchaseReceivingRepository>();
 
 
             // Services

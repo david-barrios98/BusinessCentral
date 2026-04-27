@@ -109,6 +109,13 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_add_pos_ticket_line = "[com].[sp_add_pos_ticket_line]";
             public const string sp_pay_pos_ticket = "[com].[sp_pay_pos_ticket]";
             public const string sp_report_inventory_by_location = "[com].[sp_report_inventory_by_location]";
+            public const string sp_upsert_supplier = "[com].[sp_upsert_supplier]";
+            public const string sp_list_suppliers = "[com].[sp_list_suppliers]";
+            public const string sp_upsert_product_variant = "[com].[sp_upsert_product_variant]";
+            public const string sp_list_product_variants = "[com].[sp_list_product_variants]";
+            public const string sp_create_purchase_receipt = "[com].[sp_create_purchase_receipt]";
+            public const string sp_add_purchase_receipt_line = "[com].[sp_add_purchase_receipt_line]";
+            public const string sp_post_purchase_receipt = "[com].[sp_post_purchase_receipt]";
         }
 
         public static class Finance
