@@ -1,8 +1,10 @@
 using BusinessCentral.Application.DTOs.Commerce;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -35,29 +37,51 @@ public sealed class SupplierRepository : SqlConfigServer, ISupplierRepository
         return insertedId;
     }
 
-    public async Task<List<SupplierDTO>> ListAsync(int companyId, bool onlyActive = true, string? q = null)
+    public async Task<PagedResult<SupplierDTO>> ListAsync(int companyId, bool onlyActive = true, int page = 1, int pageSize = 50, string? q = null)
     {
-        var parameters = new[]
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Commerce.sp_list_suppliers, connection)
         {
-            CreateParameter("@company_id", companyId, SqlDbType.Int),
-            CreateParameter("@only_active", onlyActive, SqlDbType.Bit),
-            CreateParameter("@q", (object?)q ?? DBNull.Value, SqlDbType.NVarChar, 100)
+            CommandType = CommandType.StoredProcedure
         };
 
-        return await ExecuteStoredProcedureAsync(
-            StoredProcedures.Commerce.sp_list_suppliers,
-            parameters,
-            r => new SupplierDTO
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@only_active", onlyActive, SqlDbType.Bit));
+        command.Parameters.Add(CreateParameter("@q", (object?)q ?? DBNull.Value, SqlDbType.NVarChar, 100));
+        command.Parameters.Add(CreateParameter("@page", page, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@page_size", pageSize, SqlDbType.Int));
+
+        var items = new List<SupplierDTO>();
+        long total = 0;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            items.Add(new SupplierDTO
             {
-                Id = Convert.ToInt64(r["Id"]),
-                CompanyId = Convert.ToInt32(r["CompanyId"]),
-                Name = r["Name"]?.ToString() ?? string.Empty,
-                DocumentNumber = r["DocumentNumber"] == DBNull.Value ? null : r["DocumentNumber"]?.ToString(),
-                Phone = r["Phone"] == DBNull.Value ? null : r["Phone"]?.ToString(),
-                Email = r["Email"] == DBNull.Value ? null : r["Email"]?.ToString(),
-                Notes = r["Notes"] == DBNull.Value ? null : r["Notes"]?.ToString(),
-                Active = Convert.ToBoolean(r["Active"])
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                Name = reader["Name"]?.ToString() ?? string.Empty,
+                DocumentNumber = reader["DocumentNumber"] == DBNull.Value ? null : reader["DocumentNumber"]?.ToString(),
+                Phone = reader["Phone"] == DBNull.Value ? null : reader["Phone"]?.ToString(),
+                Email = reader["Email"] == DBNull.Value ? null : reader["Email"]?.ToString(),
+                Notes = reader["Notes"] == DBNull.Value ? null : reader["Notes"]?.ToString(),
+                Active = Convert.ToBoolean(reader["Active"])
             });
+        }
+
+        if (await reader.NextResultAsync() && await reader.ReadAsync())
+            total = Convert.ToInt64(reader["Total"]);
+
+        return new PagedResult<SupplierDTO>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            Total = total
+        };
     }
 }
 

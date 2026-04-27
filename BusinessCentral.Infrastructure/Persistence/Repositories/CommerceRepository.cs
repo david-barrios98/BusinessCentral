@@ -1,8 +1,10 @@
 using BusinessCentral.Application.DTOs.Commerce;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -33,28 +35,50 @@ public sealed class CommerceRepository : SqlConfigServer, ICommerceRepository
         return success == true;
     }
 
-    public async Task<List<ProductDTO>> ListProductsAsync(int companyId, bool onlyActive)
+    public async Task<PagedResult<ProductDTO>> ListProductsAsync(int companyId, bool onlyActive, int page, int pageSize, string? q = null)
     {
-        var parameters = new[]
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Commerce.sp_list_products, connection)
         {
-            CreateParameter("@company_id", companyId, SqlDbType.Int),
-            CreateParameter("@only_active", onlyActive, SqlDbType.Bit),
+            CommandType = CommandType.StoredProcedure
         };
 
-        return await ExecuteStoredProcedureAsync(
-            StoredProcedures.Commerce.sp_list_products,
-            parameters,
-            r => new ProductDTO
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@only_active", onlyActive, SqlDbType.Bit));
+        command.Parameters.Add(CreateParameter("@page", page, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@page_size", pageSize, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@q", (object?)q ?? DBNull.Value, SqlDbType.NVarChar, 100));
+
+        var items = new List<ProductDTO>();
+        long total = 0;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            items.Add(new ProductDTO
             {
-                Id = Convert.ToInt32(r["Id"]),
-                CompanyId = Convert.ToInt32(r["CompanyId"]),
-                Sku = r["Sku"]?.ToString() ?? string.Empty,
-                Name = r["Name"]?.ToString() ?? string.Empty,
-                Unit = r["Unit"] == DBNull.Value ? null : r["Unit"]?.ToString(),
-                Price = Convert.ToDecimal(r["Price"]),
-                Active = Convert.ToBoolean(r["Active"]),
-            }
-        );
+                Id = Convert.ToInt32(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                Sku = reader["Sku"]?.ToString() ?? string.Empty,
+                Name = reader["Name"]?.ToString() ?? string.Empty,
+                Unit = reader["Unit"] == DBNull.Value ? null : reader["Unit"]?.ToString(),
+                Price = Convert.ToDecimal(reader["Price"]),
+                Active = Convert.ToBoolean(reader["Active"]),
+            });
+        }
+
+        if (await reader.NextResultAsync() && await reader.ReadAsync())
+            total = Convert.ToInt64(reader["Total"]);
+
+        return new PagedResult<ProductDTO>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            Total = total
+        };
     }
 
     public async Task<long> CreateCashSessionAsync(int companyId, int? openedByUserId, decimal openingAmount)

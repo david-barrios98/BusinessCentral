@@ -1002,11 +1002,15 @@ CREATE OR ALTER PROCEDURE [business].[sp_list_storage_locations]
 (
     @company_id INT,
     @facility_id INT = NULL,
-    @only_active BIT = 1
+    @only_active BIT = 1,
+    @page INT = 1,
+    @page_size INT = 50
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
 
     SELECT
         l.Id,
@@ -1024,7 +1028,14 @@ BEGIN
     WHERE l.CompanyId = @company_id
       AND (@facility_id IS NULL OR l.FacilityId = @facility_id OR l.FacilityId IS NULL)
       AND (@only_active = 0 OR l.Active = 1)
-    ORDER BY l.Code;
+    ORDER BY l.Code
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [business].[StorageLocation] l WITH (NOLOCK)
+    WHERE l.CompanyId = @company_id
+      AND (@facility_id IS NULL OR l.FacilityId = @facility_id OR l.FacilityId IS NULL)
+      AND (@only_active = 0 OR l.Active = 1);
 END
 GO
 
@@ -2229,15 +2240,27 @@ GO
 
 CREATE OR ALTER PROCEDURE [com].[sp_list_products]
     @company_id INT,
-    @only_active BIT = 1
+    @only_active BIT = 1,
+    @page INT = 1,
+    @page_size INT = 50,
+    @q NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @Offset INT = (@page - 1) * @page_size;
+
     SELECT Id, CompanyId, Sku, Name, Unit, Price, Active
     FROM [com].[Product]
     WHERE CompanyId=@company_id AND (@only_active=0 OR Active=1)
-    ORDER BY Name;
+      AND (@q IS NULL OR Sku LIKE '%' + @q + '%' OR Name LIKE '%' + @q + '%')
+    ORDER BY Name
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [com].[Product]
+    WHERE CompanyId=@company_id AND (@only_active=0 OR Active=1)
+      AND (@q IS NULL OR Sku LIKE '%' + @q + '%' OR Name LIKE '%' + @q + '%');
 END
 GO
 
@@ -2394,11 +2417,15 @@ CREATE OR ALTER PROCEDURE [com].[sp_list_suppliers]
 (
     @company_id INT,
     @only_active BIT = 1,
-    @q NVARCHAR(100) = NULL
+    @q NVARCHAR(100) = NULL,
+    @page INT = 1,
+    @page_size INT = 50
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
 
     SELECT
         s.Id,
@@ -2418,7 +2445,17 @@ BEGIN
           @q IS NULL OR s.Name LIKE '%' + @q + '%'
           OR s.DocumentNumber LIKE '%' + @q + '%'
       )
-    ORDER BY s.Name;
+    ORDER BY s.Name
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [com].[Supplier] s WITH (NOLOCK)
+    WHERE s.CompanyId = @company_id
+      AND (@only_active = 0 OR s.Active = 1)
+      AND (
+          @q IS NULL OR s.Name LIKE '%' + @q + '%'
+          OR s.DocumentNumber LIKE '%' + @q + '%'
+      );
 END
 GO
 
@@ -2469,11 +2506,15 @@ CREATE OR ALTER PROCEDURE [com].[sp_list_product_variants]
     @company_id INT,
     @product_id INT = NULL,
     @only_active BIT = 1,
-    @q NVARCHAR(100) = NULL
+    @q NVARCHAR(100) = NULL,
+    @page INT = 1,
+    @page_size INT = 50
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
 
     SELECT
         v.Id,
@@ -2497,7 +2538,19 @@ BEGIN
           OR v.Barcode LIKE '%' + @q + '%'
           OR v.VariantName LIKE '%' + @q + '%'
       )
-    ORDER BY v.Sku;
+    ORDER BY v.Sku
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [com].[ProductVariant] v WITH (NOLOCK)
+    WHERE v.CompanyId = @company_id
+      AND (@product_id IS NULL OR v.ProductId = @product_id)
+      AND (@only_active = 0 OR v.Active = 1)
+      AND (
+          @q IS NULL OR v.Sku LIKE '%' + @q + '%'
+          OR v.Barcode LIKE '%' + @q + '%'
+          OR v.VariantName LIKE '%' + @q + '%'
+      );
 END
 GO
 
@@ -2876,11 +2929,15 @@ CREATE OR ALTER PROCEDURE [agro].[sp_list_lots]
 (
     @company_id INT,
     @kind NVARCHAR(20) = NULL,
-    @only_open BIT = 0
+    @only_open BIT = 0,
+    @page INT = 1,
+    @page_size INT = 50
 )
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
 
     SELECT
         l.Id, l.CompanyId, l.Kind, l.Code, l.Name, l.StartDate,
@@ -2890,7 +2947,14 @@ BEGIN
     WHERE l.CompanyId = @company_id
       AND (@kind IS NULL OR l.Kind = @kind)
       AND (@only_open = 0 OR LOWER(l.[Status]) = 'open')
-    ORDER BY l.StartDate DESC, l.Id DESC;
+    ORDER BY l.StartDate DESC, l.Id DESC
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [agro].[AgroLot] l WITH (NOLOCK)
+    WHERE l.CompanyId = @company_id
+      AND (@kind IS NULL OR l.Kind = @kind)
+      AND (@only_open = 0 OR LOWER(l.[Status]) = 'open');
 END
 GO
 

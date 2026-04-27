@@ -21,9 +21,13 @@ public sealed class StorageLocationsController : SecureCompanyControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int? facilityId = null, [FromQuery] bool onlyActive = true)
+    public async Task<IActionResult> List(
+        [FromQuery] int? facilityId = null,
+        [FromQuery] bool onlyActive = true,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
-        var result = await _mediator.Send(new ListStorageLocationsQuery(CompanyId, facilityId, onlyActive));
+        var result = await _mediator.Send(new ListStorageLocationsQuery(CompanyId, facilityId, onlyActive, page, pageSize));
         return ProcessResult(result);
     }
 

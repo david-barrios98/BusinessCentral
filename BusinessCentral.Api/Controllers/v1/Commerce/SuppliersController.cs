@@ -21,9 +21,13 @@ public sealed class SuppliersController : SecureCompanyControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] bool onlyActive = true, [FromQuery] string? q = null)
+    public async Task<IActionResult> List(
+        [FromQuery] bool onlyActive = true,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        [FromQuery] string? q = null)
     {
-        var result = await _mediator.Send(new ListSuppliersQuery(CompanyId, onlyActive, q));
+        var result = await _mediator.Send(new ListSuppliersQuery(CompanyId, onlyActive, page, pageSize, q));
         return ProcessResult(result);
     }
 

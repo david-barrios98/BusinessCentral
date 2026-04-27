@@ -21,9 +21,14 @@ public sealed class ProductVariantsController : SecureCompanyControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> List([FromQuery] int? productId = null, [FromQuery] bool onlyActive = true, [FromQuery] string? q = null)
+    public async Task<IActionResult> List(
+        [FromQuery] int? productId = null,
+        [FromQuery] bool onlyActive = true,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        [FromQuery] string? q = null)
     {
-        var result = await _mediator.Send(new ListVariantsQuery(CompanyId, productId, onlyActive, q));
+        var result = await _mediator.Send(new ListVariantsQuery(CompanyId, productId, onlyActive, page, pageSize, q));
         return ProcessResult(result);
     }
 

@@ -1,8 +1,10 @@
 using BusinessCentral.Application.DTOs.Agro;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -35,32 +37,54 @@ public sealed class AgroRepository : SqlConfigServer, IAgroRepository
         return id;
     }
 
-    public async Task<List<AgroLotDTO>> ListLotsAsync(int companyId, string? kind = null, bool onlyOpen = false)
+    public async Task<PagedResult<AgroLotDTO>> ListLotsAsync(int companyId, string? kind = null, bool onlyOpen = false, int page = 1, int pageSize = 50)
     {
-        var parameters = new[]
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Agro.sp_list_lots, connection)
         {
-            CreateParameter("@company_id", companyId, SqlDbType.Int),
-            CreateParameter("@kind", (object?)kind ?? DBNull.Value, SqlDbType.NVarChar, 20),
-            CreateParameter("@only_open", onlyOpen, SqlDbType.Bit)
+            CommandType = CommandType.StoredProcedure
         };
 
-        return await ExecuteStoredProcedureAsync(
-            StoredProcedures.Agro.sp_list_lots,
-            parameters,
-            r => new AgroLotDTO
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@kind", (object?)kind ?? DBNull.Value, SqlDbType.NVarChar, 20));
+        command.Parameters.Add(CreateParameter("@only_open", onlyOpen, SqlDbType.Bit));
+        command.Parameters.Add(CreateParameter("@page", page, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@page_size", pageSize, SqlDbType.Int));
+
+        var items = new List<AgroLotDTO>();
+        long total = 0;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            items.Add(new AgroLotDTO
             {
-                Id = Convert.ToInt64(r["Id"]),
-                CompanyId = Convert.ToInt32(r["CompanyId"]),
-                Kind = r["Kind"]?.ToString() ?? string.Empty,
-                Code = r["Code"]?.ToString() ?? string.Empty,
-                Name = r["Name"] == DBNull.Value ? null : r["Name"]?.ToString(),
-                StartDate = Convert.ToDateTime(r["StartDate"]),
-                InitialUnits = Convert.ToInt32(r["InitialUnits"]),
-                CurrentUnits = Convert.ToInt32(r["CurrentUnits"]),
-                InitialAvgWeightKg = r["InitialAvgWeightKg"] == DBNull.Value ? null : Convert.ToDecimal(r["InitialAvgWeightKg"]),
-                Status = r["Status"]?.ToString() ?? "open",
-                Notes = r["Notes"] == DBNull.Value ? null : r["Notes"]?.ToString()
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                Kind = reader["Kind"]?.ToString() ?? string.Empty,
+                Code = reader["Code"]?.ToString() ?? string.Empty,
+                Name = reader["Name"] == DBNull.Value ? null : reader["Name"]?.ToString(),
+                StartDate = Convert.ToDateTime(reader["StartDate"]),
+                InitialUnits = Convert.ToInt32(reader["InitialUnits"]),
+                CurrentUnits = Convert.ToInt32(reader["CurrentUnits"]),
+                InitialAvgWeightKg = reader["InitialAvgWeightKg"] == DBNull.Value ? null : Convert.ToDecimal(reader["InitialAvgWeightKg"]),
+                Status = reader["Status"]?.ToString() ?? "open",
+                Notes = reader["Notes"] == DBNull.Value ? null : reader["Notes"]?.ToString()
             });
+        }
+
+        if (await reader.NextResultAsync() && await reader.ReadAsync())
+            total = Convert.ToInt64(reader["Total"]);
+
+        return new PagedResult<AgroLotDTO>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            Total = total
+        };
     }
 
     public async Task<long> CreateFeedLogAsync(int companyId, long lotId, DateTime feedDate, int feedProductId, long? feedVariantId, decimal quantity, long? fromLocationId, decimal? unitCost, string? notes)

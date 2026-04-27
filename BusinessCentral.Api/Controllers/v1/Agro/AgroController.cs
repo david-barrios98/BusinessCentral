@@ -21,9 +21,13 @@ public sealed class AgroController : SecureCompanyControllerBase
     }
 
     [HttpGet("lots")]
-    public async Task<IActionResult> ListLots([FromQuery] string? kind = null, [FromQuery] bool onlyOpen = false)
+    public async Task<IActionResult> ListLots(
+        [FromQuery] string? kind = null,
+        [FromQuery] bool onlyOpen = false,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
     {
-        var result = await _mediator.Send(new ListLotsQuery(CompanyId, kind, onlyOpen));
+        var result = await _mediator.Send(new ListLotsQuery(CompanyId, kind, onlyOpen, page, pageSize));
         return ProcessResult(result);
     }
 

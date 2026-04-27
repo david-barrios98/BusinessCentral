@@ -1,8 +1,10 @@
 using BusinessCentral.Application.DTOs.Commerce;
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using Microsoft.Data.SqlClient;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -36,33 +38,55 @@ public sealed class ProductVariantRepository : SqlConfigServer, IProductVariantR
         return insertedId;
     }
 
-    public async Task<List<ProductVariantListItemDTO>> ListAsync(int companyId, int? productId = null, bool onlyActive = true, string? q = null)
+    public async Task<PagedResult<ProductVariantListItemDTO>> ListAsync(int companyId, int? productId = null, bool onlyActive = true, int page = 1, int pageSize = 50, string? q = null)
     {
-        var parameters = new[]
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Commerce.sp_list_product_variants, connection)
         {
-            CreateParameter("@company_id", companyId, SqlDbType.Int),
-            CreateParameter("@product_id", (object?)productId ?? DBNull.Value, SqlDbType.Int),
-            CreateParameter("@only_active", onlyActive, SqlDbType.Bit),
-            CreateParameter("@q", (object?)q ?? DBNull.Value, SqlDbType.NVarChar, 100)
+            CommandType = CommandType.StoredProcedure
         };
 
-        return await ExecuteStoredProcedureAsync(
-            StoredProcedures.Commerce.sp_list_product_variants,
-            parameters,
-            r => new ProductVariantListItemDTO
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@product_id", (object?)productId ?? DBNull.Value, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@only_active", onlyActive, SqlDbType.Bit));
+        command.Parameters.Add(CreateParameter("@q", (object?)q ?? DBNull.Value, SqlDbType.NVarChar, 100));
+        command.Parameters.Add(CreateParameter("@page", page, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@page_size", pageSize, SqlDbType.Int));
+
+        var items = new List<ProductVariantListItemDTO>();
+        long total = 0;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            items.Add(new ProductVariantListItemDTO
             {
-                Id = Convert.ToInt64(r["Id"]),
-                CompanyId = Convert.ToInt32(r["CompanyId"]),
-                ProductId = Convert.ToInt32(r["ProductId"]),
-                ProductSku = r["ProductSku"]?.ToString() ?? string.Empty,
-                ProductName = r["ProductName"]?.ToString() ?? string.Empty,
-                Sku = r["Sku"]?.ToString() ?? string.Empty,
-                Barcode = r["Barcode"] == DBNull.Value ? null : r["Barcode"]?.ToString(),
-                VariantName = r["VariantName"] == DBNull.Value ? null : r["VariantName"]?.ToString(),
-                PriceOverride = r["PriceOverride"] == DBNull.Value ? null : Convert.ToDecimal(r["PriceOverride"]),
-                CostOverride = r["CostOverride"] == DBNull.Value ? null : Convert.ToDecimal(r["CostOverride"]),
-                Active = Convert.ToBoolean(r["Active"])
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                ProductId = Convert.ToInt32(reader["ProductId"]),
+                ProductSku = reader["ProductSku"]?.ToString() ?? string.Empty,
+                ProductName = reader["ProductName"]?.ToString() ?? string.Empty,
+                Sku = reader["Sku"]?.ToString() ?? string.Empty,
+                Barcode = reader["Barcode"] == DBNull.Value ? null : reader["Barcode"]?.ToString(),
+                VariantName = reader["VariantName"] == DBNull.Value ? null : reader["VariantName"]?.ToString(),
+                PriceOverride = reader["PriceOverride"] == DBNull.Value ? null : Convert.ToDecimal(reader["PriceOverride"]),
+                CostOverride = reader["CostOverride"] == DBNull.Value ? null : Convert.ToDecimal(reader["CostOverride"]),
+                Active = Convert.ToBoolean(reader["Active"])
             });
+        }
+
+        if (await reader.NextResultAsync() && await reader.ReadAsync())
+            total = Convert.ToInt64(reader["Total"]);
+
+        return new PagedResult<ProductVariantListItemDTO>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            Total = total
+        };
     }
 }
 
