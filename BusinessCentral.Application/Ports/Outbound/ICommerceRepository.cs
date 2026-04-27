@@ -1,0 +1,15 @@
+using BusinessCentral.Application.DTOs.Commerce;
+
+namespace BusinessCentral.Application.Ports.Outbound;
+
+public interface ICommerceRepository
+{
+    Task<bool> UpsertProductAsync(int companyId, string sku, string name, string? unit, decimal price, bool active);
+    Task<List<ProductDTO>> ListProductsAsync(int companyId, bool onlyActive);
+
+    Task<long> CreateCashSessionAsync(int companyId, int? openedByUserId, decimal openingAmount);
+    Task<long> CreatePosTicketAsync(int companyId, long? cashSessionId);
+    Task<long> AddPosTicketLineAsync(int companyId, long ticketId, int productId, decimal quantity, decimal unitPrice);
+    Task<bool> PayPosTicketAsync(int companyId, long ticketId, string method, decimal amount);
+}
+

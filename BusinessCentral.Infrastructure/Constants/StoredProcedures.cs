@@ -72,6 +72,35 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_deductions = "[hr].[sp_list_deductions]";
         }
 
+        public static class Farm
+        {
+            public const string sp_upsert_zone = "[farm].[sp_upsert_zone]";
+            public const string sp_list_zones = "[farm].[sp_list_zones]";
+            public const string sp_create_harvest_lot = "[farm].[sp_create_harvest_lot]";
+            public const string sp_list_harvest_lots = "[farm].[sp_list_harvest_lots]";
+            public const string sp_create_process_step = "[farm].[sp_create_process_step]";
+            public const string sp_list_process_steps = "[farm].[sp_list_process_steps]";
+        }
+
+        public static class Services
+        {
+            public const string sp_upsert_service = "[svc].[sp_upsert_service]";
+            public const string sp_list_services = "[svc].[sp_list_services]";
+            public const string sp_create_service_order = "[svc].[sp_create_service_order]";
+            public const string sp_add_service_order_line = "[svc].[sp_add_service_order_line]";
+            public const string sp_get_service_order = "[svc].[sp_get_service_order]";
+        }
+
+        public static class Commerce
+        {
+            public const string sp_upsert_product = "[com].[sp_upsert_product]";
+            public const string sp_list_products = "[com].[sp_list_products]";
+            public const string sp_create_cash_session = "[com].[sp_create_cash_session]";
+            public const string sp_create_pos_ticket = "[com].[sp_create_pos_ticket]";
+            public const string sp_add_pos_ticket_line = "[com].[sp_add_pos_ticket_line]";
+            public const string sp_pay_pos_ticket = "[com].[sp_pay_pos_ticket]";
+        }
+
         public static class Common
         {
             // Geografía
