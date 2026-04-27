@@ -58,6 +58,12 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<BusinessNature> BusinessNatures { get; set; } = null!;
         public DbSet<BusinessNatureModule> BusinessNatureModules { get; set; } = null!;
         public DbSet<CompanyBusinessNature> CompanyBusinessNatures { get; set; } = null!;
+        public DbSet<FulfillmentMethod> FulfillmentMethods { get; set; } = null!;
+        public DbSet<CompanyFulfillmentMethod> CompanyFulfillmentMethods { get; set; } = null!;
+        public DbSet<BusinessNatureFulfillmentMethod> BusinessNatureFulfillmentMethods { get; set; } = null!;
+        public DbSet<PaymentMethod> PaymentMethods { get; set; } = null!;
+        public DbSet<CompanyPaymentMethod> CompanyPaymentMethods { get; set; } = null!;
+        public DbSet<BusinessNaturePaymentMethod> BusinessNaturePaymentMethods { get; set; } = null!;
         public DbSet<Permission> Permission { get; set; } = null!;
         public DbSet<PlanModule> PlanModule { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
@@ -135,6 +141,18 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
             modelBuilder.Entity<CompanyBusinessNature>()
                 .HasKey(x => new { x.CompanyId, x.BusinessNatureId });
+
+            modelBuilder.Entity<CompanyFulfillmentMethod>()
+                .HasKey(x => new { x.CompanyId, x.FulfillmentMethodId });
+
+            modelBuilder.Entity<BusinessNatureFulfillmentMethod>()
+                .HasKey(x => new { x.BusinessNatureId, x.FulfillmentMethodId });
+
+            modelBuilder.Entity<CompanyPaymentMethod>()
+                .HasKey(x => new { x.CompanyId, x.PaymentMethodId });
+
+            modelBuilder.Entity<BusinessNaturePaymentMethod>()
+                .HasKey(x => new { x.BusinessNatureId, x.PaymentMethodId });
 
             modelBuilder.Entity<ProductCategory>()
                 .HasKey(x => new { x.CompanyId, x.ProductId, x.CategoryId });

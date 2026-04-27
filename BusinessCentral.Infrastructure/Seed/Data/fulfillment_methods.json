@@ -1,0 +1,35 @@
+[
+  {
+    "Id": 1,
+    "Code": "IN_STORE",
+    "Name": "En tienda / punto",
+    "AppliesTo": "ANY",
+    "Description": "El cliente recibe o se atiende en el punto físico.",
+    "Active": true
+  },
+  {
+    "Id": 2,
+    "Code": "DELIVERY",
+    "Name": "Domicilio / entrega",
+    "AppliesTo": "COMMERCE",
+    "Description": "Entrega a domicilio. Requiere dirección o detalles.",
+    "Active": true
+  },
+  {
+    "Id": 3,
+    "Code": "ON_SITE",
+    "Name": "Servicio en sitio",
+    "AppliesTo": "SERVICES",
+    "Description": "Atención/servicio en el lugar del cliente.",
+    "Active": true
+  },
+  {
+    "Id": 4,
+    "Code": "OTHER_LOCATION",
+    "Name": "Otro lugar",
+    "AppliesTo": "ANY",
+    "Description": "Entrega/atención en lugar alterno definido por el usuario.",
+    "Active": true
+  }
+]
+

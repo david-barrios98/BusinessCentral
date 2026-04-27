@@ -8,6 +8,8 @@ public sealed class ServiceOrderDTO
     public string? VehicleType { get; set; }
     public string? Plate { get; set; }
     public string? CustomerName { get; set; }
+    public string? FulfillmentMethodCode { get; set; }
+    public string? FulfillmentDetails { get; set; }
     public string Status { get; set; } = "open";
     public decimal Total { get; set; }
 }

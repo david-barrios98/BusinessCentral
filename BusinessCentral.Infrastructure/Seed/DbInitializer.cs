@@ -29,6 +29,8 @@ namespace BusinessCentral.Infrastructure.Seed
             // Modules: seed por "merge" (no se detiene si ya hay data)
             await SeedModulesMerge(context, "modules.json");
             await SeedBusinessNaturesMerge(context, "business_natures.json");
+            await SeedFulfillmentMethodsMerge(context, "fulfillment_methods.json");
+            await SeedPaymentMethodsMerge(context, "payment_methods.json");
             await SeedEntity<FacilityType>(context, "facility_type.json");
 
             // --- 2. GEOGRAFÍA (Nivel 1 - Dependen de Countries) ---
@@ -58,6 +60,8 @@ namespace BusinessCentral.Infrastructure.Seed
 
             // --- 7. DATOS DE PRUEBA (módulos) ---
             await SeedBusinessNatureModulesMerge(context, "business_nature_modules.json");
+            await SeedBusinessNatureFulfillmentMethodsMerge(context, "business_nature_fulfillment_methods.json");
+            await SeedBusinessNaturePaymentMethodsMerge(context, "business_nature_payment_methods.json");
             // HR
             await SeedEntity<EmployeeProfile>(context, "hr_employee_profiles.json");
             await SeedEntity<PayScheme>(context, "hr_pay_schemes.json");
@@ -244,6 +248,22 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             public string NatureCode { get; set; } = string.Empty;
             public string ModuleCode { get; set; } = string.Empty;
+            public bool IsDefaultEnabled { get; set; } = true;
+            public int SortOrder { get; set; } = 0;
+        }
+
+        private sealed class BusinessNatureFulfillmentMethodSeedRow
+        {
+            public string NatureCode { get; set; } = string.Empty;
+            public string MethodCode { get; set; } = string.Empty;
+            public bool IsDefaultEnabled { get; set; } = true;
+            public int SortOrder { get; set; } = 0;
+        }
+
+        private sealed class BusinessNaturePaymentMethodSeedRow
+        {
+            public string NatureCode { get; set; } = string.Empty;
+            public string MethodCode { get; set; } = string.Empty;
             public bool IsDefaultEnabled { get; set; } = true;
             public int SortOrder { get; set; } = 0;
         }
@@ -520,6 +540,246 @@ namespace BusinessCentral.Infrastructure.Seed
                 context.ChangeTracker.Clear();
                 throw new Exception("❌ Error en Seed merge de BusinessNatureModule", ex);
             }
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: FulfillmentMethod (por Code)
+        // =============================
+        private static async Task SeedFulfillmentMethodsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            var dbSet = context.Set<FulfillmentMethod>();
+            List<FulfillmentMethod> data;
+            try
+            {
+                data = await LoadJsonAsync<FulfillmentMethod>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (data == null || !data.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var existingCodes = await dbSet.Select(x => x.Code).ToListAsync();
+            var existing = new HashSet<string>(
+                existingCodes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim().ToLowerInvariant())
+            );
+
+            var now = DateTime.UtcNow;
+            foreach (var x in data)
+            {
+                if (x.CreatedAt == default) x.CreatedAt = now;
+                if (x.UpdatedAt == default) x.UpdatedAt = now;
+            }
+
+            var toInsert = data
+                .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+                .Where(x => !existing.Contains(x.Code.Trim().ToLowerInvariant()))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ FulfillmentMethod ya contiene todos los registros del seed");
+                return;
+            }
+
+            await dbSet.AddRangeAsync(toInsert);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+            Console.WriteLine($"✅ Seed merge FulfillmentMethod insertado: {toInsert.Count} nuevos");
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: BusinessNatureFulfillmentMethod (por NatureId + MethodId)
+        // =============================
+        private static async Task SeedBusinessNatureFulfillmentMethodsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<BusinessNatureFulfillmentMethodSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<BusinessNatureFulfillmentMethodSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var natureCodeToId = await context.Set<BusinessNature>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var methodCodeToId = await context.Set<FulfillmentMethod>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var rows = raw
+                .Select(r =>
+                {
+                    var nk = r.NatureCode?.Trim().ToLowerInvariant();
+                    var mk = r.MethodCode?.Trim().ToLowerInvariant();
+                    var natureId = (!string.IsNullOrWhiteSpace(nk) && natureCodeToId.TryGetValue(nk, out var nId)) ? nId : 0;
+                    var methodId = (!string.IsNullOrWhiteSpace(mk) && methodCodeToId.TryGetValue(mk, out var mId)) ? mId : 0;
+                    return new BusinessNatureFulfillmentMethod
+                    {
+                        BusinessNatureId = natureId,
+                        FulfillmentMethodId = methodId,
+                        IsDefaultEnabled = r.IsDefaultEnabled,
+                        SortOrder = r.SortOrder
+                    };
+                })
+                .Where(x => x.BusinessNatureId > 0 && x.FulfillmentMethodId > 0)
+                .ToList();
+
+            var dbSet = context.Set<BusinessNatureFulfillmentMethod>();
+            var existing = await dbSet.Select(x => new { x.BusinessNatureId, x.FulfillmentMethodId }).ToListAsync();
+            var existingSet = new HashSet<string>(existing.Select(x => $"{x.BusinessNatureId}|{x.FulfillmentMethodId}"));
+
+            var toInsert = rows
+                .Where(x => !existingSet.Contains($"{x.BusinessNatureId}|{x.FulfillmentMethodId}"))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ BusinessNatureFulfillmentMethod ya contiene todos los registros del seed");
+                return;
+            }
+
+            await dbSet.AddRangeAsync(toInsert);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+            Console.WriteLine($"✅ Seed merge BusinessNatureFulfillmentMethod insertado: {toInsert.Count} nuevos");
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: PaymentMethod (por Code)
+        // =============================
+        private static async Task SeedPaymentMethodsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            var dbSet = context.Set<PaymentMethod>();
+            List<PaymentMethod> data;
+            try
+            {
+                data = await LoadJsonAsync<PaymentMethod>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (data == null || !data.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var existingCodes = await dbSet.Select(x => x.Code).ToListAsync();
+            var existing = new HashSet<string>(
+                existingCodes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim().ToLowerInvariant())
+            );
+
+            var now = DateTime.UtcNow;
+            foreach (var x in data)
+            {
+                if (x.CreatedAt == default) x.CreatedAt = now;
+                if (x.UpdatedAt == default) x.UpdatedAt = now;
+            }
+
+            var toInsert = data
+                .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+                .Where(x => !existing.Contains(x.Code.Trim().ToLowerInvariant()))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ PaymentMethod ya contiene todos los registros del seed");
+                return;
+            }
+
+            await dbSet.AddRangeAsync(toInsert);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+            Console.WriteLine($"✅ Seed merge PaymentMethod insertado: {toInsert.Count} nuevos");
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: BusinessNaturePaymentMethod (por NatureId + MethodId)
+        // =============================
+        private static async Task SeedBusinessNaturePaymentMethodsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<BusinessNaturePaymentMethodSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<BusinessNaturePaymentMethodSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            var natureCodeToId = await context.Set<BusinessNature>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var methodCodeToId = await context.Set<PaymentMethod>()
+                .Where(x => x.Code != null)
+                .ToDictionaryAsync(x => x.Code.ToLowerInvariant(), x => x.Id);
+
+            var rows = raw
+                .Select(r =>
+                {
+                    var nk = r.NatureCode?.Trim().ToLowerInvariant();
+                    var mk = r.MethodCode?.Trim().ToLowerInvariant();
+                    var natureId = (!string.IsNullOrWhiteSpace(nk) && natureCodeToId.TryGetValue(nk, out var nId)) ? nId : 0;
+                    var methodId = (!string.IsNullOrWhiteSpace(mk) && methodCodeToId.TryGetValue(mk, out var mId)) ? mId : 0;
+                    return new BusinessNaturePaymentMethod
+                    {
+                        BusinessNatureId = natureId,
+                        PaymentMethodId = methodId,
+                        IsDefaultEnabled = r.IsDefaultEnabled,
+                        SortOrder = r.SortOrder
+                    };
+                })
+                .Where(x => x.BusinessNatureId > 0 && x.PaymentMethodId > 0)
+                .ToList();
+
+            var dbSet = context.Set<BusinessNaturePaymentMethod>();
+            var existing = await dbSet.Select(x => new { x.BusinessNatureId, x.PaymentMethodId }).ToListAsync();
+            var existingSet = new HashSet<string>(existing.Select(x => $"{x.BusinessNatureId}|{x.PaymentMethodId}"));
+
+            var toInsert = rows
+                .Where(x => !existingSet.Contains($"{x.BusinessNatureId}|{x.PaymentMethodId}"))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ BusinessNaturePaymentMethod ya contiene todos los registros del seed");
+                return;
+            }
+
+            await dbSet.AddRangeAsync(toInsert);
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+            Console.WriteLine($"✅ Seed merge BusinessNaturePaymentMethod insertado: {toInsert.Count} nuevos");
         }
 
         // =============================

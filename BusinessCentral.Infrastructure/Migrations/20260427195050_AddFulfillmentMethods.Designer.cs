@@ -4,6 +4,7 @@ using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    partial class BusinessCentralDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427195050_AddFulfillmentMethods")]
+    partial class AddFulfillmentMethods
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -941,8 +944,8 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<string>("Method")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTime>("PaidAt")
                         .HasColumnType("datetime2");
@@ -1671,27 +1674,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("BusinessNatureModule", "config");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNaturePaymentMethod", b =>
-                {
-                    b.Property<int>("BusinessNatureId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PaymentMethodId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDefaultEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.HasKey("BusinessNatureId", "PaymentMethodId");
-
-                    b.HasIndex("PaymentMethodId");
-
-                    b.ToTable("BusinessNaturePaymentMethod", "config");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyBusinessNature", b =>
                 {
                     b.Property<int>("CompanyId")
@@ -1759,30 +1741,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("ModuleId");
 
                     b.ToTable("CompanyModule", "config");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyPaymentMethod", b =>
-                {
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PaymentMethodId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("CompanyId", "PaymentMethodId");
-
-                    b.HasIndex("PaymentMethodId");
-
-                    b.ToTable("CompanyPaymentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanySubscription", b =>
@@ -1924,47 +1882,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Module", "config");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.PaymentMethod", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("AppliesTo")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PaymentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.Permission", b =>
@@ -3745,25 +3662,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Module");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNaturePaymentMethod", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Config.BusinessNature", "BusinessNature")
-                        .WithMany()
-                        .HasForeignKey("BusinessNatureId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Config.PaymentMethod", "PaymentMethod")
-                        .WithMany()
-                        .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BusinessNature");
-
-                    b.Navigation("PaymentMethod");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyBusinessNature", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Config.BusinessNature", "BusinessNature")
@@ -3819,25 +3717,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("Module");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyPaymentMethod", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Config.PaymentMethod", "PaymentMethod")
-                        .WithMany()
-                        .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-
-                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanySubscription", b =>

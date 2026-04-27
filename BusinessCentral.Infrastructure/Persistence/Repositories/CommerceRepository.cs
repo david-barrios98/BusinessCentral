@@ -100,12 +100,82 @@ public sealed class CommerceRepository : SqlConfigServer, ICommerceRepository
         return insertedId;
     }
 
-    public async Task<long> CreatePosTicketAsync(int companyId, long? cashSessionId)
+    public async Task<PosTicketReceiptDTO?> GetPosTicketReceiptAsync(int companyId, long ticketId)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Commerce.sp_get_pos_ticket, connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@ticket_id", ticketId, SqlDbType.BigInt));
+
+        await using var reader = await command.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+            return null;
+
+        var receipt = new PosTicketReceiptDTO
+        {
+            Ticket = new PosTicketHeaderDTO
+            {
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                CashSessionId = reader["CashSessionId"] == DBNull.Value ? null : Convert.ToInt64(reader["CashSessionId"]),
+                TicketDate = Convert.ToDateTime(reader["TicketDate"]),
+                Status = reader["Status"]?.ToString() ?? "open",
+                Total = Convert.ToDecimal(reader["Total"]),
+                FulfillmentMethodCode = reader["FulfillmentMethodCode"] == DBNull.Value ? null : reader["FulfillmentMethodCode"]?.ToString(),
+                FulfillmentDetails = reader["FulfillmentDetails"] == DBNull.Value ? null : reader["FulfillmentDetails"]?.ToString(),
+            }
+        };
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                receipt.Lines.Add(new PosTicketReceiptLineDTO
+                {
+                    Id = Convert.ToInt64(reader["Id"]),
+                    TicketId = Convert.ToInt64(reader["TicketId"]),
+                    ProductId = Convert.ToInt32(reader["ProductId"]),
+                    ProductSku = reader["ProductSku"]?.ToString() ?? string.Empty,
+                    ProductName = reader["ProductName"]?.ToString() ?? string.Empty,
+                    Quantity = Convert.ToDecimal(reader["Quantity"]),
+                    UnitPrice = Convert.ToDecimal(reader["UnitPrice"]),
+                    LineTotal = Convert.ToDecimal(reader["LineTotal"]),
+                });
+            }
+        }
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                receipt.Payments.Add(new PosTicketPaymentDTO
+                {
+                    Id = Convert.ToInt64(reader["Id"]),
+                    TicketId = Convert.ToInt64(reader["TicketId"]),
+                    Method = reader["Method"]?.ToString() ?? string.Empty,
+                    Amount = Convert.ToDecimal(reader["Amount"]),
+                    PaidAt = Convert.ToDateTime(reader["PaidAt"]),
+                });
+            }
+        }
+
+        return receipt;
+    }
+
+    public async Task<long> CreatePosTicketAsync(int companyId, long? cashSessionId, string? fulfillmentMethodCode, string? fulfillmentDetails)
     {
         var parameters = new[]
         {
             CreateParameter("@company_id", companyId, SqlDbType.Int),
             CreateParameter("@cash_session_id", (object?)cashSessionId ?? DBNull.Value, SqlDbType.BigInt),
+            CreateParameter("@fulfillment_method_code", (object?)fulfillmentMethodCode ?? DBNull.Value, SqlDbType.NVarChar, 30),
+            CreateParameter("@fulfillment_details", (object?)fulfillmentDetails ?? DBNull.Value, SqlDbType.NVarChar, 500),
         };
 
         var insertedId = await ExecuteStoredProcedureSingleAsync(

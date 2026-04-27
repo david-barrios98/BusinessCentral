@@ -17,7 +17,7 @@ public sealed class PosPayment
     public long TicketId { get; set; }
 
     [Required]
-    [MaxLength(20)]
+    [MaxLength(30)]
     public string Method { get; set; } = "CASH";
 
     public decimal Amount { get; set; }

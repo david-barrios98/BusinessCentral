@@ -1,0 +1,13 @@
+[
+  { "NatureCode": "COMMERCE", "MethodCode": "IN_STORE", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "COMMERCE", "MethodCode": "DELIVERY", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "COMMERCE", "MethodCode": "OTHER_LOCATION", "IsDefaultEnabled": true, "SortOrder": 30 },
+
+  { "NatureCode": "SERVICES", "MethodCode": "IN_STORE", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "SERVICES", "MethodCode": "ON_SITE", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "SERVICES", "MethodCode": "OTHER_LOCATION", "IsDefaultEnabled": true, "SortOrder": 30 },
+
+  { "NatureCode": "FARM", "MethodCode": "IN_STORE", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "FARM", "MethodCode": "OTHER_LOCATION", "IsDefaultEnabled": true, "SortOrder": 20 }
+]
+

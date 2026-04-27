@@ -37,6 +37,8 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IFinanceReportsRepository, FinanceReportsRepository>();
             services.AddScoped<IPucAccountingRepository, PucAccountingRepository>();
             services.AddScoped<ICompanyFinancialProfileRepository, CompanyFinancialProfileRepository>();
+            services.AddScoped<IFulfillmentMethodRepository, FulfillmentMethodRepository>();
+            services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
             services.AddScoped<IStorageLocationRepository, StorageLocationRepository>();
             services.AddScoped<IInventoryLocationReportRepository, InventoryLocationReportRepository>();
             services.AddScoped<ISupplierRepository, SupplierRepository>();

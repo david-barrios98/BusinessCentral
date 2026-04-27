@@ -1,0 +1,9 @@
+[
+  { "Id": 1, "Code": "CASH", "Name": "Efectivo", "AppliesTo": "POS", "Description": "Pago en efectivo.", "Active": true },
+  { "Id": 2, "Code": "CARD", "Name": "Tarjeta", "AppliesTo": "POS", "Description": "Débito/crédito.", "Active": true },
+  { "Id": 3, "Code": "TRANSFER", "Name": "Transferencia", "AppliesTo": "POS", "Description": "Bancaria / billetera.", "Active": true },
+  { "Id": 4, "Code": "QR", "Name": "QR", "AppliesTo": "POS", "Description": "Pago QR.", "Active": true },
+  { "Id": 5, "Code": "CREDIT", "Name": "Crédito", "AppliesTo": "POS", "Description": "Venta a crédito / por cobrar.", "Active": true },
+  { "Id": 6, "Code": "OTHER", "Name": "Otro", "AppliesTo": "POS", "Description": "Otro medio.", "Active": true }
+]
+

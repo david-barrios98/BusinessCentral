@@ -24,12 +24,21 @@ public sealed class ServiceOrdersController : SecureCompanyControllerBase
         public string? VehicleType { get; set; }
         public string? Plate { get; set; }
         public string? CustomerName { get; set; }
+        public string? FulfillmentMethodCode { get; set; }
+        public string? FulfillmentDetails { get; set; }
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateOrderRequest req)
     {
-        var result = await _mediator.Send(new CreateServiceOrderCommand(CompanyId, req.VehicleType, req.Plate, req.CustomerName));
+        var result = await _mediator.Send(new CreateServiceOrderCommand(
+            CompanyId,
+            req.VehicleType,
+            req.Plate,
+            req.CustomerName,
+            req.FulfillmentMethodCode,
+            req.FulfillmentDetails
+        ));
         return ProcessResult(result);
     }
 

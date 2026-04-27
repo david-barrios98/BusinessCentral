@@ -19,6 +19,12 @@ public sealed class PosTicket
     [MaxLength(20)]
     public string Status { get; set; } = "open";
 
+    [MaxLength(30)]
+    public string? FulfillmentMethodCode { get; set; } // IN_STORE / DELIVERY / OTHER_LOCATION
+
+    [MaxLength(500)]
+    public string? FulfillmentDetails { get; set; } // dirección / referencia / notas
+
     public decimal Total { get; set; }
 
     [ForeignKey(nameof(CompanyId))]

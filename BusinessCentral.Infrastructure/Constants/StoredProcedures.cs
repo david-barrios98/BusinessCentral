@@ -55,6 +55,12 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_onboard_company = "[config].[sp_onboard_company]";
             public const string sp_list_company_business_natures = "[config].[sp_list_company_business_natures]";
             public const string sp_set_company_business_nature = "[config].[sp_set_company_business_nature]";
+            public const string sp_list_fulfillment_methods = "[config].[sp_list_fulfillment_methods]";
+            public const string sp_list_company_fulfillment_methods = "[config].[sp_list_company_fulfillment_methods]";
+            public const string sp_set_company_fulfillment_method = "[config].[sp_set_company_fulfillment_method]";
+            public const string sp_list_payment_methods = "[config].[sp_list_payment_methods]";
+            public const string sp_list_company_payment_methods = "[config].[sp_list_company_payment_methods]";
+            public const string sp_set_company_payment_method = "[config].[sp_set_company_payment_method]";
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
@@ -112,6 +118,7 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_products = "[com].[sp_list_products]";
             public const string sp_create_cash_session = "[com].[sp_create_cash_session]";
             public const string sp_create_pos_ticket = "[com].[sp_create_pos_ticket]";
+            public const string sp_get_pos_ticket = "[com].[sp_get_pos_ticket]";
             public const string sp_add_pos_ticket_line = "[com].[sp_add_pos_ticket_line]";
             public const string sp_pay_pos_ticket = "[com].[sp_pay_pos_ticket]";
             public const string sp_report_inventory_by_location = "[com].[sp_report_inventory_by_location]";

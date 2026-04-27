@@ -7,6 +7,8 @@ public sealed record CreateServiceOrderCommand(
     int CompanyId,
     string? VehicleType,
     string? Plate,
-    string? CustomerName
+    string? CustomerName,
+    string? FulfillmentMethodCode,
+    string? FulfillmentDetails
 ) : IRequest<Result<long>>;
 

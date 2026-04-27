@@ -248,6 +248,182 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   CONFIG: Fulfillment / métodos de entrega/recepción
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_fulfillment_methods]
+(
+    @only_active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        fm.Id,
+        fm.Code,
+        fm.Name,
+        fm.AppliesTo,
+        fm.[Description],
+        fm.Active
+    FROM [config].[FulfillmentMethod] fm WITH (NOLOCK)
+    WHERE (@only_active = 0 OR fm.Active = 1)
+    ORDER BY fm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_company_fulfillment_methods]
+(
+    @company_id INT,
+    @only_enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        fm.Id,
+        fm.Code,
+        fm.Name,
+        fm.AppliesTo,
+        fm.[Description],
+        fm.Active,
+        COALESCE(cfm.IsEnabled, CAST(0 AS BIT)) AS IsEnabled
+    FROM [config].[FulfillmentMethod] fm WITH (NOLOCK)
+    LEFT JOIN [config].[CompanyFulfillmentMethod] cfm WITH (NOLOCK)
+        ON cfm.FulfillmentMethodId = fm.Id AND cfm.CompanyId = @company_id
+    WHERE fm.Active = 1
+      AND (@only_enabled = 0 OR COALESCE(cfm.IsEnabled, CAST(0 AS BIT)) = 1)
+    ORDER BY fm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_set_company_fulfillment_method]
+(
+    @company_id INT,
+    @method_code NVARCHAR(30),
+    @enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @method_id INT;
+    SELECT TOP 1 @method_id = fm.Id
+    FROM [config].[FulfillmentMethod] fm WITH (NOLOCK)
+    WHERE fm.Active = 1 AND LOWER(fm.Code) = LOWER(@method_code);
+
+    IF @method_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Method not found' AS Message;
+        RETURN;
+    END
+
+    IF EXISTS (SELECT 1 FROM [config].[CompanyFulfillmentMethod] WHERE CompanyId=@company_id AND FulfillmentMethodId=@method_id)
+    BEGIN
+        UPDATE [config].[CompanyFulfillmentMethod]
+        SET IsEnabled=@enabled, UpdatedAt=SYSUTCDATETIME()
+        WHERE CompanyId=@company_id AND FulfillmentMethodId=@method_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [config].[CompanyFulfillmentMethod] (CompanyId, FulfillmentMethodId, IsEnabled, CreatedAt, UpdatedAt)
+        VALUES (@company_id, @method_id, @enabled, SYSUTCDATETIME(), SYSUTCDATETIME());
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
+END
+GO
+
+/* =========================================================
+   CONFIG: Payment methods
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_payment_methods]
+(
+    @only_active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        pm.Id,
+        pm.Code,
+        pm.Name,
+        pm.AppliesTo,
+        pm.[Description],
+        pm.Active
+    FROM [config].[PaymentMethod] pm WITH (NOLOCK)
+    WHERE (@only_active = 0 OR pm.Active = 1)
+    ORDER BY pm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_company_payment_methods]
+(
+    @company_id INT,
+    @only_enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        pm.Id,
+        pm.Code,
+        pm.Name,
+        pm.AppliesTo,
+        pm.[Description],
+        pm.Active,
+        COALESCE(cpm.IsEnabled, CAST(0 AS BIT)) AS IsEnabled
+    FROM [config].[PaymentMethod] pm WITH (NOLOCK)
+    LEFT JOIN [config].[CompanyPaymentMethod] cpm WITH (NOLOCK)
+        ON cpm.PaymentMethodId = pm.Id AND cpm.CompanyId = @company_id
+    WHERE pm.Active = 1
+      AND (@only_enabled = 0 OR COALESCE(cpm.IsEnabled, CAST(0 AS BIT)) = 1)
+    ORDER BY pm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_set_company_payment_method]
+(
+    @company_id INT,
+    @method_code NVARCHAR(30),
+    @enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @method_id INT;
+    SELECT TOP 1 @method_id = pm.Id
+    FROM [config].[PaymentMethod] pm WITH (NOLOCK)
+    WHERE pm.Active = 1 AND LOWER(pm.Code) = LOWER(@method_code);
+
+    IF @method_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Method not found' AS Message;
+        RETURN;
+    END
+
+    IF EXISTS (SELECT 1 FROM [config].[CompanyPaymentMethod] WHERE CompanyId=@company_id AND PaymentMethodId=@method_id)
+    BEGIN
+        UPDATE [config].[CompanyPaymentMethod]
+        SET IsEnabled=@enabled, UpdatedAt=SYSUTCDATETIME()
+        WHERE CompanyId=@company_id AND PaymentMethodId=@method_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [config].[CompanyPaymentMethod] (CompanyId, PaymentMethodId, IsEnabled, CreatedAt, UpdatedAt)
+        VALUES (@company_id, @method_id, @enabled, SYSUTCDATETIME(), SYSUTCDATETIME());
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_onboard_company]
 (
     -- Company
@@ -356,6 +532,36 @@ BEGIN
           AND NOT EXISTS (
               SELECT 1 FROM [config].[CompanyModule] cm
               WHERE cm.CompanyId = @company_id AND cm.ModuleId = bnm.ModuleId
+          );
+
+        -- Enable fulfillment methods from nature template
+        INSERT INTO [config].[CompanyFulfillmentMethod] (CompanyId, FulfillmentMethodId, IsEnabled, CreatedAt, UpdatedAt)
+        SELECT
+            @company_id,
+            bnf.FulfillmentMethodId,
+            bnf.IsDefaultEnabled,
+            @now,
+            @now
+        FROM [config].[BusinessNatureFulfillmentMethod] bnf
+        WHERE bnf.BusinessNatureId = @bn_id
+          AND NOT EXISTS (
+              SELECT 1 FROM [config].[CompanyFulfillmentMethod] cfm
+              WHERE cfm.CompanyId = @company_id AND cfm.FulfillmentMethodId = bnf.FulfillmentMethodId
+          );
+
+        -- Enable payment methods from nature template
+        INSERT INTO [config].[CompanyPaymentMethod] (CompanyId, PaymentMethodId, IsEnabled, CreatedAt, UpdatedAt)
+        SELECT
+            @company_id,
+            bnp.PaymentMethodId,
+            bnp.IsDefaultEnabled,
+            @now,
+            @now
+        FROM [config].[BusinessNaturePaymentMethod] bnp
+        WHERE bnp.BusinessNatureId = @bn_id
+          AND NOT EXISTS (
+              SELECT 1 FROM [config].[CompanyPaymentMethod] cpm
+              WHERE cpm.CompanyId = @company_id AND cpm.PaymentMethodId = bnp.PaymentMethodId
           );
 
         -- Create owner user through existing SP
@@ -2217,13 +2423,15 @@ CREATE OR ALTER PROCEDURE [svc].[sp_create_service_order]
     @company_id INT,
     @vehicle_type NVARCHAR(50) = NULL,
     @plate NVARCHAR(20) = NULL,
-    @customer_name NVARCHAR(150) = NULL
+    @customer_name NVARCHAR(150) = NULL,
+    @fulfillment_method_code NVARCHAR(30) = NULL,
+    @fulfillment_details NVARCHAR(500) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO [svc].[ServiceOrder] (CompanyId, VehicleType, Plate, CustomerName)
-    VALUES (@company_id, @vehicle_type, @plate, @customer_name);
+    INSERT INTO [svc].[ServiceOrder] (CompanyId, VehicleType, Plate, CustomerName, FulfillmentMethodCode, FulfillmentDetails)
+    VALUES (@company_id, @vehicle_type, @plate, @customer_name, @fulfillment_method_code, @fulfillment_details);
 
     SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
 END
@@ -2262,7 +2470,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT TOP 1 Id, CompanyId, OrderDate, VehicleType, Plate, CustomerName, Status, Total
+    SELECT TOP 1 Id, CompanyId, OrderDate, VehicleType, Plate, CustomerName, FulfillmentMethodCode, FulfillmentDetails, Status, Total
     FROM [svc].[ServiceOrder]
     WHERE CompanyId=@company_id AND Id=@order_id;
 
@@ -2345,15 +2553,64 @@ GO
 
 CREATE OR ALTER PROCEDURE [com].[sp_create_pos_ticket]
     @company_id INT,
-    @cash_session_id BIGINT = NULL
+    @cash_session_id BIGINT = NULL,
+    @fulfillment_method_code NVARCHAR(30) = NULL,
+    @fulfillment_details NVARCHAR(500) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO [com].[PosTicket] (CompanyId, CashSessionId)
-    VALUES (@company_id, @cash_session_id);
+    INSERT INTO [com].[PosTicket] (CompanyId, CashSessionId, FulfillmentMethodCode, FulfillmentDetails)
+    VALUES (@company_id, @cash_session_id, @fulfillment_method_code, @fulfillment_details);
 
     SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_get_pos_ticket]
+(
+    @company_id INT,
+    @ticket_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        tk.Id,
+        tk.CompanyId,
+        tk.CashSessionId,
+        tk.TicketDate,
+        tk.[Status],
+        tk.Total,
+        tk.FulfillmentMethodCode,
+        tk.FulfillmentDetails
+    FROM [com].[PosTicket] tk WITH (NOLOCK)
+    WHERE tk.CompanyId = @company_id AND tk.Id = @ticket_id;
+
+    SELECT
+        l.Id,
+        l.TicketId,
+        l.ProductId,
+        p.Sku AS ProductSku,
+        p.Name AS ProductName,
+        l.Quantity,
+        l.UnitPrice,
+        l.LineTotal
+    FROM [com].[PosTicketLine] l WITH (NOLOCK)
+    INNER JOIN [com].[Product] p WITH (NOLOCK) ON p.Id = l.ProductId AND p.CompanyId = l.CompanyId
+    WHERE l.CompanyId = @company_id AND l.TicketId = @ticket_id
+    ORDER BY l.Id;
+
+    SELECT
+        p.Id,
+        p.TicketId,
+        p.Method,
+        p.Amount,
+        p.PaidAt
+    FROM [com].[PosPayment] p WITH (NOLOCK)
+    WHERE p.CompanyId = @company_id AND p.TicketId = @ticket_id
+    ORDER BY p.Id;
 END
 GO
 
@@ -2393,6 +2650,27 @@ CREATE OR ALTER PROCEDURE [com].[sp_pay_pos_ticket]
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    -- Validación: método de pago debe estar habilitado para la compañía (si existe catálogo).
+    IF EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'config')
+    BEGIN
+        IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[config].[PaymentMethod]') AND type IN (N'U'))
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM [config].[PaymentMethod] pm WITH (NOLOCK)
+                INNER JOIN [config].[CompanyPaymentMethod] cpm WITH (NOLOCK)
+                    ON cpm.PaymentMethodId = pm.Id AND cpm.CompanyId = @company_id
+                WHERE pm.Active = 1
+                  AND cpm.IsEnabled = 1
+                  AND LOWER(pm.Code) = LOWER(@method)
+            )
+            BEGIN
+                RAISERROR('Payment method not enabled for company.', 16, 1);
+                RETURN;
+            END
+        END
+    END
 
     INSERT INTO [com].[PosPayment] (CompanyId, TicketId, Method, Amount)
     VALUES (@company_id, @ticket_id, @method, @amount);

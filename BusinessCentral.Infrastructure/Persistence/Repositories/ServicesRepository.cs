@@ -56,7 +56,7 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
         );
     }
 
-    public async Task<long> CreateServiceOrderAsync(int companyId, string? vehicleType, string? plate, string? customerName)
+    public async Task<long> CreateServiceOrderAsync(int companyId, string? vehicleType, string? plate, string? customerName, string? fulfillmentMethodCode, string? fulfillmentDetails)
     {
         var parameters = new[]
         {
@@ -64,6 +64,8 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
             CreateParameter("@vehicle_type", (object?)vehicleType ?? DBNull.Value, SqlDbType.NVarChar, 50),
             CreateParameter("@plate", (object?)plate ?? DBNull.Value, SqlDbType.NVarChar, 20),
             CreateParameter("@customer_name", (object?)customerName ?? DBNull.Value, SqlDbType.NVarChar, 150),
+            CreateParameter("@fulfillment_method_code", (object?)fulfillmentMethodCode ?? DBNull.Value, SqlDbType.NVarChar, 30),
+            CreateParameter("@fulfillment_details", (object?)fulfillmentDetails ?? DBNull.Value, SqlDbType.NVarChar, 500),
         };
 
         var insertedId = await ExecuteStoredProcedureSingleAsync(
@@ -123,6 +125,8 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
                 VehicleType = reader["VehicleType"] == DBNull.Value ? null : reader["VehicleType"]?.ToString(),
                 Plate = reader["Plate"] == DBNull.Value ? null : reader["Plate"]?.ToString(),
                 CustomerName = reader["CustomerName"] == DBNull.Value ? null : reader["CustomerName"]?.ToString(),
+                FulfillmentMethodCode = reader["FulfillmentMethodCode"] == DBNull.Value ? null : reader["FulfillmentMethodCode"]?.ToString(),
+                FulfillmentDetails = reader["FulfillmentDetails"] == DBNull.Value ? null : reader["FulfillmentDetails"]?.ToString(),
                 Status = reader["Status"]?.ToString() ?? "open",
                 Total = Convert.ToDecimal(reader["Total"]),
             };

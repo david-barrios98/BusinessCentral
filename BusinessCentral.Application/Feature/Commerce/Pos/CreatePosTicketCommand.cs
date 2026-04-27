@@ -3,5 +3,10 @@ using MediatR;
 
 namespace BusinessCentral.Application.Feature.Commerce.Pos;
 
-public sealed record CreatePosTicketCommand(int CompanyId, long? CashSessionId) : IRequest<Result<long>>;
+public sealed record CreatePosTicketCommand(
+    int CompanyId,
+    long? CashSessionId,
+    string? FulfillmentMethodCode,
+    string? FulfillmentDetails
+) : IRequest<Result<long>>;
 

@@ -35,12 +35,21 @@ public sealed class PosController : SecureCompanyControllerBase
     public sealed class CreateTicketRequest
     {
         public long? CashSessionId { get; set; }
+        public string? FulfillmentMethodCode { get; set; }
+        public string? FulfillmentDetails { get; set; }
     }
 
     [HttpPost("tickets")]
     public async Task<IActionResult> CreateTicket([FromBody] CreateTicketRequest req)
     {
-        var result = await _mediator.Send(new CreatePosTicketCommand(CompanyId, req.CashSessionId));
+        var result = await _mediator.Send(new CreatePosTicketCommand(CompanyId, req.CashSessionId, req.FulfillmentMethodCode, req.FulfillmentDetails));
+        return ProcessResult(result);
+    }
+
+    [HttpGet("tickets/{ticketId:long}")]
+    public async Task<IActionResult> GetTicket([FromRoute] long ticketId)
+    {
+        var result = await _mediator.Send(new GetPosTicketReceiptQuery(CompanyId, ticketId));
         return ProcessResult(result);
     }
 

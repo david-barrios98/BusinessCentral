@@ -24,6 +24,12 @@ public sealed class ServiceOrder
     [MaxLength(20)]
     public string Status { get; set; } = "open";
 
+    [MaxLength(30)]
+    public string? FulfillmentMethodCode { get; set; } // IN_STORE / ON_SITE / OTHER_LOCATION
+
+    [MaxLength(500)]
+    public string? FulfillmentDetails { get; set; }
+
     public decimal Total { get; set; }
     public DateTime CreatedAt { get; set; }
 
