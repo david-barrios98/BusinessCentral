@@ -1,26 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MailKit" Version="4.10.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.6" />
+		<PackageReference Include="MailKit" Version="4.16.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.7" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.20" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.20" />
-		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.10.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7" />
+		<PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
 
 		<!-- Alineadas a 10.0.6 para evitar degradación -->
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.6" />
-		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.7" />
 	</ItemGroup>
 
 	<ItemGroup>
