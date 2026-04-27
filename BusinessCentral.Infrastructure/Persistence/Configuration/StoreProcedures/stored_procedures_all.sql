@@ -708,6 +708,67 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [fin].[sp_get_account_id_by_code]
+(
+    @company_id INT,
+    @account_code NVARCHAR(20)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        a.Id
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id
+      AND a.Active = 1
+      AND a.Code = @account_code;
+END
+GO
+
+/* --- Perfil de arranque financiero (empresa) --- */
+CREATE OR ALTER PROCEDURE [business].[sp_get_company_financial_bootstrap]
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        c.Id AS CompanyId,
+        c.FinancialStartupMode,
+        c.FinancialOperatingStartDateUtc,
+        c.FinancialBootstrapStatus,
+        c.FinancialBootstrapNotes
+    FROM [business].[Companies] c WITH (NOLOCK)
+    WHERE c.Id = @company_id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [business].[sp_update_company_financial_bootstrap]
+(
+    @company_id INT,
+    @startup_mode NVARCHAR(30) = NULL,
+    @operating_start_utc DATETIME2 = NULL,
+    @bootstrap_status NVARCHAR(20),
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    /* NULL en modo/fecha/notas = no sobrescribir (permite updates parciales desde otros procesos). */
+    UPDATE [business].[Companies]
+    SET FinancialStartupMode = CASE WHEN @startup_mode IS NOT NULL THEN @startup_mode ELSE FinancialStartupMode END,
+        FinancialOperatingStartDateUtc = CASE WHEN @operating_start_utc IS NOT NULL THEN @operating_start_utc ELSE FinancialOperatingStartDateUtc END,
+        FinancialBootstrapStatus = @bootstrap_status,
+        FinancialBootstrapNotes = CASE WHEN @notes IS NOT NULL THEN @notes ELSE FinancialBootstrapNotes END,
+        [Update] = SYSUTCDATETIME()
+    WHERE Id = @company_id;
+
+    SELECT CAST(@@ROWCOUNT AS INT) AS RowsAffected;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [fin].[sp_create_journal_entry]
 (
     @company_id INT,

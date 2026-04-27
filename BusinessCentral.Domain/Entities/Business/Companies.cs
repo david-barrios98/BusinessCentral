@@ -62,5 +62,19 @@ namespace BusinessCentral.Domain.Entities.Business
 
         public bool? Active { get; set; } = true;
 
+        /// <summary>Modo de arranque financiero: CONSTITUTION | SANITATION | MIGRATION.</summary>
+        [MaxLength(30)]
+        public string? FinancialStartupMode { get; set; }
+
+        /// <summary>Fecha desde la cual el ERP toma como “corte” operativo y contable para aperturas.</summary>
+        public DateTime? FinancialOperatingStartDateUtc { get; set; }
+
+        /// <summary>NOT_STARTED | IN_PROGRESS | COMPLETED</summary>
+        [MaxLength(20)]
+        public string FinancialBootstrapStatus { get; set; } = "NOT_STARTED";
+
+        [MaxLength(500)]
+        public string? FinancialBootstrapNotes { get; set; }
+
     }
 }

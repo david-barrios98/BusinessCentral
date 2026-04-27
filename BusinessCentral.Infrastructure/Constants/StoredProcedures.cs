@@ -64,6 +64,8 @@ namespace BusinessCentral.Infrastructure.Constants
         {
             public const string sp_upsert_storage_location = "[business].[sp_upsert_storage_location]";
             public const string sp_list_storage_locations = "[business].[sp_list_storage_locations]";
+            public const string sp_get_company_financial_bootstrap = "[business].[sp_get_company_financial_bootstrap]";
+            public const string sp_update_company_financial_bootstrap = "[business].[sp_update_company_financial_bootstrap]";
         }
 
         public static class Hr
@@ -130,6 +132,7 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_report_tax_summary_co = "[fin].[sp_report_tax_summary_co]";
             public const string sp_report_renta_annual_co = "[fin].[sp_report_renta_annual_co]";
             public const string sp_list_accounts = "[fin].[sp_list_accounts]";
+            public const string sp_get_account_id_by_code = "[fin].[sp_get_account_id_by_code]";
             public const string sp_create_journal_entry = "[fin].[sp_create_journal_entry]";
             public const string sp_add_journal_entry_line = "[fin].[sp_add_journal_entry_line]";
             public const string sp_get_journal_entry = "[fin].[sp_get_journal_entry]";

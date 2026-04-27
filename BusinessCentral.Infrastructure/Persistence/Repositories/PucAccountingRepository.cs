@@ -39,6 +39,26 @@ public sealed class PucAccountingRepository : SqlConfigServer, IPucAccountingRep
             });
     }
 
+    public async Task<long?> GetAccountIdByCodeAsync(int companyId, string accountCode)
+    {
+        if (string.IsNullOrWhiteSpace(accountCode))
+            return null;
+
+        var code = accountCode.Trim();
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@account_code", code, SqlDbType.NVarChar, 20)
+        };
+
+        var id = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Finance.sp_get_account_id_by_code,
+            parameters,
+            reader => Convert.ToInt64(reader["Id"]));
+
+        return id;
+    }
+
     public async Task<long> CreateJournalEntryAsync(int companyId, DateTime entryDate, string? entryType, string? referenceType, string? referenceId, string? description, int? createdByUserId)
     {
         var parameters = new[]
