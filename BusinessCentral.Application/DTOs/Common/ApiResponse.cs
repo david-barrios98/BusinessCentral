@@ -13,6 +13,7 @@ namespace BusinessCentral.Application.DTOs.Common
         public string Message { get; set; } = string.Empty;
         public int Code { get; set; }
         public bool IsException { get; set; }
+        public string? TraceId { get; set; }
 
         public static ApiResponse<T> Success(T data, string message, int code = 200)
             => new() { IsSuccess = true, Data = data, Message = message, Code = code };
@@ -20,7 +21,7 @@ namespace BusinessCentral.Application.DTOs.Common
         public static ApiResponse<T> Failure(string message, int code)
             => new() { IsSuccess = false, Message = message, Code = code };
 
-        public static ApiResponse<T> Exception(string message, int code = 500)
-            => new() { IsSuccess = false, IsException = true, Message = message, Code = code };
+        public static ApiResponse<T> Exception(string message, int code = 500, string? traceId = null)
+            => new() { IsSuccess = false, IsException = true, Message = message, Code = code, TraceId = traceId };
     }
 }

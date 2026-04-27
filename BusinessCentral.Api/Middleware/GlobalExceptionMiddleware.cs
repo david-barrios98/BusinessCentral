@@ -50,13 +50,15 @@ public class GlobalExceptionMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
 
-        // Usamos el mensaje genérico para errores 500 por seguridad, 
-        // para el resto usamos el mensaje de la excepción.
-        string message = exception.Message;
+        // Para 500 devolvemos un mensaje genérico (no filtrar detalles internos).
+        string message = statusCode >= 500
+            ? "Ocurrió un error interno. Intenta nuevamente."
+            : exception.Message;
 
         var response = BusinessCentral.Application.DTOs.Common.ApiResponse<object>.Exception(
             message,
-            statusCode
+            statusCode,
+            context.TraceIdentifier
         );
 
         return context.Response.WriteAsJsonAsync(response);

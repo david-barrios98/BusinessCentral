@@ -9,7 +9,10 @@ public static class JwtExtensions
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration config)
     {
         var jwtSettings = config.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"];
+        var secretKey =
+            jwtSettings["SecretKey"] ??
+            Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ??
+            Environment.GetEnvironmentVariable("JwtSettings__SecretKey");
 
         if (string.IsNullOrEmpty(secretKey))
             throw new InvalidOperationException("La SecretKey de JWT no está configurada.");

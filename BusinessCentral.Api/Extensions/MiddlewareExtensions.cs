@@ -6,6 +6,7 @@ public static class MiddlewareExtensions
 {
     public static IApplicationBuilder UseGlobalMiddleware(this IApplicationBuilder app)
     {
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseMiddleware<TenantSubscriptionMiddleware>();
 
