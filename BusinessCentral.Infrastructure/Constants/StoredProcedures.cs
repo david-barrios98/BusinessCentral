@@ -53,6 +53,25 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
         }
 
+        public static class Hr
+        {
+            public const string sp_upsert_employee_profile = "[hr].[sp_upsert_employee_profile]";
+            public const string sp_get_employee_profile = "[hr].[sp_get_employee_profile]";
+            public const string sp_list_employees = "[hr].[sp_list_employees]";
+
+            public const string sp_upsert_pay_scheme = "[hr].[sp_upsert_pay_scheme]";
+            public const string sp_list_pay_schemes = "[hr].[sp_list_pay_schemes]";
+
+            public const string sp_create_work_log = "[hr].[sp_create_work_log]";
+            public const string sp_list_work_logs = "[hr].[sp_list_work_logs]";
+
+            public const string sp_create_loan_advance = "[hr].[sp_create_loan_advance]";
+            public const string sp_list_loan_advances = "[hr].[sp_list_loan_advances]";
+
+            public const string sp_create_deduction = "[hr].[sp_create_deduction]";
+            public const string sp_list_deductions = "[hr].[sp_list_deductions]";
+        }
+
         public static class Common
         {
             // Geografía
