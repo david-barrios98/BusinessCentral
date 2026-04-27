@@ -4,6 +4,7 @@ using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    partial class BusinessCentralDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427173849_AddFinanceReporting")]
+    partial class AddFinanceReporting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1415,59 +1418,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("HarvestLot", "business");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.Account", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsAuxiliary")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Nature")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
-
-                    b.Property<long?>("ParentAccountId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("ParentAccountId");
-
-                    b.ToTable("Account", "business");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.FinancialTransaction", b =>
                 {
                     b.Property<long>("Id")
@@ -1541,106 +1491,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("CompanyId");
 
                     b.ToTable("FinancialTransaction", "business");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.JournalEntry", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("EntryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("EntryType")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("ReferenceId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ReferenceType")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("JournalEntry", "business");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.JournalEntryLine", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("AccountId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Credit")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Debit")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<long>("JournalEntryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ThirdPartyDocument")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ThirdPartyName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("JournalEntryId");
-
-                    b.ToTable("JournalEntryLine", "business");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.TaxConcept", b =>
@@ -2639,24 +2489,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Zone");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.Account", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Finance.Account", "Parent")
-                        .WithMany()
-                        .HasForeignKey("ParentAccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Company");
-
-                    b.Navigation("Parent");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.FinancialTransaction", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
@@ -2666,44 +2498,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.JournalEntry", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Finance.JournalEntryLine", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Finance.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Finance.JournalEntry", "JournalEntry")
-                        .WithMany()
-                        .HasForeignKey("JournalEntryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Company");
-
-                    b.Navigation("JournalEntry");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.Deduction", b =>

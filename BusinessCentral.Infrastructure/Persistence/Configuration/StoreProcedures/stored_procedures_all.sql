@@ -403,6 +403,463 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   FIN (Reportes financieros/contables + base tributaria CO)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [fin].[sp_create_financial_transaction]
+(
+    @company_id INT,
+    @tx_date DATETIME2,
+    @direction NVARCHAR(20),
+    @kind NVARCHAR(30),
+    @category_code NVARCHAR(50) = NULL,
+    @description NVARCHAR(500) = NULL,
+    @amount DECIMAL(18,2),
+    @third_party_document NVARCHAR(50) = NULL,
+    @third_party_name NVARCHAR(200) = NULL,
+    @source_module NVARCHAR(50) = NULL,
+    @reference_type NVARCHAR(50) = NULL,
+    @reference_id NVARCHAR(100) = NULL,
+    @tax_code NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [fin].[FinancialTransaction]
+        (CompanyId, TxDate, Direction, Kind, CategoryCode, [Description], Amount, ThirdPartyDocument, ThirdPartyName, SourceModule, ReferenceType, ReferenceId, TaxCode, Active, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @tx_date, @direction, @kind, @category_code, @description, @amount, @third_party_document, @third_party_name, @source_module, @reference_type, @reference_id, @tax_code, 1, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_financial_summary]
+(
+    @company_id INT,
+    @from_date DATETIME2,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Tx AS (
+        SELECT
+            CAST(t.TxDate AS DATE) AS [Day],
+            CASE WHEN t.Direction = 'IN' THEN t.Amount ELSE 0 END AS InAmount,
+            CASE WHEN t.Direction = 'OUT' THEN t.Amount ELSE 0 END AS OutAmount
+        FROM [fin].[FinancialTransaction] t WITH (NOLOCK)
+        WHERE t.CompanyId = @company_id
+          AND t.Active = 1
+          AND t.TxDate >= @from_date AND t.TxDate < DATEADD(DAY, 1, @to_date)
+    ),
+    Pos AS (
+        SELECT
+            CAST(p.PaidAt AS DATE) AS [Day],
+            SUM(p.Amount) AS InAmount
+        FROM [com].[PosPayment] p WITH (NOLOCK)
+        INNER JOIN [com].[PosTicket] tk WITH (NOLOCK) ON tk.Id = p.TicketId AND tk.CompanyId = p.CompanyId
+        WHERE p.CompanyId = @company_id
+          AND p.PaidAt >= @from_date AND p.PaidAt < DATEADD(DAY, 1, @to_date)
+          AND LOWER(tk.Status) IN ('paid','closed')
+        GROUP BY CAST(p.PaidAt AS DATE)
+    )
+    SELECT
+        d.[Day],
+        SUM(d.InAmount) AS InAmount,
+        SUM(d.OutAmount) AS OutAmount,
+        SUM(d.InAmount) - SUM(d.OutAmount) AS Net
+    FROM (
+        SELECT [Day], InAmount, OutAmount FROM Tx
+        UNION ALL
+        SELECT [Day], InAmount, CAST(0 AS DECIMAL(18,2)) AS OutAmount FROM Pos
+    ) d
+    GROUP BY d.[Day]
+    ORDER BY d.[Day];
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_pnl]
+(
+    @company_id INT,
+    @from_date DATETIME2,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Solo transacciones clasificadas (CategoryCode). POS se clasifica como SALES.
+    ;WITH Tx AS (
+        SELECT
+            ISNULL(NULLIF(LTRIM(RTRIM(t.CategoryCode)), ''), 'UNCLASSIFIED') AS CategoryCode,
+            SUM(CASE WHEN t.Direction = 'IN' THEN t.Amount ELSE 0 END) AS Income,
+            SUM(CASE WHEN t.Direction = 'OUT' THEN t.Amount ELSE 0 END) AS Expense
+        FROM [fin].[FinancialTransaction] t WITH (NOLOCK)
+        WHERE t.CompanyId = @company_id
+          AND t.Active = 1
+          AND t.TxDate >= @from_date AND t.TxDate < DATEADD(DAY, 1, @to_date)
+        GROUP BY ISNULL(NULLIF(LTRIM(RTRIM(t.CategoryCode)), ''), 'UNCLASSIFIED')
+    ),
+    Pos AS (
+        SELECT
+            'SALES_POS' AS CategoryCode,
+            SUM(p.Amount) AS Income,
+            CAST(0 AS DECIMAL(18,2)) AS Expense
+        FROM [com].[PosPayment] p WITH (NOLOCK)
+        INNER JOIN [com].[PosTicket] tk WITH (NOLOCK) ON tk.Id = p.TicketId AND tk.CompanyId = p.CompanyId
+        WHERE p.CompanyId = @company_id
+          AND p.PaidAt >= @from_date AND p.PaidAt < DATEADD(DAY, 1, @to_date)
+          AND LOWER(tk.Status) IN ('paid','closed')
+    )
+    SELECT
+        x.CategoryCode,
+        SUM(x.Income) AS Income,
+        SUM(x.Expense) AS Expense,
+        SUM(x.Income) - SUM(x.Expense) AS Profit
+    FROM (
+        SELECT CategoryCode, Income, Expense FROM Tx
+        UNION ALL
+        SELECT CategoryCode, Income, Expense FROM Pos
+    ) x
+    GROUP BY x.CategoryCode
+    ORDER BY x.CategoryCode;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_tax_summary_co]
+(
+    @company_id INT,
+    @from_date DATETIME2,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Resumen tributario base (CO): suma de transacciones Kind='TAX' por TaxCode.
+    SELECT
+        ISNULL(NULLIF(LTRIM(RTRIM(t.TaxCode)), ''), 'UNSPECIFIED') AS TaxCode,
+        SUM(CASE WHEN t.Direction = 'IN' THEN t.Amount ELSE 0 END) AS TaxIn,
+        SUM(CASE WHEN t.Direction = 'OUT' THEN t.Amount ELSE 0 END) AS TaxOut,
+        SUM(CASE WHEN t.Direction = 'OUT' THEN t.Amount ELSE 0 END) - SUM(CASE WHEN t.Direction = 'IN' THEN t.Amount ELSE 0 END) AS NetPayable
+    FROM [fin].[FinancialTransaction] t WITH (NOLOCK)
+    WHERE t.CompanyId = @company_id
+      AND t.Active = 1
+      AND t.Kind = 'TAX'
+      AND t.TxDate >= @from_date AND t.TxDate < DATEADD(DAY, 1, @to_date)
+    GROUP BY ISNULL(NULLIF(LTRIM(RTRIM(t.TaxCode)), ''), 'UNSPECIFIED')
+    ORDER BY TaxCode;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_renta_annual_co]
+(
+    @company_id INT,
+    @year INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @from_date DATETIME2 = DATEFROMPARTS(@year, 1, 1);
+    DECLARE @to_date DATETIME2 = DATEFROMPARTS(@year, 12, 31);
+
+    -- Base para declaración de renta: ingresos, costos, gastos, impuestos (según CategoryCode/Kind).
+    SELECT
+        @year AS [Year],
+        SUM(CASE WHEN t.Direction = 'IN' AND t.Kind <> 'TAX' THEN t.Amount ELSE 0 END) AS TotalIncome,
+        SUM(CASE WHEN t.Direction = 'OUT' AND t.Kind <> 'TAX' THEN t.Amount ELSE 0 END) AS TotalExpense,
+        SUM(CASE WHEN t.Kind = 'TAX' AND t.Direction = 'OUT' THEN t.Amount ELSE 0 END) AS TaxesPaid,
+        SUM(CASE WHEN t.Kind = 'TAX' AND t.Direction = 'IN' THEN t.Amount ELSE 0 END) AS TaxesCollected,
+        (SUM(CASE WHEN t.Direction = 'IN' AND t.Kind <> 'TAX' THEN t.Amount ELSE 0 END)
+         - SUM(CASE WHEN t.Direction = 'OUT' AND t.Kind <> 'TAX' THEN t.Amount ELSE 0 END)) AS NetIncome
+    FROM [fin].[FinancialTransaction] t WITH (NOLOCK)
+    WHERE t.CompanyId = @company_id
+      AND t.Active = 1
+      AND t.TxDate >= @from_date AND t.TxDate < DATEADD(DAY, 1, @to_date);
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_list_accounts]
+(
+    @company_id INT,
+    @only_active BIT = 1,
+    @q NVARCHAR(100) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        a.Id,
+        a.CompanyId,
+        a.Code,
+        a.Name,
+        a.Nature,
+        a.Level,
+        a.ParentAccountId,
+        a.IsAuxiliary,
+        a.Active
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id
+      AND (@only_active = 0 OR a.Active = 1)
+      AND (
+          @q IS NULL
+          OR a.Code LIKE '%' + @q + '%'
+          OR a.Name LIKE '%' + @q + '%'
+      )
+    ORDER BY a.Code;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_create_journal_entry]
+(
+    @company_id INT,
+    @entry_date DATETIME2,
+    @entry_type NVARCHAR(30) = NULL,
+    @reference_type NVARCHAR(50) = NULL,
+    @reference_id NVARCHAR(100) = NULL,
+    @description NVARCHAR(500) = NULL,
+    @created_by_user_id INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [fin].[JournalEntry]
+        (CompanyId, EntryDate, EntryType, ReferenceType, ReferenceId, [Description], [Status], CreatedByUserId, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @entry_date, @entry_type, @reference_type, @reference_id, @description, 'draft', @created_by_user_id, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_add_journal_entry_line]
+(
+    @company_id INT,
+    @journal_entry_id BIGINT,
+    @account_id BIGINT,
+    @debit DECIMAL(18,2),
+    @credit DECIMAL(18,2),
+    @third_party_document NVARCHAR(50) = NULL,
+    @third_party_name NVARCHAR(200) = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [fin].[JournalEntry] je WITH (NOLOCK)
+        WHERE je.Id = @journal_entry_id AND je.CompanyId = @company_id AND LOWER(je.[Status]) = 'draft'
+    )
+    BEGIN
+        RAISERROR('JournalEntry not found or not in draft status.', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [fin].[Account] a WITH (NOLOCK)
+        WHERE a.Id = @account_id AND a.CompanyId = @company_id AND a.Active = 1
+    )
+    BEGIN
+        RAISERROR('Account not found or inactive.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO [fin].[JournalEntryLine]
+        (CompanyId, JournalEntryId, AccountId, Debit, Credit, ThirdPartyDocument, ThirdPartyName, Notes, CreatedAt)
+    VALUES
+        (@company_id, @journal_entry_id, @account_id, @debit, @credit, @third_party_document, @third_party_name, @notes, SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_get_journal_entry]
+(
+    @company_id INT,
+    @journal_entry_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        je.Id,
+        je.CompanyId,
+        je.EntryDate,
+        je.EntryType,
+        je.ReferenceType,
+        je.ReferenceId,
+        je.[Description],
+        je.[Status],
+        je.CreatedByUserId,
+        je.CreatedAt,
+        je.UpdatedAt
+    FROM [fin].[JournalEntry] je WITH (NOLOCK)
+    WHERE je.CompanyId = @company_id AND je.Id = @journal_entry_id;
+
+    SELECT
+        l.Id,
+        l.JournalEntryId,
+        l.AccountId,
+        a.Code AS AccountCode,
+        a.Name AS AccountName,
+        l.Debit,
+        l.Credit,
+        l.ThirdPartyDocument,
+        l.ThirdPartyName,
+        l.Notes,
+        l.CreatedAt
+    FROM [fin].[JournalEntryLine] l WITH (NOLOCK)
+    INNER JOIN [fin].[Account] a WITH (NOLOCK) ON a.Id = l.AccountId AND a.CompanyId = l.CompanyId
+    WHERE l.CompanyId = @company_id AND l.JournalEntryId = @journal_entry_id
+    ORDER BY l.Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_post_journal_entry]
+(
+    @company_id INT,
+    @journal_entry_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @debit DECIMAL(18,2) = 0;
+    DECLARE @credit DECIMAL(18,2) = 0;
+
+    SELECT
+        @debit = ISNULL(SUM(Debit),0),
+        @credit = ISNULL(SUM(Credit),0)
+    FROM [fin].[JournalEntryLine] l WITH (NOLOCK)
+    WHERE l.CompanyId = @company_id AND l.JournalEntryId = @journal_entry_id;
+
+    IF @debit = 0 AND @credit = 0
+    BEGIN
+        RAISERROR('JournalEntry has no lines.', 16, 1);
+        RETURN;
+    END
+
+    IF ABS(@debit - @credit) > 0.009
+    BEGIN
+        RAISERROR('JournalEntry not balanced (debit != credit).', 16, 1);
+        RETURN;
+    END
+
+    UPDATE [fin].[JournalEntry]
+    SET [Status] = 'posted', UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @journal_entry_id AND LOWER([Status]) = 'draft';
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_trial_balance]
+(
+    @company_id INT,
+    @from_date DATETIME2,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        a.Code AS AccountCode,
+        a.Name AS AccountName,
+        SUM(l.Debit) AS Debit,
+        SUM(l.Credit) AS Credit,
+        SUM(l.Debit - l.Credit) AS Balance
+    FROM [fin].[JournalEntryLine] l WITH (NOLOCK)
+    INNER JOIN [fin].[JournalEntry] je WITH (NOLOCK) ON je.Id = l.JournalEntryId AND je.CompanyId = l.CompanyId
+    INNER JOIN [fin].[Account] a WITH (NOLOCK) ON a.Id = l.AccountId AND a.CompanyId = l.CompanyId
+    WHERE l.CompanyId = @company_id
+      AND LOWER(je.[Status]) = 'posted'
+      AND je.EntryDate >= @from_date AND je.EntryDate < DATEADD(DAY, 1, @to_date)
+      AND a.Active = 1
+    GROUP BY a.Code, a.Name
+    ORDER BY a.Code;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_income_statement_puc]
+(
+    @company_id INT,
+    @from_date DATETIME2,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- PyG por PUC: ingresos (4), costos (6), gastos (5,7)
+    SELECT
+        LEFT(a.Code, 1) AS ClassCode,
+        CASE LEFT(a.Code, 1)
+            WHEN '4' THEN 'INGRESOS'
+            WHEN '5' THEN 'GASTOS'
+            WHEN '6' THEN 'COSTOS'
+            WHEN '7' THEN 'COSTOS/GP'
+            ELSE 'OTROS'
+        END AS ClassName,
+        SUM(l.Debit) AS Debit,
+        SUM(l.Credit) AS Credit,
+        SUM(l.Credit - l.Debit) AS Net
+    FROM [fin].[JournalEntryLine] l WITH (NOLOCK)
+    INNER JOIN [fin].[JournalEntry] je WITH (NOLOCK) ON je.Id = l.JournalEntryId AND je.CompanyId = l.CompanyId
+    INNER JOIN [fin].[Account] a WITH (NOLOCK) ON a.Id = l.AccountId AND a.CompanyId = l.CompanyId
+    WHERE l.CompanyId = @company_id
+      AND LOWER(je.[Status]) = 'posted'
+      AND je.EntryDate >= @from_date AND je.EntryDate < DATEADD(DAY, 1, @to_date)
+      AND LEFT(a.Code, 1) IN ('4','5','6','7')
+      AND a.Active = 1
+    GROUP BY LEFT(a.Code, 1)
+    ORDER BY LEFT(a.Code, 1);
+END
+GO
+
+CREATE OR ALTER PROCEDURE [fin].[sp_report_balance_sheet_puc]
+(
+    @company_id INT,
+    @to_date DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Balance general por PUC: Activo(1), Pasivo(2), Patrimonio(3)
+    SELECT
+        LEFT(a.Code, 1) AS ClassCode,
+        CASE LEFT(a.Code, 1)
+            WHEN '1' THEN 'ACTIVO'
+            WHEN '2' THEN 'PASIVO'
+            WHEN '3' THEN 'PATRIMONIO'
+            ELSE 'OTROS'
+        END AS ClassName,
+        SUM(l.Debit) AS Debit,
+        SUM(l.Credit) AS Credit,
+        SUM(l.Debit - l.Credit) AS Balance
+    FROM [fin].[JournalEntryLine] l WITH (NOLOCK)
+    INNER JOIN [fin].[JournalEntry] je WITH (NOLOCK) ON je.Id = l.JournalEntryId AND je.CompanyId = l.CompanyId
+    INNER JOIN [fin].[Account] a WITH (NOLOCK) ON a.Id = l.AccountId AND a.CompanyId = l.CompanyId
+    WHERE l.CompanyId = @company_id
+      AND LOWER(je.[Status]) = 'posted'
+      AND je.EntryDate < DATEADD(DAY, 1, @to_date)
+      AND LEFT(a.Code, 1) IN ('1','2','3')
+      AND a.Active = 1
+    GROUP BY LEFT(a.Code, 1)
+    ORDER BY LEFT(a.Code, 1);
+END
+GO
+
 CREATE OR ALTER PROCEDURE [common].[sp_list_departments_by_country]
     @CountryId INT
 AS

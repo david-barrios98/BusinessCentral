@@ -46,5 +46,11 @@
     "Name": "Punto de Venta",
     "Description": "Caja, tickets, pagos y movimientos de inventario por venta rápida.",
     "Active": true
+  },
+  {
+    "Code": "FIN",
+    "Name": "Finanzas y Reportes",
+    "Description": "Reportes financieros/contables y base tributaria (CO) por compañía.",
+    "Active": true
   }
 ]

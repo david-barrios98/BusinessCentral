@@ -1,12 +1,15 @@
 [
   { "NatureCode": "FARM", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
   { "NatureCode": "FARM", "ModuleCode": "FARM", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "FARM", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 },
 
   { "NatureCode": "SERVICES", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
   { "NatureCode": "SERVICES", "ModuleCode": "SERVICES", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "SERVICES", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 },
 
   { "NatureCode": "COMMERCE", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
   { "NatureCode": "COMMERCE", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
-  { "NatureCode": "COMMERCE", "ModuleCode": "POS", "IsDefaultEnabled": true, "SortOrder": 30 }
+  { "NatureCode": "COMMERCE", "ModuleCode": "POS", "IsDefaultEnabled": true, "SortOrder": 30 },
+  { "NatureCode": "COMMERCE", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 }
 ]
 

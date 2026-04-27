@@ -1,0 +1,47 @@
+[
+  { "CompanyId": 1, "Code": "1", "Name": "ACTIVO", "Nature": "D", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "11", "Name": "DISPONIBLE", "Nature": "D", "Level": 2, "ParentCode": "1", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "1105", "Name": "CAJA", "Nature": "D", "Level": 3, "ParentCode": "11", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "110505", "Name": "CAJA GENERAL", "Nature": "D", "Level": 4, "ParentCode": "1105", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "13", "Name": "DEUDORES", "Nature": "D", "Level": 2, "ParentCode": "1", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "1305", "Name": "CLIENTES", "Nature": "D", "Level": 3, "ParentCode": "13", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "130505", "Name": "CLIENTES NACIONALES", "Nature": "D", "Level": 4, "ParentCode": "1305", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "14", "Name": "INVENTARIOS", "Nature": "D", "Level": 2, "ParentCode": "1", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "1435", "Name": "MERCANCÍAS NO FABRICADAS POR LA EMPRESA", "Nature": "D", "Level": 3, "ParentCode": "14", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "143505", "Name": "MERCANCÍAS NO FABRICADAS - NACIONALES", "Nature": "D", "Level": 4, "ParentCode": "1435", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "2", "Name": "PASIVO", "Nature": "C", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "22", "Name": "PROVEEDORES", "Nature": "C", "Level": 2, "ParentCode": "2", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "2205", "Name": "NACIONALES", "Nature": "C", "Level": 3, "ParentCode": "22", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "220505", "Name": "PROVEEDORES NACIONALES", "Nature": "C", "Level": 4, "ParentCode": "2205", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "24", "Name": "IMPUESTOS, GRAVÁMENES Y TASAS", "Nature": "C", "Level": 2, "ParentCode": "2", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "2408", "Name": "IMPUESTO SOBRE LAS VENTAS POR PAGAR", "Nature": "C", "Level": 3, "ParentCode": "24", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "240805", "Name": "IVA GENERADO", "Nature": "C", "Level": 4, "ParentCode": "2408", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "2365", "Name": "RETENCIÓN EN LA FUENTE", "Nature": "C", "Level": 3, "ParentCode": "24", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "236540", "Name": "RETEFUENTE COMPRAS", "Nature": "C", "Level": 4, "ParentCode": "2365", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "3", "Name": "PATRIMONIO", "Nature": "C", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "31", "Name": "CAPITAL SOCIAL", "Nature": "C", "Level": 2, "ParentCode": "3", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "3105", "Name": "CAPITAL SUSCRITO Y PAGADO", "Nature": "C", "Level": 3, "ParentCode": "31", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "310505", "Name": "CAPITAL SUSCRITO Y PAGADO", "Nature": "C", "Level": 4, "ParentCode": "3105", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "4", "Name": "INGRESOS", "Nature": "C", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "41", "Name": "OPERACIONALES", "Nature": "C", "Level": 2, "ParentCode": "4", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "4135", "Name": "COMERCIO AL POR MAYOR Y AL POR MENOR", "Nature": "C", "Level": 3, "ParentCode": "41", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "413501", "Name": "VENTAS DE MERCANCÍAS", "Nature": "C", "Level": 4, "ParentCode": "4135", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "5", "Name": "GASTOS", "Nature": "D", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "51", "Name": "ADMINISTRACIÓN", "Nature": "D", "Level": 2, "ParentCode": "5", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "5105", "Name": "GASTOS DE PERSONAL", "Nature": "D", "Level": 3, "ParentCode": "51", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "510506", "Name": "SUELDOS", "Nature": "D", "Level": 4, "ParentCode": "5105", "IsAuxiliary": true, "Active": true },
+
+  { "CompanyId": 1, "Code": "6", "Name": "COSTOS DE VENTAS", "Nature": "D", "Level": 1, "ParentCode": null, "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "61", "Name": "COSTO DE VENTAS Y DE PRESTACIÓN DE SERVICIOS", "Nature": "D", "Level": 2, "ParentCode": "6", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "6135", "Name": "COSTO DE VENTAS", "Nature": "D", "Level": 3, "ParentCode": "61", "IsAuxiliary": false, "Active": true },
+  { "CompanyId": 1, "Code": "613501", "Name": "COSTO DE VENTAS", "Nature": "D", "Level": 4, "ParentCode": "6135", "IsAuxiliary": true, "Active": true }
+]
+

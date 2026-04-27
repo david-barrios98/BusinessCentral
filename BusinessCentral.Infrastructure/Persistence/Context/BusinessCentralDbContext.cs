@@ -7,6 +7,7 @@ using BusinessCentral.Domain.Entities.Hr;
 using BusinessCentral.Domain.Entities.Common;
 using BusinessCentral.Domain.Entities.Config;
 using BusinessCentral.Domain.Entities.Services;
+using BusinessCentral.Domain.Entities.Finance;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -88,6 +89,13 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<PosTicket> PosTickets { get; set; } = null!;
         public DbSet<PosTicketLine> PosTicketLines { get; set; } = null!;
         public DbSet<PosPayment> PosPayments { get; set; } = null!;
+
+        // Esquema FIN (finanzas / reportes contables)
+        public DbSet<FinancialTransaction> FinancialTransactions { get; set; } = null!;
+        public DbSet<TaxConcept> TaxConcepts { get; set; } = null!;
+        public DbSet<Account> Accounts { get; set; } = null!;
+        public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
+        public DbSet<JournalEntryLine> JournalEntryLines { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -130,6 +138,8 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                     entity.SetSchema("svc");
                 else if (namespaceName.Contains(".Commerce"))
                     entity.SetSchema("com");
+                else if (namespaceName.Contains(".Finance"))
+                    entity.SetSchema("fin");
 
                 // --- EL RESTO DE TU LÓGICA (CASCADA, ETC) ---
                 foreach (var fk in entity.GetForeignKeys())

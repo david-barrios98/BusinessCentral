@@ -104,9 +104,26 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_pay_pos_ticket = "[com].[sp_pay_pos_ticket]";
         }
 
+        public static class Finance
+        {
+            public const string sp_create_financial_transaction = "[fin].[sp_create_financial_transaction]";
+            public const string sp_report_financial_summary = "[fin].[sp_report_financial_summary]";
+            public const string sp_report_pnl = "[fin].[sp_report_pnl]";
+            public const string sp_report_tax_summary_co = "[fin].[sp_report_tax_summary_co]";
+            public const string sp_report_renta_annual_co = "[fin].[sp_report_renta_annual_co]";
+            public const string sp_list_accounts = "[fin].[sp_list_accounts]";
+            public const string sp_create_journal_entry = "[fin].[sp_create_journal_entry]";
+            public const string sp_add_journal_entry_line = "[fin].[sp_add_journal_entry_line]";
+            public const string sp_get_journal_entry = "[fin].[sp_get_journal_entry]";
+            public const string sp_post_journal_entry = "[fin].[sp_post_journal_entry]";
+            public const string sp_report_trial_balance = "[fin].[sp_report_trial_balance]";
+            public const string sp_report_income_statement_puc = "[fin].[sp_report_income_statement_puc]";
+            public const string sp_report_balance_sheet_puc = "[fin].[sp_report_balance_sheet_puc]";
+        }
+
         public static class Common
         {
-            // Geografía
+            // Geografa
             public const string sp_list_countries = "[common].[sp_list_countries]";
             public const string sp_list_departments_by_country = "[common].[sp_list_departments_by_country]";
             public const string sp_list_cities_by_department = "[common].[sp_list_cities_by_department]";

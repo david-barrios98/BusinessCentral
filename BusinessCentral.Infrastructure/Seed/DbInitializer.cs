@@ -8,6 +8,7 @@ using BusinessCentral.Domain.Entities.Hr;
 using BusinessCentral.Domain.Entities.Common;
 using BusinessCentral.Domain.Entities.Config;
 using BusinessCentral.Domain.Entities.Services;
+using BusinessCentral.Domain.Entities.Finance;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -85,6 +86,9 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<PosTicketLine>(context, "com_pos_ticket_lines.json");
             await SeedEntity<PosPayment>(context, "com_pos_payments.json");
             await SeedEntity<InventoryMovement>(context, "com_inventory_movements.json");
+
+            // FIN (PUC)
+            await SeedPucAccountsMerge(context, "fin_puc_accounts.json");
         }
 
         // =============================
@@ -236,6 +240,106 @@ namespace BusinessCentral.Infrastructure.Seed
             public string ModuleCode { get; set; } = string.Empty;
             public bool IsDefaultEnabled { get; set; } = true;
             public int SortOrder { get; set; } = 0;
+        }
+
+        private sealed class PucAccountSeedRow
+        {
+            public int CompanyId { get; set; }
+            public string Code { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+            public string Nature { get; set; } = "D";
+            public int Level { get; set; } = 1;
+            public string? ParentCode { get; set; }
+            public bool IsAuxiliary { get; set; } = false;
+            public bool Active { get; set; } = true;
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: PUC Accounts (por CompanyId + Code)
+        // =============================
+        private static async Task SeedPucAccountsMerge(BusinessCentralDbContext context, string fileName)
+        {
+            List<PucAccountSeedRow> raw;
+            try
+            {
+                raw = await LoadJsonAsync<PucAccountSeedRow>(fileName);
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)");
+                return;
+            }
+
+            if (raw == null || !raw.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            // Cache existing per company
+            var existing = await context.Set<Account>()
+                .Select(a => new { a.CompanyId, a.Code, a.Id })
+                .ToListAsync();
+
+            static string Norm(string? s) => (s ?? string.Empty).Trim();
+
+            var existingMap = existing
+                .Where(x => !string.IsNullOrWhiteSpace(x.Code))
+                .ToDictionary(x => $"{x.CompanyId}|{Norm(x.Code)}", x => x.Id);
+
+            // We'll insert parents before children by sorting by Level then Code length.
+            var ordered = raw
+                .Where(r => r.CompanyId > 0 && !string.IsNullOrWhiteSpace(r.Code))
+                .OrderBy(r => r.Level)
+                .ThenBy(r => r.Code.Length)
+                .ToList();
+
+            var now = DateTime.UtcNow;
+            var inserted = 0;
+
+            foreach (var r in ordered)
+            {
+                var key = $"{r.CompanyId}|{Norm(r.Code)}";
+                if (existingMap.ContainsKey(key))
+                    continue;
+
+                long? parentId = null;
+                if (!string.IsNullOrWhiteSpace(r.ParentCode))
+                {
+                    var pKey = $"{r.CompanyId}|{Norm(r.ParentCode)}";
+                    if (existingMap.TryGetValue(pKey, out var pid))
+                        parentId = pid;
+                }
+
+                var entity = new Account
+                {
+                    CompanyId = r.CompanyId,
+                    Code = Norm(r.Code),
+                    Name = r.Name?.Trim() ?? string.Empty,
+                    Nature = string.IsNullOrWhiteSpace(r.Nature) ? "D" : r.Nature.Trim().ToUpperInvariant(),
+                    Level = r.Level <= 0 ? 1 : r.Level,
+                    ParentAccountId = parentId,
+                    IsAuxiliary = r.IsAuxiliary,
+                    Active = r.Active,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                context.Set<Account>().Add(entity);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+
+                // refresh map with new inserted row: reload id by querying just inserted (safe by unique key)
+                var newId = await context.Set<Account>()
+                    .Where(a => a.CompanyId == r.CompanyId && a.Code == entity.Code)
+                    .Select(a => a.Id)
+                    .FirstAsync();
+
+                existingMap[key] = newId;
+                inserted++;
+            }
+
+            Console.WriteLine($"✅ Seed merge PUC Account insertado: {inserted} nuevos");
         }
 
         // =============================
