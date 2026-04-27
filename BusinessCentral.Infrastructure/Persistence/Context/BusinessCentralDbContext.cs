@@ -1,8 +1,12 @@
 ﻿using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Domain.Entities.Auth;
 using BusinessCentral.Domain.Entities.Business;
+using BusinessCentral.Domain.Entities.Commerce;
+using BusinessCentral.Domain.Entities.Farm;
+using BusinessCentral.Domain.Entities.Hr;
 using BusinessCentral.Domain.Entities.Common;
 using BusinessCentral.Domain.Entities.Config;
+using BusinessCentral.Domain.Entities.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -45,17 +49,47 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<CompanySubscription> CompanySubscription { get; set; } = null!;
         public DbSet<MembershipPlan> MembershipPlan { get; set; } = null!;
         public DbSet<Module> Modules { get; set; } = null!;
+        public DbSet<CompanyModule> CompanyModules { get; set; } = null!;
         public DbSet<Permission> Permission { get; set; } = null!;
         public DbSet<PlanModule> PlanModule { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+
+        // Esquema HR
+        public DbSet<EmployeeProfile> EmployeeProfiles { get; set; } = null!;
+        public DbSet<PayScheme> PaySchemes { get; set; } = null!;
+        public DbSet<WorkLog> WorkLogs { get; set; } = null!;
+        public DbSet<LoanAdvance> LoanAdvances { get; set; } = null!;
+        public DbSet<Deduction> Deductions { get; set; } = null!;
+
+        // Esquema FARM
+        public DbSet<FarmZone> FarmZones { get; set; } = null!;
+        public DbSet<HarvestLot> HarvestLots { get; set; } = null!;
+        public DbSet<CoffeeProcessStep> CoffeeProcessSteps { get; set; } = null!;
+
+        // Esquema SERVICES
+        public DbSet<ServiceCatalog> ServiceCatalog { get; set; } = null!;
+        public DbSet<ServiceOrder> ServiceOrders { get; set; } = null!;
+        public DbSet<ServiceOrderLine> ServiceOrderLines { get; set; } = null!;
+
+        // Esquema COMMERCE/POS
+        public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
+        public DbSet<CashSession> CashSessions { get; set; } = null!;
+        public DbSet<PosTicket> PosTickets { get; set; } = null!;
+        public DbSet<PosTicketLine> PosTicketLines { get; set; } = null!;
+        public DbSet<PosPayment> PosPayments { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // 1. Carga automática de configuraciones si decides hacer alguna manual
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(BusinessCentralDbContext).Assembly);
+
+            // Claves compuestas / constraints necesarias para migraciones
+            modelBuilder.Entity<CompanyModule>()
+                .HasKey(x => new { x.CompanyId, x.ModuleId });
 
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
@@ -74,6 +108,14 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                     entity.SetSchema("common");
                 else if (namespaceName.Contains("Business"))
                     entity.SetSchema("business");
+                else if (namespaceName.Contains(".Hr"))
+                    entity.SetSchema("hr");
+                else if (namespaceName.Contains(".Farm"))
+                    entity.SetSchema("farm");
+                else if (namespaceName.Contains(".Services"))
+                    entity.SetSchema("svc");
+                else if (namespaceName.Contains(".Commerce"))
+                    entity.SetSchema("com");
 
                 // --- EL RESTO DE TU LÓGICA (CASCADA, ETC) ---
                 foreach (var fk in entity.GetForeignKeys())
