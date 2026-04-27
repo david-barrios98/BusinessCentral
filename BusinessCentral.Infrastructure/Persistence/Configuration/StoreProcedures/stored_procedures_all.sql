@@ -2,10 +2,27 @@
   BusinessCentral - Stored Procedures (consolidado)
 
   Importante:
-  - Este archivo contiene SOLO CREATE OR ALTER PROCEDURE.
-  - La creación de esquemas/tablas se maneja por migraciones (EF) y entidades.
+  - Este archivo contiene SOLO CREATE OR ALTER PROCEDURE (más creación idempotente de esquemas).
+  - La creación de tablas se maneja por migraciones (EF); sin migraciones, las tablas no existen.
   - Los catálogos/maestros se insertan por Data Seed (JSON embebidos).
 */
+
+/* Esquemas usados por tablas y procedimientos (idempotente).
+   Si ya aplicaste migraciones EF, estos IF no hacen nada.
+   Si ejecutas solo este script contra una BD vacía, necesitas también tablas (dotnet ef database update). */
+IF SCHEMA_ID(N'auth') IS NULL EXEC(N'CREATE SCHEMA [auth]');
+IF SCHEMA_ID(N'audit') IS NULL EXEC(N'CREATE SCHEMA [audit]');
+IF SCHEMA_ID(N'business') IS NULL EXEC(N'CREATE SCHEMA [business]');
+IF SCHEMA_ID(N'common') IS NULL EXEC(N'CREATE SCHEMA [common]');
+IF SCHEMA_ID(N'config') IS NULL EXEC(N'CREATE SCHEMA [config]');
+IF SCHEMA_ID(N'fin') IS NULL EXEC(N'CREATE SCHEMA [fin]');
+IF SCHEMA_ID(N'com') IS NULL EXEC(N'CREATE SCHEMA [com]');
+IF SCHEMA_ID(N'hr') IS NULL EXEC(N'CREATE SCHEMA [hr]');
+IF SCHEMA_ID(N'farm') IS NULL EXEC(N'CREATE SCHEMA [farm]');
+IF SCHEMA_ID(N'svc') IS NULL EXEC(N'CREATE SCHEMA [svc]');
+IF SCHEMA_ID(N'mfg') IS NULL EXEC(N'CREATE SCHEMA [mfg]');
+IF SCHEMA_ID(N'agro') IS NULL EXEC(N'CREATE SCHEMA [agro]');
+GO
 
 SET NOCOUNT ON;
 GO
@@ -485,7 +502,7 @@ BEGIN
             THROW 50002, 'Subdomain already exists', 1;
 
         INSERT INTO [business].[Companies]
-            (Name, TradeName, DocumentTypeId, DocumentNumber, Email, Phone, Subdomain, BusinessNatureId, Create, [Update], Active)
+            (Name, TradeName, DocumentTypeId, DocumentNumber, Email, Phone, Subdomain, BusinessNatureId, [Create], [Update], Active)
         VALUES
             (@CompanyName, @TradeName, @DocumentTypeId, @DocumentNumber, @Email, @Phone, @Subdomain, @bn_id, @now, @now, 1);
 
@@ -497,7 +514,7 @@ BEGIN
 
         -- Create main facility (Priority = 1)
         INSERT INTO [business].[Facility]
-            (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, Create, [Update], Active)
+            (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, [Create], [Update], Active)
         VALUES
             (@company_id, @FacilityTypeId, @FacilityName, @FacilityCode, @FacilityEmail, @FacilityPhone, 1, @now, @now, 1);
 
@@ -515,7 +532,7 @@ BEGIN
 
         -- Default login method for this company/application (API)
         INSERT INTO [config].[ApplicationCompanies]
-            (CompanyId, ApplicationCode, LoginField, Priority, IsEnabled, Create, [Update], Active)
+            (CompanyId, ApplicationCode, LoginField, Priority, IsEnabled, [Create], [Update], Active)
         VALUES
             (@company_id, 'API', 'email', 1, 1, @now, @now, 1);
 

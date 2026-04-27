@@ -1,0 +1,48 @@
+# Opcional: Web App Linux en plan F1 (o superior) configurado como contenedor desde GHCR.
+# Requiere secreto GHCR_PACKAGES_TOKEN (PAT GitHub con lectura de paquetes) para que Azure pueda hacer pull,
+# además de un Service Principal con permisos sobre el recurso (AZURE_CREDENTIALS).
+#
+# Una vez en Portal: Deployment Center → Container Registry → ghcr.io + credenciales (o deja que este workflow solo actualice la etiqueta de imagen).
+
+name: Deploy Azure (update container image)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Tag de imagen en GHCR (ej. main o sha-abc1234)"
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image name (GHCR lowercase)
+        id: image
+        run: echo "repository_lc=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure container image and restart
+        env:
+          IMAGE: ghcr.io/${{ steps.image.outputs.repository_lc }}:${{ github.event.inputs.image_tag }}
+        run: |
+          az webapp config container set \
+            --name "${{ secrets.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --docker-custom-image-name "$IMAGE" \
+            --docker-registry-server-url https://ghcr.io \
+            --docker-registry-server-user "${{ secrets.GHCR_REGISTRY_USER }}" \
+            --docker-registry-server-password "${{ secrets.GHCR_PACKAGES_TOKEN }}"
+          az webapp restart \
+            --name "${{ secrets.AZURE_WEBAPP_NAME }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}"

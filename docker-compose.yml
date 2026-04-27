@@ -1,0 +1,37 @@
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Change_This_Str0ng!"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 40s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      sql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sql;Database=db_BusinessCentral_docker;User Id=sa;Password=Change_This_Str0ng!;TrustServerCertificate=True;Encrypt=False"
+      JwtSettings__SecretKey: "CHANGE_ME_USE_A_LONG_RANDOM_SECRET_IN_PRODUCTION"
+      JwtSettings__Issuer: "https://localhost"
+      JwtSettings__Audience: "business-central-clients"
+      JwtSettings__ExpiryInMinutes: "480"
+      RunSeed: "true"

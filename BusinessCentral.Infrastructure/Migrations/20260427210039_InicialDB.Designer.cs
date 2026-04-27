@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    [Migration("20260427184549_AddAgroLots")]
-    partial class AddAgroLots
+    [Migration("20260427210039_InicialDB")]
+    partial class InicialDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,6 +136,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CurrentUnits")
                         .HasColumnType("int");
 
@@ -168,6 +171,9 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -347,6 +353,48 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("UserSession", "audit");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PublicAccessToken", "auth");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.UserAddress", b =>
                 {
                     b.Property<int>("Id")
@@ -407,6 +455,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("CanLogin")
+                        .HasColumnType("bit");
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
@@ -493,6 +544,22 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FinancialBootstrapNotes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FinancialBootstrapStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("FinancialOperatingStartDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FinancialStartupMode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(255)
@@ -681,6 +748,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("FacilityId")
                         .HasColumnType("int");
 
@@ -704,6 +774,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyId");
@@ -713,6 +786,61 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("ParentLocationId");
 
                     b.ToTable("StorageLocation", "business");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Commerce.CashMovement", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("CashSessionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("PerformedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ReferenceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashSessionId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.ToTable("CashMovement", "business");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Commerce.CashSession", b =>
@@ -726,11 +854,20 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime?>("ClosedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("ClosingAmount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int?>("ClosedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("CountedClosingAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("DifferenceAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ExpectedClosingAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("OpenedAt")
                         .HasColumnType("datetime2");
@@ -747,6 +884,8 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClosedByUserId");
 
                     b.HasIndex("CompanyId");
 
@@ -871,8 +1010,8 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<string>("Method")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<DateTime>("PaidAt")
                         .HasColumnType("datetime2");
@@ -902,6 +1041,14 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
+
+                    b.Property<string>("FulfillmentDetails")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FulfillmentMethodCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -981,6 +1128,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -1011,6 +1161,9 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1148,6 +1301,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("PriceOverride")
                         .HasColumnType("decimal(18,2)");
 
@@ -1161,6 +1317,9 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<string>("VariantName")
                         .HasMaxLength(200)
@@ -1322,6 +1481,9 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("DocumentNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -1345,6 +1507,9 @@ namespace BusinessCentral.Infrastructure.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -1530,6 +1695,27 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("BusinessNature", "config");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNatureFulfillmentMethod", b =>
+                {
+                    b.Property<int>("BusinessNatureId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FulfillmentMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDefaultEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("BusinessNatureId", "FulfillmentMethodId");
+
+                    b.HasIndex("FulfillmentMethodId");
+
+                    b.ToTable("BusinessNatureFulfillmentMethod", "config");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNatureModule", b =>
                 {
                     b.Property<int>("BusinessNatureId")
@@ -1554,6 +1740,27 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("BusinessNatureModule", "config");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNaturePaymentMethod", b =>
+                {
+                    b.Property<int>("BusinessNatureId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDefaultEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("BusinessNatureId", "PaymentMethodId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.ToTable("BusinessNaturePaymentMethod", "config");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyBusinessNature", b =>
                 {
                     b.Property<int>("CompanyId")
@@ -1573,6 +1780,30 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("BusinessNatureId");
 
                     b.ToTable("CompanyBusinessNature", "config");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyFulfillmentMethod", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FulfillmentMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CompanyId", "FulfillmentMethodId");
+
+                    b.HasIndex("FulfillmentMethodId");
+
+                    b.ToTable("CompanyFulfillmentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyModule", b =>
@@ -1597,6 +1828,30 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("ModuleId");
 
                     b.ToTable("CompanyModule", "config");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyPaymentMethod", b =>
+                {
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentMethodId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CompanyId", "PaymentMethodId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.ToTable("CompanyPaymentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanySubscription", b =>
@@ -1633,6 +1888,47 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasIndex("MembershipPlanId");
 
                     b.ToTable("CompanySubscription", "config");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.FulfillmentMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AppliesTo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FulfillmentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.MembershipPlan", b =>
@@ -1697,6 +1993,47 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Module", "config");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.PaymentMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AppliesTo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PaymentMethod", "config");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.Permission", b =>
@@ -2319,6 +2656,120 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("Deduction", "business");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilityException", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("DateFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("DateTo")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmployeeAvailabilityException", "business");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilityProfile", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("MaxServicesPerDay")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TimeZone")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmployeeAvailabilityProfile", "business");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilitySlot", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int?>("MaxServicesInSlot")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmployeeAvailabilitySlot", "business");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeProfile", b =>
                 {
                     b.Property<int>("UserId")
@@ -2729,6 +3180,14 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<string>("CustomerName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FulfillmentDetails")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FulfillmentMethodCode")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
@@ -2928,6 +3387,25 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.UserAddress", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Common.City", "City")
@@ -3054,8 +3532,39 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Commerce.CashMovement", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Commerce.CashSession", "CashSession")
+                        .WithMany()
+                        .HasForeignKey("CashSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CashSession");
+
+                    b.Navigation("Company");
+
+                    b.Navigation("PerformedByUser");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Commerce.CashSession", b =>
                 {
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "ClosedByUser")
+                        .WithMany()
+                        .HasForeignKey("ClosedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
@@ -3066,6 +3575,8 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("OpenedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ClosedByUser");
 
                     b.Navigation("Company");
 
@@ -3412,6 +3923,25 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNatureFulfillmentMethod", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.BusinessNature", "BusinessNature")
+                        .WithMany()
+                        .HasForeignKey("BusinessNatureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.FulfillmentMethod", "FulfillmentMethod")
+                        .WithMany()
+                        .HasForeignKey("FulfillmentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BusinessNature");
+
+                    b.Navigation("FulfillmentMethod");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNatureModule", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Config.BusinessNature", "BusinessNature")
@@ -3429,6 +3959,25 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("BusinessNature");
 
                     b.Navigation("Module");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.BusinessNaturePaymentMethod", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.BusinessNature", "BusinessNature")
+                        .WithMany()
+                        .HasForeignKey("BusinessNatureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BusinessNature");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyBusinessNature", b =>
@@ -3450,6 +3999,25 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Company");
                 });
 
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyFulfillmentMethod", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.FulfillmentMethod", "FulfillmentMethod")
+                        .WithMany()
+                        .HasForeignKey("FulfillmentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("FulfillmentMethod");
+                });
+
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyModule", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
@@ -3467,6 +4035,25 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("Module");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanyPaymentMethod", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BusinessCentral.Domain.Entities.Config.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Config.CompanySubscription", b =>
@@ -3703,6 +4290,39 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Company");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilityException", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilityProfile", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BusinessCentral.Domain.Entities.Hr.EmployeeAvailabilitySlot", b =>
+                {
+                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });

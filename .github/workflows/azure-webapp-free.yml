@@ -1,0 +1,34 @@
+# Despliegue gratuito en Azure App Service (plan Linux F1): publica la API como .NET (sin contenedor).
+# En Azure Portal: Web App → Get publish profile → pegar contenido XML en secreto AZURE_PUBLISH_PROFILE.
+#
+# Base de datos: el plan F1 solo cubre la API. Azure SQL Database no tiene SKU perpetuamente gratuito;
+# opciones típicas: créditos de cuenta nueva/estudiante, nivel más barato (Basic), o SQL externo accesible.
+
+name: Deploy Azure Free (dotnet zip)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Publish
+        run: dotnet publish BusinessCentral.Api/BusinessCentral.Api.csproj -c Release -o ./publish /p:UseAppHost=false
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./publish

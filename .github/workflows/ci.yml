@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore BusinessCentral.Api.sln
+
+      - name: Build
+        run: dotnet build BusinessCentral.Api.sln -c Release --no-restore
+
+      - name: Publish (artifact check)
+        run: dotnet publish BusinessCentral.Api/BusinessCentral.Api.csproj -c Release -o ./publish --no-build
