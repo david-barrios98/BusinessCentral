@@ -2544,10 +2544,213 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO [com].[CashSession] (CompanyId, OpenedByUserId, OpeningAmount)
-    VALUES (@company_id, @opened_by_user_id, @opening_amount);
+    -- Solo una caja abierta por usuario (por compañía)
+    IF @opened_by_user_id IS NOT NULL AND EXISTS (
+        SELECT 1 FROM [com].[CashSession] cs WITH (NOLOCK)
+        WHERE cs.CompanyId=@company_id AND cs.OpenedByUserId=@opened_by_user_id AND LOWER(cs.[Status])='open'
+    )
+    BEGIN
+        RAISERROR('User already has an open cash session.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO [com].[CashSession] (CompanyId, OpenedAt, OpenedByUserId, [Status], OpeningAmount)
+    VALUES (@company_id, SYSUTCDATETIME(), @opened_by_user_id, 'open', @opening_amount);
 
     SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_add_cash_movement]
+(
+    @company_id INT,
+    @cash_session_id BIGINT,
+    @direction NVARCHAR(10),
+    @reason_code NVARCHAR(30) = NULL,
+    @amount DECIMAL(18,2),
+    @reference_type NVARCHAR(100) = NULL,
+    @reference_id NVARCHAR(100) = NULL,
+    @notes NVARCHAR(500) = NULL,
+    @performed_by_user_id INT = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @amount <= 0
+    BEGIN
+        RAISERROR('Amount must be > 0.', 16, 1);
+        RETURN;
+    END
+
+    IF LOWER(@direction) NOT IN ('in','out')
+    BEGIN
+        RAISERROR('Direction must be IN or OUT.', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [com].[CashSession] cs WITH (NOLOCK)
+        WHERE cs.CompanyId=@company_id AND cs.Id=@cash_session_id AND LOWER(cs.[Status])='open'
+    )
+    BEGIN
+        RAISERROR('CashSession not found or not open.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO [com].[CashMovement]
+        (CompanyId, CashSessionId, Direction, ReasonCode, Amount, ReferenceType, ReferenceId, Notes, PerformedByUserId, CreatedAt)
+    VALUES
+        (@company_id, @cash_session_id, UPPER(@direction), @reason_code, @amount, @reference_type, @reference_id, @notes, @performed_by_user_id, SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_get_cash_session]
+(
+    @company_id INT,
+    @cash_session_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        cs.Id,
+        cs.CompanyId,
+        cs.OpenedAt,
+        cs.ClosedAt,
+        cs.OpenedByUserId,
+        cs.ClosedByUserId,
+        cs.[Status],
+        cs.OpeningAmount,
+        cs.ExpectedClosingAmount,
+        cs.CountedClosingAmount,
+        cs.DifferenceAmount
+    FROM [com].[CashSession] cs WITH (NOLOCK)
+    WHERE cs.CompanyId=@company_id AND cs.Id=@cash_session_id;
+
+    SELECT
+        m.Id,
+        m.CashSessionId,
+        m.Direction,
+        m.ReasonCode,
+        m.Amount,
+        m.ReferenceType,
+        m.ReferenceId,
+        m.Notes,
+        m.PerformedByUserId,
+        m.CreatedAt
+    FROM [com].[CashMovement] m WITH (NOLOCK)
+    WHERE m.CompanyId=@company_id AND m.CashSessionId=@cash_session_id
+    ORDER BY m.Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [com].[sp_close_cash_session]
+(
+    @company_id INT,
+    @cash_session_id BIGINT,
+    @counted_closing_amount DECIMAL(18,2),
+    @closed_by_user_id INT = NULL,
+    @cash_payment_method_code NVARCHAR(30) = 'CASH',
+    @create_over_short_entry BIT = 1,
+    @cash_account_code NVARCHAR(20) = '110505',
+    @over_short_expense_account_code NVARCHAR(20) = '519595',
+    @over_short_income_account_code NVARCHAR(20) = '429595'
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM [com].[CashSession] cs WITH (NOLOCK)
+        WHERE cs.CompanyId=@company_id AND cs.Id=@cash_session_id AND LOWER(cs.[Status])='open'
+    )
+    BEGIN
+        RAISERROR('CashSession not found or not open.', 16, 1);
+        RETURN;
+    END
+
+    DECLARE @opening DECIMAL(18,2) = 0;
+    SELECT @opening = cs.OpeningAmount FROM [com].[CashSession] cs WITH (NOLOCK)
+    WHERE cs.CompanyId=@company_id AND cs.Id=@cash_session_id;
+
+    DECLARE @cashSales DECIMAL(18,2) = 0;
+    SELECT @cashSales = COALESCE(SUM(p.Amount),0)
+    FROM [com].[PosPayment] p WITH (NOLOCK)
+    INNER JOIN [com].[PosTicket] tk WITH (NOLOCK) ON tk.Id=p.TicketId AND tk.CompanyId=p.CompanyId
+    WHERE p.CompanyId=@company_id
+      AND tk.CashSessionId=@cash_session_id
+      AND LOWER(p.Method)=LOWER(@cash_payment_method_code);
+
+    DECLARE @movIn DECIMAL(18,2) = 0;
+    DECLARE @movOut DECIMAL(18,2) = 0;
+    SELECT
+        @movIn = COALESCE(SUM(CASE WHEN LOWER(Direction)='in' THEN Amount ELSE 0 END),0),
+        @movOut = COALESCE(SUM(CASE WHEN LOWER(Direction)='out' THEN Amount ELSE 0 END),0)
+    FROM [com].[CashMovement] m WITH (NOLOCK)
+    WHERE m.CompanyId=@company_id AND m.CashSessionId=@cash_session_id;
+
+    DECLARE @expected DECIMAL(18,2) = @opening + @cashSales + @movIn - @movOut;
+    DECLARE @diff DECIMAL(18,2) = @counted_closing_amount - @expected;
+
+    UPDATE [com].[CashSession]
+    SET ClosedAt = SYSUTCDATETIME(),
+        ClosedByUserId = @closed_by_user_id,
+        [Status] = 'closed',
+        ExpectedClosingAmount = @expected,
+        CountedClosingAmount = @counted_closing_amount,
+        DifferenceAmount = @diff
+    WHERE CompanyId=@company_id AND Id=@cash_session_id;
+
+    -- Asiento opcional por diferencia de arqueo (sobrante/faltante)
+    IF @create_over_short_entry = 1 AND ABS(@diff) > 0.009
+    BEGIN
+        DECLARE @acc_cash BIGINT = NULL;
+        DECLARE @acc_exp BIGINT = NULL;
+        DECLARE @acc_inc BIGINT = NULL;
+
+        SELECT TOP 1 @acc_cash = a.Id FROM [fin].[Account] a WITH (NOLOCK)
+        WHERE a.CompanyId=@company_id AND a.Active=1 AND a.Code=@cash_account_code;
+
+        SELECT TOP 1 @acc_exp = a.Id FROM [fin].[Account] a WITH (NOLOCK)
+        WHERE a.CompanyId=@company_id AND a.Active=1 AND a.Code=@over_short_expense_account_code;
+
+        SELECT TOP 1 @acc_inc = a.Id FROM [fin].[Account] a WITH (NOLOCK)
+        WHERE a.CompanyId=@company_id AND a.Active=1 AND a.Code=@over_short_income_account_code;
+
+        IF @acc_cash IS NOT NULL AND @acc_exp IS NOT NULL AND @acc_inc IS NOT NULL
+        BEGIN
+            INSERT INTO [fin].[JournalEntry]
+                (CompanyId, EntryDate, EntryType, ReferenceType, ReferenceId, [Description], [Status], CreatedByUserId, CreatedAt, UpdatedAt)
+            VALUES
+                (@company_id, SYSUTCDATETIME(), 'CASH_SESSION', 'CASH_SESSION', CAST(@cash_session_id AS NVARCHAR(100)),
+                 'Arqueo/cierre de caja (diferencia)', 'posted', @closed_by_user_id, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+            DECLARE @je_id BIGINT = CAST(SCOPE_IDENTITY() AS BIGINT);
+
+            IF @diff < 0
+            BEGIN
+                -- faltante: Dr gasto, Cr caja
+                INSERT INTO [fin].[JournalEntryLine] (CompanyId, JournalEntryId, AccountId, Debit, Credit, Notes, CreatedAt)
+                VALUES
+                    (@company_id, @je_id, @acc_exp, ABS(@diff), 0, 'Faltante de caja', SYSUTCDATETIME()),
+                    (@company_id, @je_id, @acc_cash, 0, ABS(@diff), 'Salida por faltante', SYSUTCDATETIME());
+            END
+            ELSE
+            BEGIN
+                -- sobrante: Dr caja, Cr ingreso
+                INSERT INTO [fin].[JournalEntryLine] (CompanyId, JournalEntryId, AccountId, Debit, Credit, Notes, CreatedAt)
+                VALUES
+                    (@company_id, @je_id, @acc_cash, @diff, 0, 'Entrada por sobrante', SYSUTCDATETIME()),
+                    (@company_id, @je_id, @acc_inc, 0, @diff, 'Sobrante de caja', SYSUTCDATETIME());
+            END
+        END
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, @expected AS Expected, @diff AS Difference;
 END
 GO
 

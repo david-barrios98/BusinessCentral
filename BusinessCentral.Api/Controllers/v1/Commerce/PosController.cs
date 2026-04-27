@@ -1,6 +1,7 @@
 using BusinessCentral.Api.Controllers.v1;
 using BusinessCentral.Api.Middleware;
 using BusinessCentral.Application.Feature.Commerce.Pos;
+using BusinessCentral.Application.Feature.Commerce.Pos.Cash;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,61 @@ public sealed class PosController : SecureCompanyControllerBase
     [HttpPost("cash-sessions")]
     public async Task<IActionResult> OpenCash([FromBody] OpenCashRequest req)
     {
-        var result = await _mediator.Send(new CreateCashSessionCommand(CompanyId, req.OpenedByUserId, req.OpeningAmount));
+        var openedBy = req.OpenedByUserId ?? (UserId == 0 ? null : UserId);
+        var result = await _mediator.Send(new CreateCashSessionCommand(CompanyId, openedBy, req.OpeningAmount));
+        return ProcessResult(result);
+    }
+
+    [HttpGet("cash-sessions/{cashSessionId:long}")]
+    public async Task<IActionResult> GetCashSession([FromRoute] long cashSessionId)
+    {
+        var result = await _mediator.Send(new GetCashSessionQuery(CompanyId, cashSessionId));
+        return ProcessResult(result);
+    }
+
+    public sealed class AddCashMovementRequest
+    {
+        public string Direction { get; set; } = "OUT"; // IN/OUT
+        public string? ReasonCode { get; set; }
+        public decimal Amount { get; set; }
+        public string? ReferenceType { get; set; }
+        public string? ReferenceId { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    [HttpPost("cash-sessions/{cashSessionId:long}/movements")]
+    public async Task<IActionResult> AddCashMovement([FromRoute] long cashSessionId, [FromBody] AddCashMovementRequest req)
+    {
+        var result = await _mediator.Send(new AddCashMovementCommand(
+            CompanyId,
+            cashSessionId,
+            req.Direction,
+            req.ReasonCode,
+            req.Amount,
+            req.ReferenceType,
+            req.ReferenceId,
+            req.Notes,
+            UserId == 0 ? null : UserId
+        ));
+        return ProcessResult(result);
+    }
+
+    public sealed class CloseCashSessionRequest
+    {
+        public decimal CountedClosingAmount { get; set; }
+        public string CashPaymentMethodCode { get; set; } = "CASH";
+    }
+
+    [HttpPost("cash-sessions/{cashSessionId:long}/close")]
+    public async Task<IActionResult> CloseCashSession([FromRoute] long cashSessionId, [FromBody] CloseCashSessionRequest req)
+    {
+        var result = await _mediator.Send(new CloseCashSessionCommand(
+            CompanyId,
+            cashSessionId,
+            req.CountedClosingAmount,
+            UserId == 0 ? null : UserId,
+            req.CashPaymentMethodCode
+        ));
         return ProcessResult(result);
     }
 

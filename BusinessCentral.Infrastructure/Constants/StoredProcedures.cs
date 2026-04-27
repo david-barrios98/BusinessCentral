@@ -117,6 +117,9 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_upsert_product = "[com].[sp_upsert_product]";
             public const string sp_list_products = "[com].[sp_list_products]";
             public const string sp_create_cash_session = "[com].[sp_create_cash_session]";
+            public const string sp_get_cash_session = "[com].[sp_get_cash_session]";
+            public const string sp_add_cash_movement = "[com].[sp_add_cash_movement]";
+            public const string sp_close_cash_session = "[com].[sp_close_cash_session]";
             public const string sp_create_pos_ticket = "[com].[sp_create_pos_ticket]";
             public const string sp_get_pos_ticket = "[com].[sp_get_pos_ticket]";
             public const string sp_add_pos_ticket_line = "[com].[sp_add_pos_ticket_line]";

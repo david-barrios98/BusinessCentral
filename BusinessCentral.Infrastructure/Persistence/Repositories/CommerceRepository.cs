@@ -100,6 +100,110 @@ public sealed class CommerceRepository : SqlConfigServer, ICommerceRepository
         return insertedId;
     }
 
+    public async Task<long> AddCashMovementAsync(int companyId, long cashSessionId, string direction, string? reasonCode, decimal amount, string? referenceType, string? referenceId, string? notes, int? performedByUserId)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@cash_session_id", cashSessionId, SqlDbType.BigInt),
+            CreateParameter("@direction", direction, SqlDbType.NVarChar, 10),
+            CreateParameter("@reason_code", (object?)reasonCode ?? DBNull.Value, SqlDbType.NVarChar, 30),
+            CreateParameter("@amount", amount, SqlDbType.Decimal),
+            CreateParameter("@reference_type", (object?)referenceType ?? DBNull.Value, SqlDbType.NVarChar, 100),
+            CreateParameter("@reference_id", (object?)referenceId ?? DBNull.Value, SqlDbType.NVarChar, 100),
+            CreateParameter("@notes", (object?)notes ?? DBNull.Value, SqlDbType.NVarChar, 500),
+            CreateParameter("@performed_by_user_id", (object?)performedByUserId ?? DBNull.Value, SqlDbType.Int),
+        };
+
+        var insertedId = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Commerce.sp_add_cash_movement,
+            parameters,
+            r => Convert.ToInt64(r["InsertedId"])
+        );
+
+        return insertedId;
+    }
+
+    public async Task<CashSessionDetailsDTO?> GetCashSessionAsync(int companyId, long cashSessionId)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Commerce.sp_get_cash_session, connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@cash_session_id", cashSessionId, SqlDbType.BigInt));
+
+        await using var reader = await command.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+            return null;
+
+        var dto = new CashSessionDetailsDTO
+        {
+            Session = new CashSessionHeaderDTO
+            {
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                OpenedAt = Convert.ToDateTime(reader["OpenedAt"]),
+                ClosedAt = reader["ClosedAt"] == DBNull.Value ? null : Convert.ToDateTime(reader["ClosedAt"]),
+                OpenedByUserId = reader["OpenedByUserId"] == DBNull.Value ? null : Convert.ToInt32(reader["OpenedByUserId"]),
+                ClosedByUserId = reader["ClosedByUserId"] == DBNull.Value ? null : Convert.ToInt32(reader["ClosedByUserId"]),
+                Status = reader["Status"]?.ToString() ?? "open",
+                OpeningAmount = Convert.ToDecimal(reader["OpeningAmount"]),
+                ExpectedClosingAmount = reader["ExpectedClosingAmount"] == DBNull.Value ? null : Convert.ToDecimal(reader["ExpectedClosingAmount"]),
+                CountedClosingAmount = reader["CountedClosingAmount"] == DBNull.Value ? null : Convert.ToDecimal(reader["CountedClosingAmount"]),
+                DifferenceAmount = reader["DifferenceAmount"] == DBNull.Value ? null : Convert.ToDecimal(reader["DifferenceAmount"]),
+            }
+        };
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                dto.Movements.Add(new CashMovementDTO
+                {
+                    Id = Convert.ToInt64(reader["Id"]),
+                    CashSessionId = Convert.ToInt64(reader["CashSessionId"]),
+                    Direction = reader["Direction"]?.ToString() ?? "OUT",
+                    ReasonCode = reader["ReasonCode"] == DBNull.Value ? null : reader["ReasonCode"]?.ToString(),
+                    Amount = Convert.ToDecimal(reader["Amount"]),
+                    ReferenceType = reader["ReferenceType"] == DBNull.Value ? null : reader["ReferenceType"]?.ToString(),
+                    ReferenceId = reader["ReferenceId"] == DBNull.Value ? null : reader["ReferenceId"]?.ToString(),
+                    Notes = reader["Notes"] == DBNull.Value ? null : reader["Notes"]?.ToString(),
+                    PerformedByUserId = reader["PerformedByUserId"] == DBNull.Value ? null : Convert.ToInt32(reader["PerformedByUserId"]),
+                    CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
+                });
+            }
+        }
+
+        return dto;
+    }
+
+    public async Task<CashSessionCloseResultDTO?> CloseCashSessionAsync(int companyId, long cashSessionId, decimal countedClosingAmount, int? closedByUserId, string cashPaymentMethodCode = "CASH")
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@cash_session_id", cashSessionId, SqlDbType.BigInt),
+            CreateParameter("@counted_closing_amount", countedClosingAmount, SqlDbType.Decimal),
+            CreateParameter("@closed_by_user_id", (object?)closedByUserId ?? DBNull.Value, SqlDbType.Int),
+            CreateParameter("@cash_payment_method_code", cashPaymentMethodCode, SqlDbType.NVarChar, 30),
+        };
+
+        return await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Commerce.sp_close_cash_session,
+            parameters,
+            r => new CashSessionCloseResultDTO
+            {
+                Success = Convert.ToBoolean(r["Success"]),
+                Expected = Convert.ToDecimal(r["Expected"]),
+                Difference = Convert.ToDecimal(r["Difference"]),
+            });
+    }
+
     public async Task<PosTicketReceiptDTO?> GetPosTicketReceiptAsync(int companyId, long ticketId)
     {
         await using var connection = new SqlConnection(ConnectionString);

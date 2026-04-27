@@ -104,6 +104,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<PurchaseReceiptLine> PurchaseReceiptLines { get; set; } = null!;
         public DbSet<InventoryMovement> InventoryMovements { get; set; } = null!;
         public DbSet<CashSession> CashSessions { get; set; } = null!;
+        public DbSet<CashMovement> CashMovements { get; set; } = null!;
         public DbSet<PosTicket> PosTickets { get; set; } = null!;
         public DbSet<PosTicketLine> PosTicketLines { get; set; } = null!;
         public DbSet<PosPayment> PosPayments { get; set; } = null!;
