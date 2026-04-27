@@ -17,6 +17,15 @@ public static class JwtExtensions
         if (string.IsNullOrEmpty(secretKey))
             throw new InvalidOperationException("La SecretKey de JWT no está configurada.");
 
+        // HS256 exige clave simétrica ≥ 256 bits (32 bytes). Ver IDX10720 si es más corta.
+        var keyByteCount = Encoding.UTF8.GetByteCount(secretKey);
+        if (keyByteCount < 32)
+        {
+            throw new InvalidOperationException(
+                $"JwtSettings:SecretKey debe tener al menos 32 bytes en UTF-8 (actual: {keyByteCount}). " +
+                "Amplía la cadena o usa una clave aleatoria de 32+ caracteres ASCII para desarrollo.");
+        }
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
