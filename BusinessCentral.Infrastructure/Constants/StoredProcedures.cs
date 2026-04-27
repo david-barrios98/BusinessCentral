@@ -79,6 +79,10 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_upsert_employee_profile = "[hr].[sp_upsert_employee_profile]";
             public const string sp_get_employee_profile = "[hr].[sp_get_employee_profile]";
             public const string sp_list_employees = "[hr].[sp_list_employees]";
+            public const string sp_get_employee_availability = "[hr].[sp_get_employee_availability]";
+            public const string sp_upsert_employee_availability = "[hr].[sp_upsert_employee_availability]";
+            public const string sp_set_employee_availability_slots = "[hr].[sp_set_employee_availability_slots]";
+            public const string sp_set_employee_availability_exceptions = "[hr].[sp_set_employee_availability_exceptions]";
 
             public const string sp_upsert_pay_scheme = "[hr].[sp_upsert_pay_scheme]";
             public const string sp_list_pay_schemes = "[hr].[sp_list_pay_schemes]";

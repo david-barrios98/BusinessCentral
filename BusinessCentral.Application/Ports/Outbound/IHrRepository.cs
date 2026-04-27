@@ -7,6 +7,8 @@ public interface IHrRepository
     Task<bool> UpsertEmployeeProfileAsync(int companyId, EmployeeProfileDTO dto);
     Task<EmployeeProfileDTO?> GetEmployeeProfileAsync(int companyId, int userId);
     Task<List<dynamic>> ListEmployeesAsync(int companyId);
+    Task<bool> UpsertEmployeeAvailabilityAsync(int companyId, EmployeeAvailabilityDTO dto);
+    Task<EmployeeAvailabilityDTO?> GetEmployeeAvailabilityAsync(int companyId, int userId);
 
     Task<bool> UpsertPaySchemeAsync(int companyId, string code, string name, string? unit, bool active);
     Task<List<PaySchemeDTO>> ListPaySchemesAsync(int companyId, bool onlyActive);

@@ -72,6 +72,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
 
         // Esquema HR
         public DbSet<EmployeeProfile> EmployeeProfiles { get; set; } = null!;
+        public DbSet<EmployeeAvailabilityProfile> EmployeeAvailabilityProfiles { get; set; } = null!;
+        public DbSet<EmployeeAvailabilitySlot> EmployeeAvailabilitySlots { get; set; } = null!;
+        public DbSet<EmployeeAvailabilityException> EmployeeAvailabilityExceptions { get; set; } = null!;
         public DbSet<PayScheme> PaySchemes { get; set; } = null!;
         public DbSet<WorkLog> WorkLogs { get; set; } = null!;
         public DbSet<LoanAdvance> LoanAdvances { get; set; } = null!;

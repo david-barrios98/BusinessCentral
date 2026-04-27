@@ -2106,6 +2106,187 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   HR: Disponibilidad opcional (horarios / excepciones / capacidad)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [hr].[sp_get_employee_availability]
+(
+    @company_id INT,
+    @user_id INT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP 1
+        p.Id,
+        p.CompanyId,
+        p.UserId,
+        p.TimeZone,
+        p.MaxServicesPerDay,
+        p.Active,
+        p.Notes,
+        p.CreatedAt,
+        p.UpdatedAt
+    FROM [hr].[EmployeeAvailabilityProfile] p WITH (NOLOCK)
+    WHERE p.CompanyId=@company_id AND p.UserId=@user_id;
+
+    SELECT
+        s.Id,
+        s.CompanyId,
+        s.UserId,
+        s.DayOfWeek,
+        s.StartTime,
+        s.EndTime,
+        s.MaxServicesInSlot,
+        s.Active
+    FROM [hr].[EmployeeAvailabilitySlot] s WITH (NOLOCK)
+    WHERE s.CompanyId=@company_id AND s.UserId=@user_id
+    ORDER BY s.DayOfWeek, s.StartTime;
+
+    SELECT
+        e.Id,
+        e.CompanyId,
+        e.UserId,
+        e.DateFrom,
+        e.DateTo,
+        e.IsAvailable,
+        e.Reason,
+        e.CreatedAt
+    FROM [hr].[EmployeeAvailabilityException] e WITH (NOLOCK)
+    WHERE e.CompanyId=@company_id AND e.UserId=@user_id
+    ORDER BY e.DateFrom DESC, e.Id DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [hr].[sp_upsert_employee_availability]
+(
+    @company_id INT,
+    @user_id INT,
+    @time_zone NVARCHAR(80) = NULL,
+    @max_services_per_day INT = NULL,
+    @active BIT = 1,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM [hr].[EmployeeAvailabilityProfile] WHERE CompanyId=@company_id AND UserId=@user_id)
+    BEGIN
+        UPDATE [hr].[EmployeeAvailabilityProfile]
+        SET TimeZone=@time_zone,
+            MaxServicesPerDay=@max_services_per_day,
+            Active=@active,
+            Notes=@notes,
+            UpdatedAt=SYSUTCDATETIME()
+        WHERE CompanyId=@company_id AND UserId=@user_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [hr].[EmployeeAvailabilityProfile]
+            (CompanyId, UserId, TimeZone, MaxServicesPerDay, Active, Notes, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @user_id, @time_zone, @max_services_per_day, @active, @notes, SYSUTCDATETIME(), SYSUTCDATETIME());
+    END
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [hr].[sp_set_employee_availability_slots]
+(
+    @company_id INT,
+    @user_id INT,
+    @slots_json NVARCHAR(MAX)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @slots_json IS NULL OR ISJSON(@slots_json) <> 1
+    BEGIN
+        RAISERROR('slots_json must be valid JSON array.', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM [hr].[EmployeeAvailabilitySlot]
+    WHERE CompanyId=@company_id AND UserId=@user_id;
+
+    INSERT INTO [hr].[EmployeeAvailabilitySlot]
+        (CompanyId, UserId, DayOfWeek, StartTime, EndTime, MaxServicesInSlot, Active)
+    SELECT
+        @company_id,
+        @user_id,
+        j.DayOfWeek,
+        j.StartTime,
+        j.EndTime,
+        j.MaxServicesInSlot,
+        COALESCE(j.Active, 1)
+    FROM OPENJSON(@slots_json)
+    WITH
+    (
+        DayOfWeek INT '$.dayOfWeek',
+        StartTime TIME '$.startTime',
+        EndTime TIME '$.endTime',
+        MaxServicesInSlot INT '$.maxServicesInSlot',
+        Active BIT '$.active'
+    ) j
+    WHERE j.DayOfWeek BETWEEN 0 AND 6
+      AND j.StartTime IS NOT NULL
+      AND j.EndTime IS NOT NULL
+      AND j.EndTime > j.StartTime;
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [hr].[sp_set_employee_availability_exceptions]
+(
+    @company_id INT,
+    @user_id INT,
+    @exceptions_json NVARCHAR(MAX)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @exceptions_json IS NULL OR ISJSON(@exceptions_json) <> 1
+    BEGIN
+        RAISERROR('exceptions_json must be valid JSON array.', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM [hr].[EmployeeAvailabilityException]
+    WHERE CompanyId=@company_id AND UserId=@user_id;
+
+    INSERT INTO [hr].[EmployeeAvailabilityException]
+        (CompanyId, UserId, DateFrom, DateTo, IsAvailable, Reason, CreatedAt)
+    SELECT
+        @company_id,
+        @user_id,
+        j.DateFrom,
+        j.DateTo,
+        COALESCE(j.IsAvailable, 0),
+        j.Reason,
+        SYSUTCDATETIME()
+    FROM OPENJSON(@exceptions_json)
+    WITH
+    (
+        DateFrom DATE '$.dateFrom',
+        DateTo DATE '$.dateTo',
+        IsAvailable BIT '$.isAvailable',
+        Reason NVARCHAR(300) '$.reason'
+    ) j
+    WHERE j.DateFrom IS NOT NULL
+      AND j.DateTo IS NOT NULL
+      AND j.DateTo >= j.DateFrom;
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [hr].[sp_upsert_pay_scheme]
     @company_id INT,
     @code NVARCHAR(50),

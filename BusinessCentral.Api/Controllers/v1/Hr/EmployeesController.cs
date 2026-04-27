@@ -1,6 +1,7 @@
 using BusinessCentral.Api.Middleware;
 using BusinessCentral.Application.DTOs.Hr;
 using BusinessCentral.Application.Feature.Hr.Employees;
+using BusinessCentral.Application.Feature.Hr.Availability;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,22 @@ public sealed class EmployeesController : HrControllerBase
         dto.UserId = userId;
         dto.CompanyId = CompanyId;
         var result = await _mediator.Send(new UpsertEmployeeProfileCommand(CompanyId, dto));
+        return ProcessResult(result);
+    }
+
+    [HttpGet("{userId:int}/availability")]
+    public async Task<IActionResult> GetAvailability([FromRoute] int userId)
+    {
+        var result = await _mediator.Send(new GetEmployeeAvailabilityQuery(CompanyId, userId));
+        return ProcessResult(result);
+    }
+
+    [HttpPut("{userId:int}/availability")]
+    public async Task<IActionResult> UpsertAvailability([FromRoute] int userId, [FromBody] EmployeeAvailabilityDTO dto)
+    {
+        dto.UserId = userId;
+        dto.CompanyId = CompanyId;
+        var result = await _mediator.Send(new UpsertEmployeeAvailabilityCommand(CompanyId, dto));
         return ProcessResult(result);
     }
 }

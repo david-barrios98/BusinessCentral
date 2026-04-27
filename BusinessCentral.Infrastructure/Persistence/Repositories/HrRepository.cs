@@ -1,8 +1,10 @@
 using BusinessCentral.Application.DTOs.Hr;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Text.Json;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -92,6 +94,126 @@ public sealed class HrRepository : SqlConfigServer, IHrRepository
         );
 
         return list;
+    }
+
+    public async Task<bool> UpsertEmployeeAvailabilityAsync(int companyId, EmployeeAvailabilityDTO dto)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@user_id", dto.UserId, SqlDbType.Int),
+            CreateParameter("@time_zone", (object?)dto.TimeZone ?? DBNull.Value, SqlDbType.NVarChar, 80),
+            CreateParameter("@max_services_per_day", (object?)dto.MaxServicesPerDay ?? DBNull.Value, SqlDbType.Int),
+            CreateParameter("@active", dto.Active, SqlDbType.Bit),
+            CreateParameter("@notes", (object?)dto.Notes ?? DBNull.Value, SqlDbType.NVarChar, 500),
+        };
+
+        var success = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Hr.sp_upsert_employee_availability,
+            parameters,
+            r => Convert.ToBoolean(r["Success"])
+        );
+
+        if (success != true)
+            return false;
+
+        var slotsJson = JsonSerializer.Serialize(dto.Slots ?? new List<EmployeeAvailabilitySlotDTO>());
+        var exceptionsJson = JsonSerializer.Serialize(dto.Exceptions ?? new List<EmployeeAvailabilityExceptionDTO>());
+
+        var slotsOk = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Hr.sp_set_employee_availability_slots,
+            new[]
+            {
+                CreateParameter("@company_id", companyId, SqlDbType.Int),
+                CreateParameter("@user_id", dto.UserId, SqlDbType.Int),
+                CreateParameter("@slots_json", slotsJson, SqlDbType.NVarChar),
+            },
+            r => Convert.ToBoolean(r["Success"])
+        );
+
+        if (slotsOk != true)
+            return false;
+
+        var excOk = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Hr.sp_set_employee_availability_exceptions,
+            new[]
+            {
+                CreateParameter("@company_id", companyId, SqlDbType.Int),
+                CreateParameter("@user_id", dto.UserId, SqlDbType.Int),
+                CreateParameter("@exceptions_json", exceptionsJson, SqlDbType.NVarChar),
+            },
+            r => Convert.ToBoolean(r["Success"])
+        );
+
+        return excOk == true;
+    }
+
+    public async Task<EmployeeAvailabilityDTO?> GetEmployeeAvailabilityAsync(int companyId, int userId)
+    {
+        using var connection = await OpenConnectionAsync();
+        using var command = new SqlCommand(StoredProcedures.Hr.sp_get_employee_availability, connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        command.Parameters.AddRange(new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@user_id", userId, SqlDbType.Int),
+        });
+
+        using var reader = await command.ExecuteReaderAsync();
+        EmployeeAvailabilityDTO? dto = null;
+        if (await reader.ReadAsync())
+        {
+            dto = new EmployeeAvailabilityDTO
+            {
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                UserId = Convert.ToInt32(reader["UserId"]),
+                TimeZone = reader["TimeZone"] == DBNull.Value ? null : reader["TimeZone"]?.ToString(),
+                MaxServicesPerDay = reader["MaxServicesPerDay"] == DBNull.Value ? null : Convert.ToInt32(reader["MaxServicesPerDay"]),
+                Active = Convert.ToBoolean(reader["Active"]),
+                Notes = reader["Notes"] == DBNull.Value ? null : reader["Notes"]?.ToString(),
+            };
+        }
+        else
+        {
+            return null;
+        }
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                dto.Slots.Add(new EmployeeAvailabilitySlotDTO
+                {
+                    Id = Convert.ToInt64(reader["Id"]),
+                    DayOfWeek = Convert.ToInt32(reader["DayOfWeek"]),
+                    StartTime = TimeOnly.FromTimeSpan((TimeSpan)reader["StartTime"]),
+                    EndTime = TimeOnly.FromTimeSpan((TimeSpan)reader["EndTime"]),
+                    MaxServicesInSlot = reader["MaxServicesInSlot"] == DBNull.Value ? null : Convert.ToInt32(reader["MaxServicesInSlot"]),
+                    Active = Convert.ToBoolean(reader["Active"])
+                });
+            }
+        }
+
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                dto.Exceptions.Add(new EmployeeAvailabilityExceptionDTO
+                {
+                    Id = Convert.ToInt64(reader["Id"]),
+                    DateFrom = DateOnly.FromDateTime(Convert.ToDateTime(reader["DateFrom"])),
+                    DateTo = DateOnly.FromDateTime(Convert.ToDateTime(reader["DateTo"])),
+                    IsAvailable = Convert.ToBoolean(reader["IsAvailable"]),
+                    Reason = reader["Reason"] == DBNull.Value ? null : reader["Reason"]?.ToString(),
+                    CreatedAt = Convert.ToDateTime(reader["CreatedAt"])
+                });
+            }
+        }
+
+        return dto;
     }
 
     public async Task<bool> UpsertPaySchemeAsync(int companyId, string code, string name, string? unit, bool active)
