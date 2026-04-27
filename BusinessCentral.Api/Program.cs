@@ -24,6 +24,7 @@ builder.Services
     .AddCorsPolicy(configuration)
     .AddRateLimiting(configuration)
     .AddSwaggerDocumentation()
+    .AddTenantContext()
     .AddControllers();
 
 builder.Services.AddHealthChecks();

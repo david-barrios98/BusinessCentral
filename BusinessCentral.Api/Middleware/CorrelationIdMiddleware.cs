@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using BusinessCentral.Api.Services;
 
 namespace BusinessCentral.Api.Middleware;
 
@@ -13,7 +14,7 @@ public sealed class CorrelationIdMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context)
+    public async Task InvokeAsync(HttpContext context, ITenantContext tenantContext)
     {
         var correlationId = context.Request.Headers.TryGetValue(HeaderName, out var headerValue) && !string.IsNullOrWhiteSpace(headerValue)
             ? headerValue.ToString()
@@ -21,6 +22,7 @@ public sealed class CorrelationIdMiddleware
 
         context.Items[HeaderName] = correlationId;
         context.Response.Headers[HeaderName] = correlationId;
+        tenantContext.CorrelationId = correlationId;
 
         await _next(context);
     }

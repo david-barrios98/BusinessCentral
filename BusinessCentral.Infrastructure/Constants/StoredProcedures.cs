@@ -43,6 +43,7 @@ namespace BusinessCentral.Infrastructure.Constants
         public static class Config
         {
             public const string sp_check_tenant_access = "[config].[sp_check_tenant_access]";
+            public const string sp_get_company_id_by_subdomain = "[config].[sp_get_company_id_by_subdomain]";
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
