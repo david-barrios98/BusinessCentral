@@ -16,5 +16,35 @@
     "Name": "Servicios DNAILS",
     "Description": "Gestión de citas de manicure, pedicure y depilación",
     "Active": true
+  },
+  {
+    "Code": "HR",
+    "Name": "Recursos Humanos",
+    "Description": "Nómina simple, jornadas, deducciones, préstamos/avances.",
+    "Active": true
+  },
+  {
+    "Code": "FARM",
+    "Name": "Producción (Café)",
+    "Description": "Zonas, lotes de cosecha y trazabilidad de procesos de café.",
+    "Active": true
+  },
+  {
+    "Code": "SERVICES",
+    "Name": "Servicios (Lavadero)",
+    "Description": "Catálogo de servicios y órdenes de servicio con asignación a empleados.",
+    "Active": true
+  },
+  {
+    "Code": "COMMERCE",
+    "Name": "Comercio",
+    "Description": "Productos base e inventario.",
+    "Active": true
+  },
+  {
+    "Code": "POS",
+    "Name": "Punto de Venta",
+    "Description": "Caja, tickets, pagos y movimientos de inventario por venta rápida.",
+    "Active": true
   }
 ]

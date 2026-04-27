@@ -21,7 +21,8 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedEntity<Countries>(context, "countries.json");
             await SeedEntity<DocumentType>(context, "document_types.json");
             await SeedEntity<MembershipPlan>(context, "membership_plans.json");
-            await SeedEntity<Module>(context, "modules.json");
+            // Modules: seed por "merge" (no se detiene si ya hay data)
+            await SeedModulesMerge(context, "modules.json");
             await SeedEntity<FacilityType>(context, "facility_type.json");
 
             // --- 2. GEOGRAFÍA (Nivel 1 - Dependen de Countries) ---
@@ -89,6 +90,54 @@ namespace BusinessCentral.Infrastructure.Seed
                 // Limpia también en caso de error para no contaminar el siguiente intento
                 context.ChangeTracker.Clear();
                 throw new Exception($"❌ Error en Seed de {typeof(T).Name}", ex);
+            }
+        }
+
+        // =============================
+        // 🧩 SEED MERGE: Modules (por Code)
+        // =============================
+        private static async Task SeedModulesMerge(BusinessCentralDbContext context, string fileName)
+        {
+            var dbSet = context.Set<Module>();
+            var data = await LoadJsonAsync<Module>(fileName);
+
+            if (data == null || !data.Any())
+            {
+                Console.WriteLine($"⚠️ {fileName} vacío");
+                return;
+            }
+
+            // Solo insertamos los que no existen por Code (case-insensitive)
+            var existingCodes = await dbSet
+                .Select(m => m.Code)
+                .ToListAsync();
+
+            var existing = new HashSet<string>(
+                existingCodes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.ToLowerInvariant())
+            );
+
+            var toInsert = data
+                .Where(m => !string.IsNullOrWhiteSpace(m.Code))
+                .Where(m => !existing.Contains(m.Code.ToLowerInvariant()))
+                .ToList();
+
+            if (!toInsert.Any())
+            {
+                Console.WriteLine("⚠️ Module ya contiene todos los registros del seed");
+                return;
+            }
+
+            try
+            {
+                await dbSet.AddRangeAsync(toInsert);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+                Console.WriteLine($"✅ Seed merge Module insertado: {toInsert.Count} nuevos");
+            }
+            catch (Exception ex)
+            {
+                context.ChangeTracker.Clear();
+                throw new Exception("❌ Error en Seed merge de Module", ex);
             }
         }
 
