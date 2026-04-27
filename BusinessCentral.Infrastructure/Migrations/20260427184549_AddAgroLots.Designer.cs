@@ -4,6 +4,7 @@ using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    partial class BusinessCentralDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427184549_AddAgroLots")]
+    partial class AddAgroLots
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -344,48 +347,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("UserSession", "audit");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Scope")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PublicAccessToken", "auth");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.UserAddress", b =>
                 {
                     b.Property<int>("Id")
@@ -446,9 +407,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("CanLogin")
-                        .HasColumnType("bit");
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
@@ -2966,25 +2924,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
 
                     b.Navigation("User");
                 });

@@ -11,5 +11,27 @@
   { "NatureCode": "COMMERCE", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
   { "NatureCode": "COMMERCE", "ModuleCode": "POS", "IsDefaultEnabled": true, "SortOrder": 30 },
   { "NatureCode": "COMMERCE", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 }
+  ,
+  { "NatureCode": "RESTAURANT", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "RESTAURANT", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "RESTAURANT", "ModuleCode": "POS", "IsDefaultEnabled": true, "SortOrder": 30 },
+  { "NatureCode": "RESTAURANT", "ModuleCode": "MFG", "IsDefaultEnabled": true, "SortOrder": 40 },
+  { "NatureCode": "RESTAURANT", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 },
+
+  { "NatureCode": "POULTRY", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "POULTRY", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "POULTRY", "ModuleCode": "AGRO", "IsDefaultEnabled": true, "SortOrder": 40 },
+  { "NatureCode": "POULTRY", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 },
+
+  { "NatureCode": "AQUA", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "AQUA", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "AQUA", "ModuleCode": "AGRO", "IsDefaultEnabled": true, "SortOrder": 40 },
+  { "NatureCode": "AQUA", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 },
+
+  { "NatureCode": "SCRAP", "ModuleCode": "HR", "IsDefaultEnabled": true, "SortOrder": 10 },
+  { "NatureCode": "SCRAP", "ModuleCode": "COMMERCE", "IsDefaultEnabled": true, "SortOrder": 20 },
+  { "NatureCode": "SCRAP", "ModuleCode": "SCRAP", "IsDefaultEnabled": true, "SortOrder": 40 },
+  { "NatureCode": "SCRAP", "ModuleCode": "POS", "IsDefaultEnabled": true, "SortOrder": 50 },
+  { "NatureCode": "SCRAP", "ModuleCode": "FIN", "IsDefaultEnabled": true, "SortOrder": 90 }
 ]
 

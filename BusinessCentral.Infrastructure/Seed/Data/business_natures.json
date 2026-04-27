@@ -22,6 +22,38 @@
     "Active": true,
     "CreatedAt": "2026-01-01T08:00:00Z",
     "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "RESTAURANT",
+    "Name": "Restaurante",
+    "Description": "Venta de platos/bebidas con recetas (insumos → productos terminados) y POS.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "POULTRY",
+    "Name": "Avicultura",
+    "Description": "Lotes de levante/engorde, consumo de alimento, mortalidad y cosecha/venta.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "AQUA",
+    "Name": "Piscicultura",
+    "Description": "Lotes, biomasa, alimentación, mortalidad, cosecha/venta y costos.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
+  },
+  {
+    "Code": "SCRAP",
+    "Name": "Chatarrería",
+    "Description": "Compra/venta por peso, calidades, báscula, stock y márgenes por material.",
+    "Active": true,
+    "CreatedAt": "2026-01-01T08:00:00Z",
+    "UpdatedAt": "2026-01-01T08:00:00Z"
   }
 ]
 

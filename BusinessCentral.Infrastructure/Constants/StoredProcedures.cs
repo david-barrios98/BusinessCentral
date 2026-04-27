@@ -24,6 +24,8 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_get_active_password_reset_token = "[auth].[sp_get_active_password_reset_token]";
             public const string sp_mark_password_reset_used = "[auth].[sp_mark_password_reset_used]";
             public const string sp_update_user_password = "[auth].[sp_update_user_password]";
+            public const string sp_create_public_access_token = "[auth].[sp_create_public_access_token]";
+            public const string sp_get_public_hr_account_summary = "[auth].[sp_get_public_hr_account_summary]";
 
             public const string sp_insert_refresh_token = "[auth].[sp_insert_refresh_token]";
             public const string sp_get_active_refresh_token = "[auth].[sp_get_active_refresh_token]";
@@ -135,6 +137,25 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_report_trial_balance = "[fin].[sp_report_trial_balance]";
             public const string sp_report_income_statement_puc = "[fin].[sp_report_income_statement_puc]";
             public const string sp_report_balance_sheet_puc = "[fin].[sp_report_balance_sheet_puc]";
+        }
+
+        public static class Agro
+        {
+            public const string sp_create_lot = "[agro].[sp_create_lot]";
+            public const string sp_list_lots = "[agro].[sp_list_lots]";
+            public const string sp_create_feed_log = "[agro].[sp_create_feed_log]";
+            public const string sp_create_mortality_log = "[agro].[sp_create_mortality_log]";
+            public const string sp_create_harvest = "[agro].[sp_create_harvest]";
+            public const string sp_report_lot_kpis = "[agro].[sp_report_lot_kpis]";
+        }
+
+        public static class Manufacturing
+        {
+            public const string sp_upsert_recipe = "[mfg].[sp_upsert_recipe]";
+            public const string sp_set_recipe_items = "[mfg].[sp_set_recipe_items]";
+            public const string sp_create_production_batch = "[mfg].[sp_create_production_batch]";
+            public const string sp_post_production_batch = "[mfg].[sp_post_production_batch]";
+            public const string sp_report_recipe_cost = "[mfg].[sp_report_recipe_cost]";
         }
 
         public static class Common

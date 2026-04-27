@@ -4,6 +4,7 @@ using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    partial class BusinessCentralDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260427184338_AddManufacturingRecipes")]
+    partial class AddManufacturingRecipes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,194 +24,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroFeedLog", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FeedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("FeedProductId")
-                        .HasColumnType("int");
-
-                    b.Property<long?>("FeedVariantId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("FromLocationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LotId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("UnitCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("AgroFeedLog", "business");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroHarvest", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("HarvestDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("LotId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("OutputProductId")
-                        .HasColumnType("int");
-
-                    b.Property<long?>("OutputVariantId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("ToLocationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal?>("TotalWeightKg")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("Units")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("AgroHarvest", "business");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroLot", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CurrentUnits")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("InitialAvgWeightKg")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("InitialUnits")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Kind")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("AgroLot", "business");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroMortalityLog", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<decimal?>("AvgWeightKg")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<long>("LotId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("MortalityDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Units")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.ToTable("AgroMortalityLog", "business");
-                });
 
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Audit.PasswordResetToken", b =>
                 {
@@ -344,48 +159,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("UserSession", "audit");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("CompanyId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Scope")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PublicAccessToken", "auth");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.UserAddress", b =>
                 {
                     b.Property<int>("Id")
@@ -446,9 +219,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("CanLogin")
-                        .HasColumnType("bit");
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
@@ -2893,50 +2663,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.ToTable("Vehicle", "business");
                 });
 
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroFeedLog", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroHarvest", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroLot", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Agro.AgroMortalityLog", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
-                });
-
             modelBuilder.Entity("BusinessCentral.Domain.Entities.Audit.PasswordResetToken", b =>
                 {
                     b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
@@ -2966,25 +2692,6 @@ namespace BusinessCentral.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("BusinessCentral.Domain.Entities.Auth.PublicAccessToken", b =>
-                {
-                    b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
-                        .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BusinessCentral.Domain.Entities.Auth.UsersInfo", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Company");
 
                     b.Navigation("User");
                 });

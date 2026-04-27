@@ -8,6 +8,8 @@ using BusinessCentral.Domain.Entities.Common;
 using BusinessCentral.Domain.Entities.Config;
 using BusinessCentral.Domain.Entities.Services;
 using BusinessCentral.Domain.Entities.Finance;
+using BusinessCentral.Domain.Entities.Manufacturing;
+using BusinessCentral.Domain.Entities.Agro;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -29,6 +31,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         // Esquema AUTH
         public DbSet<UsersInfo> Users { get; set; } = null!;
         public DbSet<UserSession> UserSessions { get; set; } = null!;
+        public DbSet<PublicAccessToken> PublicAccessTokens { get; set; } = null!;
 
 
         // Esquema BUSINESS
@@ -105,6 +108,17 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<Account> Accounts { get; set; } = null!;
         public DbSet<JournalEntry> JournalEntries { get; set; } = null!;
         public DbSet<JournalEntryLine> JournalEntryLines { get; set; } = null!;
+
+        // Esquema MFG (recetas / producción)
+        public DbSet<Recipe> Recipes { get; set; } = null!;
+        public DbSet<RecipeItem> RecipeItems { get; set; } = null!;
+        public DbSet<ProductionBatch> ProductionBatches { get; set; } = null!;
+
+        // Esquema AGRO (avicultura/piscicultura)
+        public DbSet<AgroLot> AgroLots { get; set; } = null!;
+        public DbSet<AgroFeedLog> AgroFeedLogs { get; set; } = null!;
+        public DbSet<AgroMortalityLog> AgroMortalityLogs { get; set; } = null!;
+        public DbSet<AgroHarvest> AgroHarvests { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -155,6 +169,10 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                     entity.SetSchema("com");
                 else if (namespaceName.Contains(".Finance"))
                     entity.SetSchema("fin");
+                else if (namespaceName.Contains(".Manufacturing"))
+                    entity.SetSchema("mfg");
+                else if (namespaceName.Contains(".Agro"))
+                    entity.SetSchema("agro");
 
                 // --- EL RESTO DE TU LÓGICA (CASCADA, ETC) ---
                 foreach (var fk in entity.GetForeignKeys())

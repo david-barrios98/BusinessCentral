@@ -1263,6 +1263,7 @@ BEGIN
     CROSS JOIN CompanyConfig cc
     WHERE ui.CompanyId = @company_id
       AND ui.Active = 1
+      AND ui.CanLogin = 1
       AND c.Active = 1
       AND (
         (cc.LoginField = 'email' AND ui.Email = @username) OR
@@ -1275,6 +1276,78 @@ BEGIN
     BEGIN
         RAISERROR('Usuario no encontrado o método de login no válido para esta compañía.', 16, 1);
     END
+END
+GO
+
+/* =========================================================
+   AUTH (Acceso público solo lectura)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [auth].[sp_create_public_access_token]
+(
+    @company_id INT,
+    @user_id INT,
+    @token_hash NVARCHAR(64),
+    @scope NVARCHAR(30),
+    @expires_at DATETIME2
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Revocar tokens previos del mismo scope (simple y seguro)
+    UPDATE [auth].[PublicAccessToken]
+    SET Active = 0
+    WHERE CompanyId = @company_id AND UserId = @user_id AND Scope = @scope AND Active = 1;
+
+    INSERT INTO [auth].[PublicAccessToken]
+        (CompanyId, UserId, TokenHash, Scope, ExpiresAt, Active, CreatedAt)
+    VALUES
+        (@company_id, @user_id, @token_hash, @scope, @expires_at, 1, SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_get_public_hr_account_summary]
+(
+    @token_hash NVARCHAR(64)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    DECLARE @company_id INT;
+    DECLARE @user_id INT;
+
+    SELECT TOP 1
+        @company_id = t.CompanyId,
+        @user_id = t.UserId
+    FROM [auth].[PublicAccessToken] t WITH (NOLOCK)
+    WHERE t.TokenHash = @token_hash
+      AND t.Scope = 'HR_ACCOUNT'
+      AND t.Active = 1
+      AND t.ExpiresAt > @now;
+
+    IF @company_id IS NULL OR @user_id IS NULL
+    BEGIN
+        RAISERROR('Invalid or expired token.', 16, 1);
+        RETURN;
+    END
+
+    -- Resumen simple: ingresos (WorkLogs) - deducciones - préstamos/avances (pendiente vs pagado lo refinamos luego)
+    SELECT
+        @company_id AS CompanyId,
+        @user_id AS UserId,
+        ISNULL(SUM(w.Amount), 0) AS TotalEarned,
+        ISNULL((SELECT SUM(d.Amount) FROM [hr].[Deduction] d WITH (NOLOCK) WHERE d.CompanyId = @company_id AND d.UserId = @user_id), 0) AS TotalDeductions,
+        ISNULL((SELECT SUM(l.Amount) FROM [hr].[LoanAdvance] l WITH (NOLOCK) WHERE l.CompanyId = @company_id AND l.UserId = @user_id), 0) AS TotalLoans,
+        ISNULL(SUM(w.Amount), 0)
+          - ISNULL((SELECT SUM(d.Amount) FROM [hr].[Deduction] d WITH (NOLOCK) WHERE d.CompanyId = @company_id AND d.UserId = @user_id), 0)
+          - ISNULL((SELECT SUM(l.Amount) FROM [hr].[LoanAdvance] l WITH (NOLOCK) WHERE l.CompanyId = @company_id AND l.UserId = @user_id), 0) AS Net
+    FROM [hr].[WorkLog] w WITH (NOLOCK)
+    WHERE w.CompanyId = @company_id AND w.UserId = @user_id;
 END
 GO
 
@@ -2241,6 +2314,34 @@ BEGIN
     SET Status='paid'
     WHERE CompanyId=@company_id AND Id=@ticket_id;
 
+    -- Contabilización PUC mínima (opcional): Caja vs Ventas
+    DECLARE @acc_cash BIGINT = NULL;
+    DECLARE @acc_sales BIGINT = NULL;
+
+    SELECT TOP 1 @acc_cash = a.Id
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id AND a.Code = '110505' AND a.Active = 1;
+
+    SELECT TOP 1 @acc_sales = a.Id
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id AND a.Code = '413501' AND a.Active = 1;
+
+    IF @acc_cash IS NOT NULL AND @acc_sales IS NOT NULL
+    BEGIN
+        INSERT INTO [fin].[JournalEntry]
+            (CompanyId, EntryDate, EntryType, ReferenceType, ReferenceId, [Description], [Status], CreatedByUserId, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, SYSUTCDATETIME(), 'POS', 'POS_TICKET', CAST(@ticket_id AS NVARCHAR(100)), 'POS sale', 'posted', NULL, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        DECLARE @je_id BIGINT = CAST(SCOPE_IDENTITY() AS BIGINT);
+
+        INSERT INTO [fin].[JournalEntryLine]
+            (CompanyId, JournalEntryId, AccountId, Debit, Credit, ThirdPartyDocument, ThirdPartyName, Notes, CreatedAt)
+        VALUES
+            (@company_id, @je_id, @acc_cash, @amount, 0, NULL, NULL, 'Cash/Bank', SYSUTCDATETIME()),
+            (@company_id, @je_id, @acc_sales, 0, @amount, NULL, NULL, 'Sales', SYSUTCDATETIME());
+    END
+
     SELECT CAST(1 AS BIT) AS Success;
 END
 GO
@@ -2508,7 +2609,407 @@ BEGIN
     SET [Status] = 'posted', UpdatedAt = SYSUTCDATETIME()
     WHERE CompanyId = @company_id AND Id = @receipt_id;
 
+    -- Contabilización PUC mínima (opcional): Inventario vs Proveedores
+    DECLARE @acc_inv BIGINT = NULL;
+    DECLARE @acc_ap BIGINT = NULL;
+    DECLARE @total DECIMAL(18,2) = 0;
+    DECLARE @supplier_id BIGINT = NULL;
+
+    SELECT @total = Total, @supplier_id = SupplierId
+    FROM [com].[PurchaseReceipt]
+    WHERE CompanyId = @company_id AND Id = @receipt_id;
+
+    SELECT TOP 1 @acc_inv = a.Id
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id AND a.Code = '143505' AND a.Active = 1;
+
+    SELECT TOP 1 @acc_ap = a.Id
+    FROM [fin].[Account] a WITH (NOLOCK)
+    WHERE a.CompanyId = @company_id AND a.Code = '220505' AND a.Active = 1;
+
+    IF @acc_inv IS NOT NULL AND @acc_ap IS NOT NULL AND @total > 0
+    BEGIN
+        INSERT INTO [fin].[JournalEntry]
+            (CompanyId, EntryDate, EntryType, ReferenceType, ReferenceId, [Description], [Status], CreatedByUserId, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, SYSUTCDATETIME(), 'PURCHASE', 'PURCHASE_RECEIPT', CAST(@receipt_id AS NVARCHAR(100)), 'Purchase receipt', 'posted', NULL, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        DECLARE @je_id2 BIGINT = CAST(SCOPE_IDENTITY() AS BIGINT);
+
+        INSERT INTO [fin].[JournalEntryLine]
+            (CompanyId, JournalEntryId, AccountId, Debit, Credit, ThirdPartyDocument, ThirdPartyName, Notes, CreatedAt)
+        VALUES
+            (@company_id, @je_id2, @acc_inv, @total, 0, NULL, NULL, 'Inventory', SYSUTCDATETIME()),
+            (@company_id, @je_id2, @acc_ap, 0, @total, NULL, NULL, 'Accounts payable', SYSUTCDATETIME());
+    END
+
     SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+/* =========================================================
+   MFG (Recetas / Producción) - Restaurante / Transformación
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [mfg].[sp_upsert_recipe]
+(
+    @company_id INT,
+    @id BIGINT = NULL,
+    @output_product_id INT,
+    @output_variant_id BIGINT = NULL,
+    @output_quantity DECIMAL(18,4),
+    @notes NVARCHAR(500) = NULL,
+    @active BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @id IS NULL OR @id = 0
+    BEGIN
+        INSERT INTO [mfg].[Recipe]
+            (CompanyId, OutputProductId, OutputVariantId, OutputQuantity, Notes, Active, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @output_product_id, @output_variant_id, @output_quantity, @notes, @active, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+        SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+        RETURN;
+    END
+
+    UPDATE [mfg].[Recipe]
+    SET OutputProductId = @output_product_id,
+        OutputVariantId = @output_variant_id,
+        OutputQuantity = @output_quantity,
+        Notes = @notes,
+        Active = @active,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE Id = @id AND CompanyId = @company_id;
+
+    SELECT @id AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [mfg].[sp_set_recipe_items]
+(
+    @company_id INT,
+    @recipe_id BIGINT,
+    @items_json NVARCHAR(MAX)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Reemplazo completo (simple y consistente)
+    DELETE FROM [mfg].[RecipeItem]
+    WHERE CompanyId = @company_id AND RecipeId = @recipe_id;
+
+    INSERT INTO [mfg].[RecipeItem]
+        (CompanyId, RecipeId, InputProductId, InputVariantId, Quantity, Unit, Notes, CreatedAt)
+    SELECT
+        @company_id,
+        @recipe_id,
+        CAST(JSON_VALUE(j.value, '$.inputProductId') AS INT),
+        TRY_CAST(JSON_VALUE(j.value, '$.inputVariantId') AS BIGINT),
+        CAST(JSON_VALUE(j.value, '$.quantity') AS DECIMAL(18,4)),
+        JSON_VALUE(j.value, '$.unit'),
+        JSON_VALUE(j.value, '$.notes'),
+        SYSUTCDATETIME()
+    FROM OPENJSON(@items_json) j;
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [mfg].[sp_create_production_batch]
+(
+    @company_id INT,
+    @recipe_id BIGINT = NULL,
+    @output_product_id INT,
+    @output_variant_id BIGINT = NULL,
+    @quantity_produced DECIMAL(18,4),
+    @to_location_id BIGINT = NULL,
+    @batch_date DATETIME2,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [mfg].[ProductionBatch]
+        (CompanyId, RecipeId, OutputProductId, OutputVariantId, QuantityProduced, ToLocationId, BatchDate, [Status], Notes, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @recipe_id, @output_product_id, @output_variant_id, @quantity_produced, @to_location_id, @batch_date, 'draft', @notes, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [mfg].[sp_post_production_batch]
+(
+    @company_id INT,
+    @batch_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM [mfg].[ProductionBatch] b WHERE b.CompanyId = @company_id AND b.Id = @batch_id AND LOWER(b.[Status]) = 'draft')
+    BEGIN
+        RAISERROR('ProductionBatch not found or not in draft status.', 16, 1);
+        RETURN;
+    END
+
+    DECLARE @recipe_id BIGINT;
+    DECLARE @output_product_id INT;
+    DECLARE @output_variant_id BIGINT;
+    DECLARE @qty DECIMAL(18,4);
+    DECLARE @to_loc BIGINT;
+    DECLARE @batch_date DATETIME2;
+
+    SELECT
+        @recipe_id = RecipeId,
+        @output_product_id = OutputProductId,
+        @output_variant_id = OutputVariantId,
+        @qty = QuantityProduced,
+        @to_loc = ToLocationId,
+        @batch_date = BatchDate
+    FROM [mfg].[ProductionBatch]
+    WHERE CompanyId = @company_id AND Id = @batch_id;
+
+    IF @recipe_id IS NULL
+    BEGIN
+        RAISERROR('RecipeId is required to post batch.', 16, 1);
+        RETURN;
+    END
+
+    -- Consumir insumos según receta: OUT
+    INSERT INTO [com].[InventoryMovement]
+        (CompanyId, ProductId, VariantId, FromLocationId, ToLocationId, MoveDate, [Type], Quantity, ReferenceType, ReferenceId, Notes)
+    SELECT
+        @company_id,
+        ri.InputProductId,
+        ri.InputVariantId,
+        @to_loc, -- asumimos consumo desde la misma ubicación destino (si existe); si no, NULL
+        NULL,
+        @batch_date,
+        'OUT',
+        (ri.Quantity * @qty),
+        'PROD_BATCH',
+        CAST(@batch_id AS NVARCHAR(100)),
+        ISNULL(ri.Notes, 'Recipe consumption')
+    FROM [mfg].[RecipeItem] ri
+    WHERE ri.CompanyId = @company_id AND ri.RecipeId = @recipe_id;
+
+    -- Producir terminado: IN
+    INSERT INTO [com].[InventoryMovement]
+        (CompanyId, ProductId, VariantId, FromLocationId, ToLocationId, MoveDate, [Type], Quantity, ReferenceType, ReferenceId, Notes)
+    VALUES
+        (@company_id, @output_product_id, @output_variant_id, NULL, @to_loc, @batch_date, 'IN', @qty, 'PROD_BATCH', CAST(@batch_id AS NVARCHAR(100)), 'Production output');
+
+    UPDATE [mfg].[ProductionBatch]
+    SET [Status] = 'posted', UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @batch_id;
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [mfg].[sp_report_recipe_cost]
+(
+    @company_id INT,
+    @recipe_id BIGINT,
+    @quantity DECIMAL(18,4) = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Costo estimado: usa Product.Cost si existe; si no, 0 (puedes refinar con promedio por compras luego)
+    SELECT
+        ri.InputProductId,
+        p.Sku,
+        p.Name AS ProductName,
+        ri.Quantity * @quantity AS Qty,
+        ISNULL(p.Cost, 0) AS UnitCost,
+        (ri.Quantity * @quantity) * ISNULL(p.Cost, 0) AS LineCost
+    FROM [mfg].[RecipeItem] ri
+    INNER JOIN [com].[Product] p ON p.Id = ri.InputProductId AND p.CompanyId = @company_id
+    WHERE ri.CompanyId = @company_id AND ri.RecipeId = @recipe_id
+    ORDER BY p.Sku;
+
+    SELECT SUM((ri.Quantity * @quantity) * ISNULL(p.Cost, 0)) AS TotalCost
+    FROM [mfg].[RecipeItem] ri
+    INNER JOIN [com].[Product] p ON p.Id = ri.InputProductId AND p.CompanyId = @company_id
+    WHERE ri.CompanyId = @company_id AND ri.RecipeId = @recipe_id;
+END
+GO
+
+/* =========================================================
+   AGRO (Avicultura / Piscicultura)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [agro].[sp_create_lot]
+(
+    @company_id INT,
+    @kind NVARCHAR(20),
+    @code NVARCHAR(50),
+    @name NVARCHAR(200) = NULL,
+    @start_date DATETIME2,
+    @initial_units INT,
+    @initial_avg_weight_kg DECIMAL(18,4) = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [agro].[AgroLot]
+        (CompanyId, Kind, Code, Name, StartDate, InitialUnits, CurrentUnits, InitialAvgWeightKg, [Status], Notes, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @kind, @code, @name, @start_date, @initial_units, @initial_units, @initial_avg_weight_kg, 'open', @notes, SYSUTCDATETIME(), SYSUTCDATETIME());
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [agro].[sp_list_lots]
+(
+    @company_id INT,
+    @kind NVARCHAR(20) = NULL,
+    @only_open BIT = 0
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        l.Id, l.CompanyId, l.Kind, l.Code, l.Name, l.StartDate,
+        l.InitialUnits, l.CurrentUnits, l.InitialAvgWeightKg, l.[Status], l.Notes,
+        l.CreatedAt, l.UpdatedAt
+    FROM [agro].[AgroLot] l WITH (NOLOCK)
+    WHERE l.CompanyId = @company_id
+      AND (@kind IS NULL OR l.Kind = @kind)
+      AND (@only_open = 0 OR LOWER(l.[Status]) = 'open')
+    ORDER BY l.StartDate DESC, l.Id DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [agro].[sp_create_feed_log]
+(
+    @company_id INT,
+    @lot_id BIGINT,
+    @feed_date DATETIME2,
+    @feed_product_id INT,
+    @feed_variant_id BIGINT = NULL,
+    @quantity DECIMAL(18,4),
+    @from_location_id BIGINT = NULL,
+    @unit_cost DECIMAL(18,2) = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [agro].[AgroFeedLog]
+        (CompanyId, LotId, FeedDate, FeedProductId, FeedVariantId, Quantity, FromLocationId, UnitCost, Notes, CreatedAt)
+    VALUES
+        (@company_id, @lot_id, @feed_date, @feed_product_id, @feed_variant_id, @quantity, @from_location_id, @unit_cost, @notes, SYSUTCDATETIME());
+
+    -- Consume inventory (OUT) of feed
+    INSERT INTO [com].[InventoryMovement]
+        (CompanyId, ProductId, VariantId, FromLocationId, ToLocationId, MoveDate, [Type], Quantity, ReferenceType, ReferenceId, Notes)
+    VALUES
+        (@company_id, @feed_product_id, @feed_variant_id, @from_location_id, NULL, @feed_date, 'OUT', @quantity, 'AGRO_FEED', CAST(SCOPE_IDENTITY() AS NVARCHAR(100)), @notes);
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [agro].[sp_create_mortality_log]
+(
+    @company_id INT,
+    @lot_id BIGINT,
+    @mortality_date DATETIME2,
+    @units INT,
+    @avg_weight_kg DECIMAL(18,4) = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [agro].[AgroMortalityLog]
+        (CompanyId, LotId, MortalityDate, Units, AvgWeightKg, Notes, CreatedAt)
+    VALUES
+        (@company_id, @lot_id, @mortality_date, @units, @avg_weight_kg, @notes, SYSUTCDATETIME());
+
+    UPDATE [agro].[AgroLot]
+    SET CurrentUnits = CASE WHEN CurrentUnits - @units < 0 THEN 0 ELSE CurrentUnits - @units END,
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @lot_id;
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [agro].[sp_create_harvest]
+(
+    @company_id INT,
+    @lot_id BIGINT,
+    @harvest_date DATETIME2,
+    @output_product_id INT,
+    @output_variant_id BIGINT = NULL,
+    @units INT,
+    @total_weight_kg DECIMAL(18,4) = NULL,
+    @to_location_id BIGINT = NULL,
+    @notes NVARCHAR(500) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO [agro].[AgroHarvest]
+        (CompanyId, LotId, HarvestDate, OutputProductId, OutputVariantId, Units, TotalWeightKg, ToLocationId, Notes, CreatedAt)
+    VALUES
+        (@company_id, @lot_id, @harvest_date, @output_product_id, @output_variant_id, @units, @total_weight_kg, @to_location_id, @notes, SYSUTCDATETIME());
+
+    -- Produce inventory (IN) of output
+    INSERT INTO [com].[InventoryMovement]
+        (CompanyId, ProductId, VariantId, FromLocationId, ToLocationId, MoveDate, [Type], Quantity, ReferenceType, ReferenceId, Notes)
+    VALUES
+        (@company_id, @output_product_id, @output_variant_id, NULL, @to_location_id, @harvest_date, 'IN', @units, 'AGRO_HARVEST', CAST(SCOPE_IDENTITY() AS NVARCHAR(100)), @notes);
+
+    UPDATE [agro].[AgroLot]
+    SET [Status] = 'closed', UpdatedAt = SYSUTCDATETIME()
+    WHERE CompanyId = @company_id AND Id = @lot_id;
+
+    SELECT CAST(SCOPE_IDENTITY() AS BIGINT) AS InsertedId;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [agro].[sp_report_lot_kpis]
+(
+    @company_id INT,
+    @lot_id BIGINT
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @initial_units INT;
+    DECLARE @current_units INT;
+    SELECT @initial_units = InitialUnits, @current_units = CurrentUnits
+    FROM [agro].[AgroLot] WITH (NOLOCK)
+    WHERE CompanyId = @company_id AND Id = @lot_id;
+
+    SELECT
+        @lot_id AS LotId,
+        @initial_units AS InitialUnits,
+        @current_units AS CurrentUnits,
+        (@initial_units - @current_units) AS MortalityUnits,
+        CASE WHEN @initial_units = 0 THEN 0 ELSE CAST((@initial_units - @current_units) AS DECIMAL(18,4)) / @initial_units END AS MortalityRate,
+        (SELECT ISNULL(SUM(Quantity),0) FROM [agro].[AgroFeedLog] WITH (NOLOCK) WHERE CompanyId = @company_id AND LotId = @lot_id) AS FeedQty,
+        (SELECT ISNULL(SUM(Quantity * ISNULL(UnitCost,0)),0) FROM [agro].[AgroFeedLog] WITH (NOLOCK) WHERE CompanyId = @company_id AND LotId = @lot_id) AS FeedCost;
 END
 GO
 

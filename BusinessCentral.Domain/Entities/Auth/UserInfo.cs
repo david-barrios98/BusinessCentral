@@ -63,6 +63,9 @@ namespace BusinessCentral.Domain.Entities.Auth
 
         public bool ConfirmedAccount { get; set; } = false;
 
+        // Si es false: la persona existe para nómina/relaciones, pero NO puede autenticarse al sistema.
+        public bool CanLogin { get; set; } = true;
+
         public bool Active { get; set; } = true;
 
         public DateTime Created { get; set; } = DateTime.Now;

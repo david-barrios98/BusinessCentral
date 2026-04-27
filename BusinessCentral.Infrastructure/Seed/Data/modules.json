@@ -52,5 +52,23 @@
     "Name": "Finanzas y Reportes",
     "Description": "Reportes financieros/contables y base tributaria (CO) por compañía.",
     "Active": true
+  },
+  {
+    "Code": "MFG",
+    "Name": "Producción / Recetas",
+    "Description": "Recetas (BOM), producción/transformación y consumo de insumos.",
+    "Active": true
+  },
+  {
+    "Code": "AGRO",
+    "Name": "Agro (Lotes)",
+    "Description": "Avicultura/Piscicultura: lotes, alimentación, mortalidad, cosecha.",
+    "Active": true
+  },
+  {
+    "Code": "SCRAP",
+    "Name": "Chatarrería",
+    "Description": "Compra/venta por peso y control de materiales/stock.",
+    "Active": true
   }
 ]
