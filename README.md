@@ -146,6 +146,19 @@ Controllers seguros leen:
 - `CompanyId` desde el claim `companyId`
 - `UserId` desde el claim `userId` (o `sub`)
 
+### System users (backoffice) vs usuarios tenant (empresa)
+
+En este proyecto **el login siempre recibe `companyId`** (ver `auth.sp_login_user`), y el modelo `config.Role` está **amarrado a `CompanyId`** (no nullable). Por eso, la opción más conveniente hoy (sin re-arquitecturar autenticación) es:
+
+- **Sistema / Backoffice (tú y staff)**: crear una **compañía “PLATFORM”** (o “SYSTEM”) y mantener allí los usuarios/roles de sistema.
+  - Roles con `IsSystemRole = true` habilitan acceso a rutas `api/v1/system/...` (policy `SystemRole`).
+  - Si además `IsSuperUser = true`, trátalo como **root** (crear compañías, asignar planes, soporte global).
+  - Estos usuarios **siguen logueándose con `companyId` = PLATFORM**, pero **sus permisos no deben depender** de ese `companyId` para operaciones `system`.
+
+- **Admins/usuarios de una empresa (tenant)**: usuarios normales con `CompanyId` real, consumen rutas `api/v1/secure/...` y solo ven/editar su compañía.
+
+Si más adelante quieres que un system-user opere sobre compañías específicas de forma controlada, añade una tabla de asignación tipo `SystemUserCompanyAccess (SystemUserId, CompanyId, CanRead, CanWrite, ...)` y valídala en endpoints `system` (en vez de basarte en el `companyId` del JWT).
+
 ### Usuarios por compañía (JWT + módulo AUTH)
 
 CRUD con **ámbito de tenant** (el `CompanyId` del token; no se fía del body). Requiere módulo **AUTH** y token con permisos habituales de API segura.
