@@ -6,5 +6,6 @@ namespace BusinessCentral.Application.Ports.Outbound
     public interface ILoginRepository
     {
         Task<LoginResponseDTO?> GetLoginUserAsync(LoginCommand request);
+    Task<LoginResponseDTO?> GetSystemLoginUserAsync(string username);
     }
 }

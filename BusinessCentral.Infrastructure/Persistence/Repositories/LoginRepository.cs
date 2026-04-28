@@ -28,5 +28,18 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<LoginResponseDTO>(reader));
         }
+
+        public async Task<LoginResponseDTO?> GetSystemLoginUserAsync(string username)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@username", username, SqlDbType.VarChar)
+            };
+
+            return await ExecuteStoredProcedureSingleAsync(
+                StoredProcedures.Auth.sp_login_system_user,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<LoginResponseDTO>(reader));
+        }
     }
 }

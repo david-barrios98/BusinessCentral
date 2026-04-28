@@ -19,9 +19,8 @@ public class LoginRequestDTO
     public string Password { get; set; } = null!;
 
     [JsonPropertyName("companyId")]
-    [Required(ErrorMessage = "La compañia es requerida")]
-    [MinLength(1, ErrorMessage = "El companyId requiere mínimo 1 caracteres")]
-    public string CompanyId { get; set; } = null!;
+    // Opcional: para login tenant es requerido, para login superusuario web no.
+    public string? CompanyId { get; set; }
 }
 
 public class LogoutRequestDTO

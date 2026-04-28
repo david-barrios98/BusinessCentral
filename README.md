@@ -156,18 +156,16 @@ En `POST /api/v1/public/auth/login` el servidor devuelve también la informació
 - `perm`: claim repetible (una por permiso), formato `MODULE.PERMISSION_CODE` (ej: `AUTH.USERS_WRITE`).
 - `module`: claim repetible (una por módulo habilitado en la compañía), formato `MODULE_CODE` (ej: `FIN`).
 
-### System users (backoffice) vs usuarios tenant (empresa)
+### System web (superusuario) vs apps tenant (móvil/escritorio)
 
-En este proyecto **el login siempre recibe `companyId`** (ver `auth.sp_login_user`), y el modelo `config.Role` está **amarrado a `CompanyId`** (no nullable). Por eso, la opción más conveniente hoy (sin re-arquitecturar autenticación) es:
+Se separa el uso por canal:
 
-- **Sistema / Backoffice (tú y staff)**: crear una **compañía “PLATFORM”** (o “SYSTEM”) y mantener allí los usuarios/roles de sistema.
-  - Roles con `IsSystemRole = true` habilitan acceso a rutas `api/v1/system/...` (policy `SystemRole`).
-  - Si además `IsSuperUser = true`, trátalo como **root** (crear compañías, asignar planes, soporte global).
-  - Estos usuarios **siguen logueándose con `companyId` = PLATFORM**, pero **sus permisos no deben depender** de ese `companyId` para operaciones `system`.
+- **Web**: solo para **superusuario / usuario de sistemas** (configuración global de clientes).
+- **Móvil + escritorio (MAUI)**: solo para operación de una **compañía** (tenant).
 
-- **Admins/usuarios de una empresa (tenant)**: usuarios normales con `CompanyId` real, consumen rutas `api/v1/secure/...` y solo ven/editar su compañía.
-
-Si más adelante quieres que un system-user opere sobre compañías específicas de forma controlada, añade una tabla de asignación tipo `SystemUserCompanyAccess (SystemUserId, CompanyId, CanRead, CanWrite, ...)` y valídala en endpoints `system` (en vez de basarte en el `companyId` del JWT).
+Login:
+- **Tenant**: `POST /api/v1/public/auth/login` enviando `companyId`.
+- **Superusuario web**: `POST /api/v1/public/auth/login` sin `companyId` (usa `auth.sp_login_system_user`). En este modo el JWT emite `companyId = 0`.
 
 ### Usuarios por compañía (JWT + módulo AUTH)
 

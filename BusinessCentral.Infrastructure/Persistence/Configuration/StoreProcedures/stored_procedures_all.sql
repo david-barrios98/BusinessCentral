@@ -1918,6 +1918,49 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [auth].[sp_login_system_user]
+(
+    @username VARCHAR(150)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Login sin compañía: solo para usuarios con rol de sistema (y típicamente superusuario).
+    SELECT TOP 1
+        ui.Id AS UserId,
+        @username AS UserName,
+        ui.DocumentNumber,
+        ui.FirstName,
+        ui.LastName,
+        ui.Email,
+        ui.Phone,
+        ui.Password,
+        ui.RoleId,
+        r.Name AS RoleName,
+        r.IsSystemRole,
+        r.IsSuperUser,
+        CAST(0 AS INT) AS CompanyId,
+        CAST(NULL AS NVARCHAR(200)) AS CompanyName
+    FROM [auth].[UsersInfo] ui WITH (NOLOCK)
+    INNER JOIN [config].[Role] r WITH (NOLOCK) ON r.Id = ui.RoleId
+    WHERE ui.Active = 1
+      AND ui.CanLogin = 1
+      AND r.IsSystemRole = 1
+      AND (
+        (ui.Email = @username) OR
+        (ui.Phone = @username) OR
+        (ui.DocumentNumber = @username)
+      )
+    ORDER BY r.IsSuperUser DESC, ui.Id DESC;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        RAISERROR('Usuario de sistema no encontrado o no autorizado.', 16, 1);
+    END
+END
+GO
+
 /* =========================================================
    AUTH (Acceso público solo lectura)
    ========================================================= */

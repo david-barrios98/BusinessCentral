@@ -67,7 +67,16 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                     "Unauthorized");
             }
 
-            var user = await _repository.GetLoginUserAsync(request);
+            LoginResponseDTO? user = null;
+            if (!string.IsNullOrWhiteSpace(request.userLogin.CompanyId))
+            {
+                user = await _repository.GetLoginUserAsync(request);
+            }
+            else
+            {
+                // Login de sistema (web superusuario): no usa companyId
+                user = await _repository.GetSystemLoginUserAsync(request.userLogin.UserName);
+            }
 
             // 1. Validamos existencia del usuario
             if (user == null)
