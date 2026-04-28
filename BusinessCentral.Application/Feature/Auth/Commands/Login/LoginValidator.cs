@@ -15,8 +15,10 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                 .MinimumLength(2);
 
             RuleFor(x => x.userLogin.CompanyId)
-                .NotEmpty()
-                .MinimumLength(1);
+                // companyId es requerido para login tenant, pero opcional para login system/web.
+                // Si viene, debe tener al menos 1 char (y usualmente será un int válido).
+                .MinimumLength(1)
+                .When(x => !string.IsNullOrWhiteSpace(x.userLogin.CompanyId));
         }
     }
 }

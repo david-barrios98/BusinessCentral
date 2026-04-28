@@ -14,8 +14,8 @@
     "Active": true
   },
   {
-    "CompanyId": 2,
-    "Name": "PlatformAdmin",
+    "CompanyId": null,
+    "Name": "SuperUser",
     "IsSystemRole": true,
     "IsSuperUser": true,
     "Active": true

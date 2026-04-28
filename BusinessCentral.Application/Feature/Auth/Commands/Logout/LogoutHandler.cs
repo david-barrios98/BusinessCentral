@@ -1,70 +1,64 @@
-using MediatR;
+using System.Security.Claims;
 using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
-using BusinessCentral.Domain.Entities.Audit;
+using MediatR;
 
-namespace BusinessCentral.Application.Feature.Auth.Commands.Logout
+namespace BusinessCentral.Application.Feature.Auth.Commands.Logout;
+
+public sealed class LogoutHandler : IRequestHandler<LogoutCommand, Result<bool>>
 {
-    public class LogoutHandler : IRequestHandler<LogoutCommand, Result<bool>>
+    private readonly IUserSessionRepository _userSessions;
+    private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly ITokenService _tokenService;
+
+    public LogoutHandler(IUserSessionRepository userSessions, IRefreshTokenRepository refreshTokens, ITokenService tokenService)
     {
-        private readonly IRefreshTokenRepository _refreshRepo;
-        private readonly IUserSessionRepository _sessionRepo;
-        private readonly IRedisService _redisService;
+        _userSessions = userSessions;
+        _refreshTokens = refreshTokens;
+        _tokenService = tokenService;
+    }
 
-        public LogoutHandler(IRefreshTokenRepository refreshRepo, IUserSessionRepository sessionRepo, IRedisService redisService)
+    public async Task<Result<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    {
+        // 1) Resolver userId (prioridad: explùcito -> access token -> refresh token)
+        int? userId = request.UserId;
+
+        if (userId == null && !string.IsNullOrWhiteSpace(request.Token))
         {
-            _refreshRepo = refreshRepo;
-            _sessionRepo = sessionRepo;
-            _redisService = redisService;
+            if (_tokenService.TryValidateToken(request.Token, out var principal) && principal != null)
+            {
+                var claim = principal.FindFirst("userId")?.Value ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(claim, out var parsed))
+                    userId = parsed;
+            }
         }
 
-        public async Task<Result<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
+        long? sessionId = request.SessionId;
+
+        if (!string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            // Si traes refreshToken especÌfico, revÛcalo
-            if (!string.IsNullOrEmpty(request.RefreshToken))
+            var snapshot = await _refreshTokens.GetActiveByTokenAsync(request.RefreshToken);
+            if (snapshot != null)
             {
-                var token = await _refreshRepo.GetActiveByTokenAsync(request.RefreshToken);
-                RefreshToken tokenAudit = new RefreshToken();
-       
-                if (!string.IsNullOrEmpty(token?.RefreshToken))
-                {
-                    tokenAudit.Token = token.RefreshToken;
-                    await _refreshRepo.RevokeAsync(tokenAudit, null);
-                }
+                sessionId ??= snapshot.UserSessionId;
+                userId ??= snapshot.UserId;
             }
-
-            // Si pasa userId: revocamos todos los refresh tokens del usuario y cerramos sesiones
-            if (request.UserId.HasValue)
-            {
-                await _refreshRepo.RevokeAllByUserAsync(request.UserId.Value, null);
-                await _sessionRepo.CloseSessionsByCompanyAsync(request.UserId.Value);
-            }
-
-            // Si pasa companyId: revocamos tokens (si snapshot companyId existe) y cerramos sesiones
-            if (request.CompanyId.HasValue)
-            {
-                await _refreshRepo.RevokeAllByCompanyAsync(request.CompanyId.Value, null);
-                await _sessionRepo.CloseSessionsByCompanyAsync(request.CompanyId.Value);
-            }
-
-            // Si pasa sessionId: cerramos esa sesiÛn concreta
-            if (request.SessionId.HasValue)
-            {
-                var session = await _sessionRepo.GetByIdAsync(request.SessionId.Value);
-                if (session != null && session.LogoutAt == null)
-                {
-                    session.LogoutAt = DateTime.UtcNow;
-                    session.IsSuccess = false;
-                    await _sessionRepo.UpdateAsync(session);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(request.Token))
-            {
-                await _redisService.RevokeTokenAsync(request.Token);
-            }
-
-            return Result<bool>.Success(true);
         }
+
+        if (userId == null || userId <= 0)
+            return Result<bool>.Failure("No se pudo resolver el usuario para cerrar sesiùn.", "LOGOUT_USER_REQUIRED", "BadRequest");
+
+        // 2) Revocar refresh tokens
+        // - Si tenemos SessionId (resuelto por refreshToken) revocamos por sesiÛn.
+        // - Si no, revocamos por UserId (todas las sesiones del usuario).
+        if (sessionId != null && sessionId > 0)
+            await _refreshTokens.RevokeAllByUserAsync(sessionId.Value, replacedByToken: null);
+        else
+            await _refreshTokens.RevokeAllByUserIdAsync(userId.Value, replacedByToken: null);
+
+        // 3) Cerrar sesiones (marca LogoutAt + IsSuccess=0 segùn SP)
+        await _userSessions.CloseSessionsByUserAsync(userId.Value);
+
+        return Result<bool>.Success(true);
     }
 }

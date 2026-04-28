@@ -1,6 +1,7 @@
 [
   {
-    "UserInfoId": 1,
+    "CompanyId": 1,
+    "UserEmail": "jose.mendez@gmail.com",
     "Address": "Calle 147 # 12-34, Mazuren",
     "Alias": "Apartamento",
     "Latitude": 4.7302,

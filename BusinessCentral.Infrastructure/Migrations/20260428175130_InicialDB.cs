@@ -177,7 +177,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CompanyId = table.Column<int>(type: "int", nullable: false),
+                    CompanyId = table.Column<int>(type: "int", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     IsSystemRole = table.Column<bool>(type: "bit", nullable: false),
                     IsSuperUser = table.Column<bool>(type: "bit", nullable: false),
@@ -1259,7 +1259,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CompanyId = table.Column<int>(type: "int", nullable: false),
+                    CompanyId = table.Column<int>(type: "int", nullable: true),
                     DocumentTypeId = table.Column<int>(type: "int", nullable: false),
                     DocumentNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     FirstName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),

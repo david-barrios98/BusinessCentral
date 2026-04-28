@@ -5,7 +5,7 @@
     "ServiceId": 1,
     "Quantity": 1,
     "UnitPrice": 20000,
-    "EmployeeUserId": 1
+    "EmployeeEmail": "jose.mendez@gmail.com"
   }
 ]
 

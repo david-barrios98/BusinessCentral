@@ -9,7 +9,7 @@ namespace BusinessCentral.Api.Extensions
         public static IServiceCollection AddRoleExtensions(this IServiceCollection services)
         {
             // Registrar el AuthorizationHandler y la policy "SystemRole"
-            services.AddScoped<IAuthorizationHandler, SystemRoleHandler>();
+            services.AddScoped<IAuthorizationHandler, BusinessCentral.Infrastructure.Security.SystemRoleHandler>();
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("SystemRole", policy =>

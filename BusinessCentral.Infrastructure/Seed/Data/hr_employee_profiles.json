@@ -1,7 +1,7 @@
 [
   {
-    "UserId": 1,
     "CompanyId": 1,
+    "UserEmail": "jose.mendez@gmail.com",
     "IsEmployee": true,
     "ActiveEmployee": true,
     "HireDate": "2026-01-10T00:00:00",

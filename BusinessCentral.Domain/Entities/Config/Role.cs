@@ -14,8 +14,11 @@ namespace BusinessCentral.Domain.Entities.Config
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        public int CompanyId { get; set; } // Cada empresa tiene sus propios roles
+        /// <summary>
+        /// Nullable para permitir roles globales del sistema (superusuario) sin compañía asociada.
+        /// Para roles tenant debe tener valor.
+        /// </summary>
+        public int? CompanyId { get; set; } // Cada empresa tiene sus propios roles
 
         [Required]
         [MaxLength(50)]

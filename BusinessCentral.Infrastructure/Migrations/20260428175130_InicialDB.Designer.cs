@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BusinessCentral.Infrastructure.Migrations
 {
     [DbContext(typeof(BusinessCentralDbContext))]
-    [Migration("20260428144314_InicialDB")]
+    [Migration("20260428175130_InicialDB")]
     partial class InicialDB
     {
         /// <inheritdoc />
@@ -459,7 +459,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<bool>("CanLogin")
                         .HasColumnType("bit");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int?>("CompanyId")
                         .HasColumnType("int");
 
                     b.Property<bool>("ConfirmedAccount")
@@ -2097,7 +2097,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.Property<bool?>("Active")
                         .HasColumnType("bit");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int?>("CompanyId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsSuperUser")
@@ -3430,8 +3430,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                     b.HasOne("BusinessCentral.Domain.Entities.Business.Companies", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BusinessCentral.Domain.Entities.Common.DocumentType", "DocumentType")
                         .WithMany()

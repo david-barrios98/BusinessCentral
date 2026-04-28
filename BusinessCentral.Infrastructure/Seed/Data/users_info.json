@@ -1,7 +1,7 @@
 [
   {
     "CompanyId": 1,
-    "RoleId": 1,
+    "RoleName": "Administrador",
     "DocumentTypeId": 1,
     "DocumentNumber": "1010202030",
     "FirstName": "Jose",
@@ -13,13 +13,13 @@
     "Create": "2026-03-31T15:38:00"
   },
   {
-    "CompanyId": 2,
-    "RoleId": 3,
+    "CompanyId": null,
+    "RoleName": "SuperUser",
     "DocumentTypeId": 1,
     "DocumentNumber": "999999999",
-    "FirstName": "Platform",
-    "LastName": "Admin",
-    "Email": "platform.admin@globalsystems.com",
+    "FirstName": "David",
+    "LastName": "Barrios",
+    "Email": "david.barrios.rojas@gmail.com",
     "Phone": "3190000000",
     "Password": "$2a$11$lK3CandPBR7gyDPszhpQmuEsWYZ.WxH7Tq7qRI98ytj2r.qlRksnu",
     "Active": true,

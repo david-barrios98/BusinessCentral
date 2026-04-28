@@ -26,6 +26,7 @@ Archivo clave: `BusinessCentral.Api/appsettings.Development.json`
 - **ConnectionStrings**: `DefaultConnection`
 - **JwtSettings**: `SecretKey`, `Issuer`, `Audience`, `ExpiryInMinutes`
 - **RunSeed**: si `true` ejecuta el seed al iniciar (ver `BusinessCentral.Infrastructure/Seed/DbInitializer.cs`)
+- **RunSeedDemoData**: si `true` ejecuta **data demo** (POS/HR/SERVICES/FARM) además de catálogos. Default recomendado: `false` (evita errores por FKs/IDs en ambientes con data existente)
 
 ---
 
@@ -78,6 +79,7 @@ Notas:
 
 - Algunas entidades usan `SeedEntity<T>` (inserta solo si tabla está vacía).
 - Otras usan “merge” por Code / keys compuestas (no duplica si ya existe).
+- **Data demo (POS/HR/SERVICES/FARM)**: por defecto **no se ejecuta** (para evitar problemas de FK cuando ya hay data o IDs distintos). Para activarla usa `RunSeedDemoData=true`.
 
 ---
 
@@ -165,7 +167,29 @@ Se separa el uso por canal:
 
 Login:
 - **Tenant**: `POST /api/v1/public/auth/login` enviando `companyId`.
-- **Superusuario web**: `POST /api/v1/public/auth/login` sin `companyId` (usa `auth.sp_login_system_user`). En este modo el JWT emite `companyId = 0`.
+- **Superusuario web**: `POST /api/v1/public/auth/login` sin `companyId` (usa `auth.sp_login_system_user`). En este modo el JWT emite `companyId = 0` y el usuario en BD puede tener `UsersInfo.CompanyId = NULL`.
+
+Logout:
+- `POST /api/v1/secure/auth/logout` (requiere `Authorization: Bearer <accessToken>`)
+- Body recomendado:
+
+```json
+{
+  "refreshToken": "<refreshToken>"
+}
+```
+
+Efecto:
+- Cierra sesiones abiertas del usuario en `audit.UserSession` asignando `LogoutAt` y poniendo `IsSuccess = 0`.
+- Revoca refresh tokens activos del usuario. Si envías `refreshToken`, el backend puede resolver la sesión exacta; si no, revoca por `UserId` (todas las sesiones del usuario).
+
+### Superusuario sin compañía (modelo de datos)
+
+Se permite que:
+- `auth.UsersInfo.CompanyId` sea **NULL** para usuarios de sistema/superusuarios.
+- `config.Role.CompanyId` sea **NULL** para roles globales del sistema (por ejemplo `SuperUser`).
+
+Para usuarios tenant, `CompanyId` debe existir y el login requiere `companyId`.
 
 ### Usuarios por compañía (JWT + módulo AUTH)
 

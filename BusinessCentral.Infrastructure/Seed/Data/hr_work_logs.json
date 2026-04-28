@@ -1,7 +1,7 @@
 [
   {
     "CompanyId": 1,
-    "UserId": 1,
+    "UserEmail": "jose.mendez@gmail.com",
     "WorkDate": "2026-04-01T00:00:00",
     "PaySchemeId": 1,
     "Quantity": 1,

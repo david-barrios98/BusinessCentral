@@ -1947,6 +1947,7 @@ BEGIN
     WHERE ui.Active = 1
       AND ui.CanLogin = 1
       AND r.IsSystemRole = 1
+      AND (ui.CompanyId IS NULL OR ui.CompanyId = 0)
       AND (
         (ui.Email = @username) OR
         (ui.Phone = @username) OR
@@ -2380,7 +2381,7 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_user]
-    @UserSessionId INT,
+    @UserSessionId BIGINT,
     @RevokedAt DATETIME,
     @CurrentTime DATETIME,
     @ReplacedByToken VARCHAR(MAX) = NULL
@@ -2394,6 +2395,28 @@ BEGIN
       AND RevokedAt IS NULL
       AND ExpiresAt > @CurrentTime
       AND Active = 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [auth].[sp_revoke_all_tokens_by_user_id]
+    @UserId INT,
+    @RevokedAt DATETIME,
+    @CurrentTime DATETIME,
+    @ReplacedByToken NVARCHAR(500) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE rt
+    SET rt.RevokedAt = @RevokedAt,
+        rt.ReplacedByToken = @ReplacedByToken,
+        rt.Active = 0
+    FROM [audit].[RefreshToken] rt WITH (NOLOCK)
+    INNER JOIN [audit].[UserSession] us WITH (NOLOCK) ON rt.UserSessionId = us.Id
+    WHERE us.UserId = @UserId
+      AND rt.RevokedAt IS NULL
+      AND rt.ExpiresAt > @CurrentTime
+      AND rt.Active = 1;
 END
 GO
 

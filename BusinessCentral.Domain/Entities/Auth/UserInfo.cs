@@ -18,11 +18,14 @@ namespace BusinessCentral.Domain.Entities.Auth
         [Key]
         public int Id { get; set; }
 
-        [Required] 
-        public int CompanyId { get; set; }
+        /// <summary>
+        /// Nullable para permitir superusuarios/sistema sin compañía asociada.
+        /// Para usuarios tenant debe tener valor.
+        /// </summary>
+        public int? CompanyId { get; set; }
 
         [ForeignKey("CompanyId")] 
-        public virtual Companies Company { get; set; } = null!;
+        public virtual Companies? Company { get; set; }
 
         [Required]
         public int DocumentTypeId { get; set; }

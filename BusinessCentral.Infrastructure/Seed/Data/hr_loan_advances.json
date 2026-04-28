@@ -1,7 +1,7 @@
 [
   {
     "CompanyId": 1,
-    "UserId": 1,
+    "UserEmail": "jose.mendez@gmail.com",
     "Date": "2026-04-02T00:00:00",
     "Amount": 50000,
     "Notes": "Avance de prueba",

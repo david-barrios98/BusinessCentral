@@ -72,6 +72,20 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
             await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_all_tokens_by_user, parameters);
         }
 
+        public async Task RevokeAllByUserIdAsync(int userId, string? replacedByToken = null)
+        {
+            var now = TimeZoneHelper.GetColombiaTimeNow();
+            var parameters = new[]
+            {
+                CreateParameter("@UserId", userId, SqlDbType.Int),
+                CreateParameter("@RevokedAt", now, SqlDbType.DateTime),
+                CreateParameter("@CurrentTime", now, SqlDbType.DateTime),
+                CreateParameter("@ReplacedByToken", replacedByToken ?? (object)DBNull.Value, SqlDbType.NVarChar)
+            };
+
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Auth.sp_revoke_all_tokens_by_user_id, parameters);
+        }
+
         public async Task RevokeAllByCompanyAsync(int companyId, string? replacedByToken = null)
         {
             var now = TimeZoneHelper.GetColombiaTimeNow();

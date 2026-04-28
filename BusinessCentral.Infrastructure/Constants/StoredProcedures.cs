@@ -32,6 +32,7 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_get_active_refresh_token = "[auth].[sp_get_active_refresh_token]";
             public const string sp_revoke_refresh_token = "[auth].[sp_revoke_refresh_token]";
             public const string sp_revoke_all_tokens_by_user = "[auth].[sp_revoke_all_tokens_by_user]";
+            public const string sp_revoke_all_tokens_by_user_id = "[auth].[sp_revoke_all_tokens_by_user_id]";
             public const string sp_revoke_all_tokens_by_company = "[auth].[sp_revoke_all_tokens_by_company]";
         }
         public static class User

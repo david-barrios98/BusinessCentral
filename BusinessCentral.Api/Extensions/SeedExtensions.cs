@@ -12,6 +12,7 @@ public static class SeedExtensions
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<BusinessCentralDbContext>();
 
-        await DbInitializer.SeedAsync(context);
+        var seedDemoData = config.GetValue<bool>("RunSeedDemoData");
+        await DbInitializer.SeedAsync(context, seedDemoData: seedDemoData);
     }
 }

@@ -60,15 +60,15 @@
   { "CompanyId": 1, "RoleName": "Administrador", "ModuleCode": "HR", "PermissionCode": "PAYROLL_READ" },
   { "CompanyId": 1, "RoleName": "Administrador", "ModuleCode": "HR", "PermissionCode": "PAYROLL_WRITE" },
 
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "USERS_READ" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "USERS_WRITE" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "ROLES_READ" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "ROLES_WRITE" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "PERMISSIONS_READ" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "AUTH", "PermissionCode": "PERMISSIONS_WRITE" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "BUSS", "PermissionCode": "COMPANY_READ" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "BUSS", "PermissionCode": "COMPANY_WRITE" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "BUSS", "PermissionCode": "MODULES_READ" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "BUSS", "PermissionCode": "MODULES_WRITE" },
-  { "CompanyId": 2, "RoleName": "PlatformAdmin", "ModuleCode": "FIN", "PermissionCode": "REPORTS_READ" }
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "USERS_READ" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "USERS_WRITE" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "ROLES_READ" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "ROLES_WRITE" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "PERMISSIONS_READ" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "AUTH", "PermissionCode": "PERMISSIONS_WRITE" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "BUSS", "PermissionCode": "COMPANY_READ" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "BUSS", "PermissionCode": "COMPANY_WRITE" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "BUSS", "PermissionCode": "MODULES_READ" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "BUSS", "PermissionCode": "MODULES_WRITE" },
+  { "CompanyId": 0, "RoleName": "SuperUser", "ModuleCode": "FIN", "PermissionCode": "REPORTS_READ" }
 ]
