@@ -2,15 +2,22 @@
   {
     "CompanyId": 1,
     "Name": "Administrador",
-    "IsSystemRole": true,
+    "IsSystemRole": false,
     "IsSuperUser": true,
     "Active": true
   },
   {
     "CompanyId": 1,
-    "Name": "Manicurista",
+    "Name": "Cogedor",
     "IsSystemRole": false,
     "IsSuperUser": false,
+    "Active": true
+  },
+  {
+    "CompanyId": 2,
+    "Name": "PlatformAdmin",
+    "IsSystemRole": true,
+    "IsSuperUser": true,
     "Active": true
   }
 ]

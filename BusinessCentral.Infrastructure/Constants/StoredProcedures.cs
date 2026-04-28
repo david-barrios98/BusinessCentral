@@ -61,6 +61,11 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_list_payment_methods = "[config].[sp_list_payment_methods]";
             public const string sp_list_company_payment_methods = "[config].[sp_list_company_payment_methods]";
             public const string sp_set_company_payment_method = "[config].[sp_set_company_payment_method]";
+            public const string sp_list_role_permissions = "[config].[sp_list_role_permissions]";
+            public const string sp_set_role_permission = "[config].[sp_set_role_permission]";
+            public const string sp_list_permissions = "[config].[sp_list_permissions]";
+            public const string sp_list_business_nature_default_permissions = "[config].[sp_list_business_nature_default_permissions]";
+            public const string sp_apply_business_nature_defaults_to_company = "[config].[sp_apply_business_nature_defaults_to_company]";
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";

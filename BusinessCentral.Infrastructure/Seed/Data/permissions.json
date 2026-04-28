@@ -10,8 +10,76 @@
     "Code": "USERS_WRITE"
   },
   {
-    "ModuleCode": "SERV",
-    "Name": "Services.Manage",
-    "Code": "SERVICES_MANAGE"
-  }
+    "ModuleCode": "AUTH",
+    "Name": "Roles.Read",
+    "Code": "ROLES_READ"
+  },
+  {
+    "ModuleCode": "AUTH",
+    "Name": "Roles.Write",
+    "Code": "ROLES_WRITE"
+  },
+  {
+    "ModuleCode": "AUTH",
+    "Name": "Permissions.Read",
+    "Code": "PERMISSIONS_READ"
+  },
+  {
+    "ModuleCode": "AUTH",
+    "Name": "Permissions.Write",
+    "Code": "PERMISSIONS_WRITE"
+  },
+
+  { "ModuleCode": "BUSS", "Name": "Company.Read", "Code": "COMPANY_READ" },
+  { "ModuleCode": "BUSS", "Name": "Company.Write", "Code": "COMPANY_WRITE" },
+  { "ModuleCode": "BUSS", "Name": "Facilities.Read", "Code": "FACILITIES_READ" },
+  { "ModuleCode": "BUSS", "Name": "Facilities.Write", "Code": "FACILITIES_WRITE" },
+  { "ModuleCode": "BUSS", "Name": "Subscription.Read", "Code": "SUBSCRIPTION_READ" },
+  { "ModuleCode": "BUSS", "Name": "Subscription.Write", "Code": "SUBSCRIPTION_WRITE" },
+  { "ModuleCode": "BUSS", "Name": "Modules.Read", "Code": "MODULES_READ" },
+  { "ModuleCode": "BUSS", "Name": "Modules.Write", "Code": "MODULES_WRITE" },
+
+  { "ModuleCode": "FIN", "Name": "Reports.Read", "Code": "REPORTS_READ" },
+  { "ModuleCode": "FIN", "Name": "Transactions.Read", "Code": "TX_READ" },
+  { "ModuleCode": "FIN", "Name": "Transactions.Write", "Code": "TX_WRITE" },
+  { "ModuleCode": "FIN", "Name": "Journal.Read", "Code": "JOURNAL_READ" },
+  { "ModuleCode": "FIN", "Name": "Journal.Write", "Code": "JOURNAL_WRITE" },
+
+  { "ModuleCode": "SERVICES", "Name": "Orders.Read", "Code": "ORDERS_READ" },
+  { "ModuleCode": "SERVICES", "Name": "Orders.Write", "Code": "ORDERS_WRITE" },
+  { "ModuleCode": "SERVICES", "Name": "Catalog.Read", "Code": "CATALOG_READ" },
+  { "ModuleCode": "SERVICES", "Name": "Catalog.Write", "Code": "CATALOG_WRITE" },
+
+  { "ModuleCode": "COMMERCE", "Name": "Products.Read", "Code": "PRODUCTS_READ" },
+  { "ModuleCode": "COMMERCE", "Name": "Products.Write", "Code": "PRODUCTS_WRITE" },
+  { "ModuleCode": "COMMERCE", "Name": "Suppliers.Read", "Code": "SUPPLIERS_READ" },
+  { "ModuleCode": "COMMERCE", "Name": "Suppliers.Write", "Code": "SUPPLIERS_WRITE" },
+  { "ModuleCode": "COMMERCE", "Name": "Purchases.Read", "Code": "PURCHASES_READ" },
+  { "ModuleCode": "COMMERCE", "Name": "Purchases.Write", "Code": "PURCHASES_WRITE" },
+
+  { "ModuleCode": "POS", "Name": "Cash.Read", "Code": "CASH_READ" },
+  { "ModuleCode": "POS", "Name": "Cash.Write", "Code": "CASH_WRITE" },
+  { "ModuleCode": "POS", "Name": "Tickets.Read", "Code": "TICKETS_READ" },
+  { "ModuleCode": "POS", "Name": "Tickets.Write", "Code": "TICKETS_WRITE" },
+
+  { "ModuleCode": "HR", "Name": "Employees.Read", "Code": "EMPLOYEES_READ" },
+  { "ModuleCode": "HR", "Name": "Employees.Write", "Code": "EMPLOYEES_WRITE" },
+  { "ModuleCode": "HR", "Name": "Payroll.Read", "Code": "PAYROLL_READ" },
+  { "ModuleCode": "HR", "Name": "Payroll.Write", "Code": "PAYROLL_WRITE" },
+
+  { "ModuleCode": "FARM", "Name": "Lots.Read", "Code": "LOTS_READ" },
+  { "ModuleCode": "FARM", "Name": "Lots.Write", "Code": "LOTS_WRITE" },
+
+  { "ModuleCode": "AGRO", "Name": "Lots.Read", "Code": "LOTS_READ" },
+  { "ModuleCode": "AGRO", "Name": "Lots.Write", "Code": "LOTS_WRITE" },
+
+  { "ModuleCode": "MFG", "Name": "Recipes.Read", "Code": "RECIPES_READ" },
+  { "ModuleCode": "MFG", "Name": "Recipes.Write", "Code": "RECIPES_WRITE" },
+  { "ModuleCode": "MFG", "Name": "Production.Read", "Code": "PRODUCTION_READ" },
+  { "ModuleCode": "MFG", "Name": "Production.Write", "Code": "PRODUCTION_WRITE" },
+
+  { "ModuleCode": "SCRAP", "Name": "Materials.Read", "Code": "MATERIALS_READ" },
+  { "ModuleCode": "SCRAP", "Name": "Materials.Write", "Code": "MATERIALS_WRITE" },
+
+  { "ModuleCode": "SERV", "Name": "Services.Manage", "Code": "SERVICES_MANAGE" }
 ]

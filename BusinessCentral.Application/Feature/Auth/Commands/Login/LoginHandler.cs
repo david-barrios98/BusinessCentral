@@ -17,6 +17,8 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IUserSessionRepository _userSessionRepository;
         private readonly IFailedLoginAttemptService _failedLoginAttemptService;
+        private readonly ICompanyModuleRepository _companyModuleRepository;
+        private readonly IRolePermissionRepository _rolePermissionRepository;
 
         public LoginHandler(
             ILoginRepository repository,
@@ -24,7 +26,9 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             ITokenService tokenService,
             IRefreshTokenRepository refreshTokenRepository,
             IUserSessionRepository userSessionRepository,
-            IFailedLoginAttemptService failedLoginAttemptService)
+            IFailedLoginAttemptService failedLoginAttemptService,
+            ICompanyModuleRepository companyModuleRepository,
+            IRolePermissionRepository rolePermissionRepository)
         {
             _repository = repository;
             _hashService = hashService;
@@ -32,6 +36,8 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             _refreshTokenRepository = refreshTokenRepository;
             _userSessionRepository = userSessionRepository;
             _failedLoginAttemptService = failedLoginAttemptService;
+            _companyModuleRepository = companyModuleRepository;
+            _rolePermissionRepository = rolePermissionRepository;
         }
 
         public async Task<Result<LoginResponseDTO>> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -91,6 +97,10 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             await _failedLoginAttemptService.ClearFailedAttemptsAsync(username);
 
             // 4. Generación de Token (igual que antes)
+            // Cargar permisos y módulos asignados (para UI y claims)
+            user.Permissions = await _rolePermissionRepository.ListRolePermissionsAsync(user.RoleId);
+            user.Modules = await _companyModuleRepository.ListCompanyModulesAsync(user.CompanyId);
+
             JwtUserDto jwtUser = new JwtUserDto
             {
                 userId = user.UserId,
@@ -98,6 +108,11 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                 companyId = user.CompanyId.ToString(),
                 companyName = user.CompanyName?.ToString() ?? string.Empty,
                 LoginField = loginFieldType,
+                role = user.RoleName ?? string.Empty,
+                isSystemRole = user.IsSystemRole,
+                isSuperUser = user.IsSuperUser,
+                permissions = user.Permissions.Select(p => $"{p.ModuleCode}.{p.PermissionCode}").ToList(),
+                modules = user.Modules.Where(m => m.IsEnabled).Select(m => m.ModuleCode ?? string.Empty).Where(s => !string.IsNullOrWhiteSpace(s)).ToList()
             };
 
             var accessToken = _tokenService.GenerateAccessToken(jwtUser);
@@ -137,6 +152,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
             user.AccessToken = accessToken;
             user.RefreshToken = refreshValue;
             user.ExpiresIn = _tokenService.GetAccessTokenExpirationSeconds();
+            user.IssuedAt = DateTime.UtcNow;
 
             return Result<LoginResponseDTO>.Success(user);
         }

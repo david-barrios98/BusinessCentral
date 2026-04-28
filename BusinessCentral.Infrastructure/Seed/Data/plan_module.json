@@ -30,5 +30,9 @@
   {
     "MembershipPlanId": 1,
     "ModuleCode": "POS"
+  },
+  {
+    "MembershipPlanId": 1,
+    "ModuleCode": "FIN"
   }
 ]

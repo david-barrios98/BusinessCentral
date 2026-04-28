@@ -1,7 +1,7 @@
 [
   {
     "Name": "Plan Emprendedor",
-    "Price": 49900,
+    "Price": 99000,
     "BillingCycle": "Monthly",
     "DurationDays": 30,
     "MaxUsers": 5,

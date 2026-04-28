@@ -33,8 +33,24 @@ namespace BusinessCentral.Shared.Helper
                 new Claim("companyId", user.companyId),
                 new Claim("companyName", user.companyName),
                 new Claim("loginField", user.LoginField ?? string.Empty),
+                new Claim("role", user.role ?? string.Empty),
+                new Claim("isSystemRole", user.isSystemRole ? "true" : "false"),
+                new Claim("isSuperUser", user.isSuperUser ? "true" : "false"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            // Claims repetibles: permisos y módulos habilitados
+            if (user.permissions != null)
+            {
+                foreach (var p in user.permissions.Where(p => !string.IsNullOrWhiteSpace(p)))
+                    claims.Add(new Claim("perm", p));
+            }
+
+            if (user.modules != null)
+            {
+                foreach (var m in user.modules.Where(m => !string.IsNullOrWhiteSpace(m)))
+                    claims.Add(new Claim("module", m));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -969,7 +969,7 @@ namespace BusinessCentral.Infrastructure.Seed
         }
 
         // =============================
-        // 🧩 SEED MERGE: Role (por CompanyId + Name)
+        // 🧩 SEED MERGE: Role (por CompanyId + Name) + UPDATE flags
         // =============================
         private static async Task SeedRolesMerge(BusinessCentralDbContext context, string fileName)
         {
@@ -985,12 +985,37 @@ namespace BusinessCentral.Infrastructure.Seed
             static string Norm(string? s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
             var existing = await dbSet
-                .Select(r => new { r.CompanyId, r.Name })
+                .Select(r => new { r.Id, r.CompanyId, r.Name, r.IsSystemRole, r.IsSuperUser, r.Active })
                 .ToListAsync();
 
             var existingSet = new HashSet<string>(
                 existing.Select(x => $"{x.CompanyId}|{Norm(x.Name)}")
             );
+
+            // Update existing flags (IsSystemRole/IsSuperUser/Active) to match seed
+            var seedByKey = data
+                .Where(r => r.CompanyId > 0 && !string.IsNullOrWhiteSpace(r.Name))
+                .ToDictionary(r => $"{r.CompanyId}|{Norm(r.Name)}", r => r);
+
+            var toUpdate = existing
+                .Where(e => seedByKey.ContainsKey($"{e.CompanyId}|{Norm(e.Name)}"))
+                .ToList();
+
+            if (toUpdate.Any())
+            {
+                foreach (var e in toUpdate)
+                {
+                    var seed = seedByKey[$"{e.CompanyId}|{Norm(e.Name)}"];
+                    var entity = await dbSet.FindAsync(e.Id);
+                    if (entity == null) continue;
+                    entity.IsSystemRole = seed.IsSystemRole;
+                    entity.IsSuperUser = seed.IsSuperUser;
+                    entity.Active = seed.Active;
+                }
+
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
 
             var toInsert = data
                 .Where(r => r.CompanyId > 0)

@@ -70,6 +70,25 @@ public class LoginResponseDTO
     [JsonPropertyName("companyName")]
     public string? CompanyName { get; set; }
 
+    // --- Rol / autorización ---
+    [JsonPropertyName("roleId")]
+    public int RoleId { get; set; }
+
+    [JsonPropertyName("roleName")]
+    public string? RoleName { get; set; }
+
+    [JsonPropertyName("isSystemRole")]
+    public bool IsSystemRole { get; set; }
+
+    [JsonPropertyName("isSuperUser")]
+    public bool IsSuperUser { get; set; }
+
+    [JsonPropertyName("permissions")]
+    public List<RolePermissionDTO> Permissions { get; set; } = new();
+
+    [JsonPropertyName("modules")]
+    public List<BusinessCentral.Application.DTOs.Config.CompanyModuleDTO> Modules { get; set; } = new();
+
     // --- Datos de Seguridad (JWT) ---
     [JsonPropertyName("accessToken")]
     public string AccessToken { get; set; } = null!;

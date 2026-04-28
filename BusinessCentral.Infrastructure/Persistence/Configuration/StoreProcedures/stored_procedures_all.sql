@@ -110,6 +110,68 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [config].[sp_list_permissions]
+(
+    @only_active BIT = 1,
+    @module_code NVARCHAR(50) = NULL
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        p.Id AS PermissionId,
+        m.Id AS ModuleId,
+        m.Code AS ModuleCode,
+        m.Name AS ModuleName,
+        p.Code AS PermissionCode,
+        p.Name AS PermissionName,
+        COALESCE(p.Active, 1) AS Active
+    FROM [config].[Permission] p WITH (NOLOCK)
+    INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = p.ModuleId
+    WHERE (@only_active = 0 OR COALESCE(p.Active, 1) = 1)
+      AND (@module_code IS NULL OR LOWER(m.Code) = LOWER(@module_code))
+      AND COALESCE(m.Active, 1) = 1
+    ORDER BY m.Code, p.Code;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_business_nature_default_permissions]
+(
+    @nature_code NVARCHAR(50)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @nature_id INT;
+    SELECT TOP 1 @nature_id = bn.Id
+    FROM [config].[BusinessNature] bn WITH (NOLOCK)
+    WHERE LOWER(bn.Code) = LOWER(@nature_code)
+      AND bn.Active = 1;
+
+    IF @nature_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Business nature not found' AS Message;
+        RETURN;
+    END
+
+    -- Estándar: los permisos default de una naturaleza son TODOS los permisos de los módulos
+    -- que están marcados como default-enabled en BusinessNatureModule.
+    SELECT
+        p.Id AS PermissionId,
+        m.Code AS ModuleCode,
+        p.Code AS PermissionCode,
+        p.Name AS PermissionName
+    FROM [config].[BusinessNatureModule] bnm WITH (NOLOCK)
+    INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND COALESCE(m.Active, 1) = 1
+    INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id AND COALESCE(p.Active, 1) = 1
+    WHERE bnm.BusinessNatureId = @nature_id
+      AND bnm.IsDefaultEnabled = 1
+    ORDER BY m.Code, p.Code;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_company_modules]
     @company_id INT
 AS
@@ -126,6 +188,112 @@ BEGIN
     INNER JOIN [config].[Module] m ON m.Id = cm.ModuleId
     WHERE cm.CompanyId = @company_id
     ORDER BY m.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_list_role_permissions]
+    @role_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        p.Id AS PermissionId,
+        m.Code AS ModuleCode,
+        p.Code AS PermissionCode,
+        p.Name AS PermissionName
+    FROM [config].[RolePermission] rp WITH (NOLOCK)
+    INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.Id = rp.PermissionId
+    INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = p.ModuleId
+    WHERE rp.RoleId = @role_id
+      AND COALESCE(p.Active, 1) = 1
+      AND COALESCE(m.Active, 1) = 1
+    ORDER BY m.Code, p.Code;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_set_role_permission]
+(
+    @role_id INT,
+    @permission_id INT,
+    @enabled BIT = 1
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @enabled = 1
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM [config].[RolePermission] WHERE RoleId = @role_id AND PermissionId = @permission_id)
+            INSERT INTO [config].[RolePermission] (RoleId, PermissionId) VALUES (@role_id, @permission_id);
+    END
+    ELSE
+    BEGIN
+        DELETE FROM [config].[RolePermission] WHERE RoleId = @role_id AND PermissionId = @permission_id;
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_apply_business_nature_defaults_to_company]
+(
+    @company_id INT,
+    @nature_code NVARCHAR(50),
+    @role_id INT = NULL -- opcional: si se pasa, aplica permisos default al rol
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    DECLARE @nature_id INT;
+    SELECT TOP 1 @nature_id = bn.Id
+    FROM [config].[BusinessNature] bn WITH (NOLOCK)
+    WHERE LOWER(bn.Code) = LOWER(@nature_code)
+      AND bn.Active = 1;
+
+    IF @nature_id IS NULL
+    BEGIN
+        SELECT CAST(0 AS BIT) AS Success, N'Business nature not found' AS Message;
+        RETURN;
+    END
+
+    -- 1) Módulos: asegura filas en CompanyModule según plantilla de naturaleza
+    INSERT INTO [config].[CompanyModule] (CompanyId, ModuleId, IsEnabled, CreatedAt, UpdatedAt)
+    SELECT
+        @company_id,
+        bnm.ModuleId,
+        bnm.IsDefaultEnabled,
+        @now,
+        @now
+    FROM [config].[BusinessNatureModule] bnm WITH (NOLOCK)
+    WHERE bnm.BusinessNatureId = @nature_id
+      AND NOT EXISTS (
+          SELECT 1 FROM [config].[CompanyModule] cm
+          WHERE cm.CompanyId = @company_id AND cm.ModuleId = bnm.ModuleId
+      );
+
+    -- 2) Permisos default: TODOS los permisos de módulos default-enabled, si role_id fue provisto
+    IF @role_id IS NOT NULL AND @role_id > 0
+    BEGIN
+        INSERT INTO [config].[RolePermission] (RoleId, PermissionId)
+        SELECT
+            @role_id,
+            p.Id AS PermissionId
+        FROM [config].[BusinessNatureModule] bnm WITH (NOLOCK)
+        INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND COALESCE(m.Active, 1) = 1
+        INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id AND COALESCE(p.Active, 1) = 1
+        WHERE bnm.BusinessNatureId = @nature_id
+          AND bnm.IsDefaultEnabled = 1
+          AND NOT EXISTS (
+              SELECT 1 FROM [config].[RolePermission] rp
+              WHERE rp.RoleId = @role_id AND rp.PermissionId = p.Id
+          );
+    END
+
+    SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
 END
 GO
 
@@ -795,6 +963,13 @@ BEGIN
         SET BusinessNatureId = @bn_id, [Update] = SYSUTCDATETIME()
         WHERE Id = @company_id;
     END
+
+    -- Aplicar estándares por naturaleza: asegura CompanyModule + (opcional) permisos default.
+    -- Nota: el rol a usar para defaults depende de tu estrategia; aquí no asumimos uno.
+    EXEC [config].[sp_apply_business_nature_defaults_to_company]
+        @company_id = @company_id,
+        @nature_code = @nature_code,
+        @role_id = NULL;
 
     SELECT CAST(1 AS BIT) AS Success, N'OK' AS Message;
 END
@@ -1718,10 +1893,14 @@ BEGIN
         ui.Phone,
         ui.Password,
         ui.RoleId,
+        r.Name AS RoleName,
+        r.IsSystemRole,
+        r.IsSuperUser,
         c.Name AS CompanyName,
         c.Id AS CompanyId
     FROM [auth].[UsersInfo] ui WITH (NOLOCK)
     INNER JOIN [business].[Companies] c WITH (NOLOCK) ON ui.CompanyId = c.Id
+    LEFT JOIN [config].[Role] r WITH (NOLOCK) ON r.Id = ui.RoleId
     CROSS JOIN CompanyConfig cc
     WHERE ui.CompanyId = @company_id
       AND ui.Active = 1

@@ -1,8 +1,11 @@
 [
+  { "CompanyId": 1, "ModuleCode": "AUTH", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "BUSS", "IsEnabled": true },
   { "CompanyId": 1, "ModuleCode": "HR", "IsEnabled": true },
   { "CompanyId": 1, "ModuleCode": "FARM", "IsEnabled": true },
   { "CompanyId": 1, "ModuleCode": "SERVICES", "IsEnabled": true },
   { "CompanyId": 1, "ModuleCode": "COMMERCE", "IsEnabled": true },
-  { "CompanyId": 1, "ModuleCode": "POS", "IsEnabled": true }
+  { "CompanyId": 1, "ModuleCode": "POS", "IsEnabled": true },
+  { "CompanyId": 1, "ModuleCode": "FIN", "IsEnabled": true }
 ]
 

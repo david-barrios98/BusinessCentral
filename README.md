@@ -146,6 +146,16 @@ Controllers seguros leen:
 - `CompanyId` desde el claim `companyId`
 - `UserId` desde el claim `userId` (o `sub`)
 
+### Claims de autorización (rol, permisos, módulos)
+
+En `POST /api/v1/public/auth/login` el servidor devuelve también la información de autorización, y la replica en el JWT como claims:
+
+- `role`: nombre del rol.
+- `isSystemRole`: `true|false`.
+- `isSuperUser`: `true|false`.
+- `perm`: claim repetible (una por permiso), formato `MODULE.PERMISSION_CODE` (ej: `AUTH.USERS_WRITE`).
+- `module`: claim repetible (una por módulo habilitado en la compañía), formato `MODULE_CODE` (ej: `FIN`).
+
 ### System users (backoffice) vs usuarios tenant (empresa)
 
 En este proyecto **el login siempre recibe `companyId`** (ver `auth.sp_login_user`), y el modelo `config.Role` está **amarrado a `CompanyId`** (no nullable). Por eso, la opción más conveniente hoy (sin re-arquitecturar autenticación) es:
@@ -230,6 +240,43 @@ Envía en el JSON `facilities`: arreglo de objetos `{ "facilityTypeId", "name", 
 Todos los cambios recientes en `stored_procedures_all.sql` deben **desplegarse en SQL Server** para que coincida el comportamiento anterior.
 
 ---
+
+## Estándares: módulos y permisos por naturaleza (default)
+
+### Regla base (simple y consistente)
+
+- **Módulos default por naturaleza**: se definen en `config.BusinessNatureModule` (`IsDefaultEnabled`).
+- **Permisos default por naturaleza**: en este proyecto se calculan como **todos los permisos (`config.Permission`)** de los **módulos** que están `IsDefaultEnabled = 1` para esa naturaleza.
+
+Esto permite:
+- una compañía con **múltiples naturalezas** → unión de módulos/permissions sugeridos.
+- que siempre puedas **personalizar** después (módulos por `CompanyModule`, permisos por `RolePermission`).
+
+### SuperUser
+
+El claim `isSuperUser=true` indica que el usuario debe tener acceso total **a nivel UI/cliente**. La API expone módulos/permissions para construir el menú y la autorización del cliente.
+
+> Nota: enforcement fino por permiso en endpoints (más allá de `RequiresModule`) se puede activar con un middleware/policies si quieres (roadmap).
+
+### Endpoints (tenant seguro) para administrar permisos
+
+Módulo **AUTH**, `CompanyId` por JWT.
+
+- **Catálogo de permisos**:
+  - `GET /api/v1/secure/auth/permissions?onlyActive=true&moduleCode=AUTH`
+- **Permisos default por naturaleza** (estándar calculado):
+  - `GET /api/v1/secure/auth/permissions/business-natures/{natureCode}/defaults`
+- **Permisos asignados a un rol**:
+  - `GET /api/v1/secure/auth/roles/{roleId}/permissions`
+- **Asignar / revocar permiso a un rol**:
+  - `PUT /api/v1/secure/auth/roles/{roleId}/permissions` body `{ "permissionId": 123, "enabled": true }`
+
+### Aplicación automática al habilitar naturaleza
+
+Al habilitar una naturaleza en una compañía (`PUT /api/v1/system/config/onboarding/companies/{companyId}/business-natures/{natureCode}?enabled=true`), el SP:
+- asegura filas de `CompanyModule` según la plantilla de la naturaleza (no rompe personalizaciones ya existentes),
+- deja listo el estándar de defaults por naturaleza para que el admin decida cómo aplicarlo a roles.
+
 
 ## FIN / PUC (Contabilidad)
 

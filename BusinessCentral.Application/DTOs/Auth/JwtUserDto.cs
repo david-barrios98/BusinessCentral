@@ -15,6 +15,9 @@ namespace BusinessCentral.Core.Application.DTOs
         public string? LoginField { get; set; } = null;
 
         public string role { get; set; } = string.Empty;
+        public bool isSystemRole { get; set; } = false;
+        public bool isSuperUser { get; set; } = false;
         public List<string> permissions { get; set; } = new List<string>();
+        public List<string> modules { get; set; } = new List<string>();
     }
 }
