@@ -12,5 +12,6 @@ public sealed class ServiceOrderDTO
     public string? FulfillmentDetails { get; set; }
     public string Status { get; set; } = "open";
     public decimal Total { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 

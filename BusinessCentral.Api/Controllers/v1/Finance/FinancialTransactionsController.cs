@@ -2,6 +2,7 @@ using BusinessCentral.Api.Controllers.v1;
 using BusinessCentral.Api.Middleware;
 using BusinessCentral.Application.DTOs.Finance;
 using BusinessCentral.Application.Feature.Finance.Transactions.Commands;
+using BusinessCentral.Application.Feature.Finance.Transactions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,22 @@ public sealed class FinancialTransactionsController : SecureCompanyControllerBas
     public FinancialTransactionsController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var result = await _mediator.Send(new ListFinancialTransactionsQuery(
+            CompanyId,
+            from,
+            to,
+            page,
+            pageSize));
+        return ProcessResult(result);
     }
 
     [HttpPost]

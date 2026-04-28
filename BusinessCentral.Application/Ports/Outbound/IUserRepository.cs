@@ -1,4 +1,5 @@
 using BusinessCentral.Application.DTOs.Auth;
+using BusinessCentral.Application.DTOs.Common;
 
 namespace BusinessCentral.Application.Ports.Outbound
 {
@@ -6,8 +7,8 @@ namespace BusinessCentral.Application.Ports.Outbound
     {
         Task<int?> CreateUserAsync(CreateUserDTO dto);
         Task<UserResponseDTO?> GetUserByIdAsync(int userId);
-        Task UpdateUserAsync(UpdateUserDTO dto);
-        Task DeleteUserAsync(int userId);
-        Task<List<UserResponseDTO>> ListUsersAsync(int companyId, int page, int pageSize);
+        Task UpdateUserAsync(int companyId, UpdateUserDTO dto);
+        Task DeleteUserAsync(int companyId, int userId);
+        Task<PagedResult<UserResponseDTO>> ListUsersAsync(int companyId, int page, int pageSize);
     }
 }

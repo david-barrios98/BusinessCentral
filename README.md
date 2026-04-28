@@ -146,6 +146,30 @@ Controllers seguros leen:
 - `CompanyId` desde el claim `companyId`
 - `UserId` desde el claim `userId` (o `sub`)
 
+### Usuarios por compañía (JWT + módulo AUTH)
+
+CRUD con **ámbito de tenant** (el `CompanyId` del token; no se fía del body). Requiere módulo **AUTH** y token con permisos habituales de API segura.
+
+| Acción | Método y ruta |
+|--------|-----------------|
+| Listar (paginado) | `GET /api/v1/secure/company/users?page=&pageSize=` |
+| Detalle | `GET /api/v1/secure/company/users/{userId}` |
+| Crear | `POST /api/v1/secure/company/users` |
+| Actualizar | `PUT /api/v1/secure/company/users/{userId}` |
+| Eliminar | `DELETE /api/v1/secure/company/users/{userId}` |
+
+### Usuarios (rol sistema, `SystemRole`)
+
+Mismos casos de uso con **companyId explícito** en la ruta (backoffice / soporte). Prefijo: `api/v1/private/users`.
+
+| Acción | Método y ruta |
+|--------|-----------------|
+| Listar | `GET /api/v1/private/users/company/{companyId}?page=&pageSize=` |
+| Detalle | `GET /api/v1/private/users/company/{companyId}/users/{userId}` |
+| Crear | `POST /api/v1/private/users` (body incluye `companyId`) |
+| Actualizar | `PUT /api/v1/private/users/company/{companyId}/users/{userId}` |
+| Eliminar | `DELETE /api/v1/private/users/company/{companyId}/users/{userId}` |
+
 ---
 
 ## Multi-naturaleza y módulos
@@ -185,6 +209,15 @@ Endpoints:
 - `POST /api/v1/secure/finance/bootstrap/opening/constitution`
 - `POST /api/v1/secure/finance/bootstrap/opening/balances`
 - `GET /api/v1/secure/finance/bootstrap/validate/balance-equation?asOfUtc=...`
+
+### Transacciones financieras (no contables sueltas)
+
+Módulo **FIN**. `CompanyId` por JWT.
+
+| Acción | Método y ruta |
+|--------|-----------------|
+| Listar (paginado, opcional `from` / `to` en UTC) | `GET /api/v1/secure/finance/transactions?from=&to=&page=&pageSize=` |
+| Crear | `POST /api/v1/secure/finance/transactions` |
 
 ---
 
@@ -283,51 +316,26 @@ Endpoints:
 
 ---
 
-## Prompt para Cursor (App única: Android + iOS + Web + Desktop)
+## Servicios (órdenes de servicio)
 
-Copia y pega este prompt en Cursor cuando vayas a generar el cliente.
+Módulo **SERVICES**. `CompanyId` por JWT.
 
-```text
-Eres un arquitecto senior full-stack. Necesito crear una app de un solo código base que corra en:
-- Android (APK)
-- iOS
-- Web
-- Desktop (Windows/macOS/Linux)
-
-Requisitos:
-1) Tecnología: usa Flutter + Dart (un solo proyecto), con arquitectura limpia (data/domain/presentation) y DI.
-2) Consumir el API BusinessCentral (.NET 10) con estas reglas:
-   - Todas las respuestas vienen en ApiResponse<T> con campos: isSuccess, data, message, code, isException, traceId.
-   - Paginación: page/pageSize y PagedResult<T> (items, total, page, pageSize).
-   - Autenticación: JWT. Guardar token en almacenamiento seguro (Keychain/Keystore/secure_storage).
-   - Multi-tenant: leer companyId del JWT y/o permitir selector de compañía si aplica.
-3) Módulos principales a implementar en UI (MVP):
-   - Auth: login, logout, expiración.
-   - POS: abrir caja, movimientos, cierre/arqueo, crear ticket, agregar líneas, pagar, ver recibo.
-   - Catálogos: listar métodos habilitados de pago y fulfillment desde:
-       GET /api/v1/secure/config/payment-methods
-       GET /api/v1/secure/config/fulfillment-methods
-   - Productos: listado paginado + búsqueda (q) y creación/edición básica.
-4) UX:
-   - UI moderna, responsive.
-   - Manejo de errores uniforme mostrando message.
-   - Estados de carga, retry, empty states.
-5) Estructura:
-   - lib/core: http client, interceptors, auth store, api response parsing.
-   - lib/features/<feature>: screens, blocs/cubits, repositories, models.
-6) Networking:
-   - Usa dio o http + interceptors para Authorization Bearer.
-   - Parseo robusto de ApiResponse<T> y errores (422/401/409/400).
-7) Entregables:
-   - Proyecto Flutter completo, listo para `flutter run` y `flutter build apk`.
-   - Documenta cómo configurar baseUrl del API por ambiente (dev/prod).
-   - Incluye un set mínimo de pantallas: Login, Home, POS, Cash Session Details, Ticket Receipt.
-
-Además:
-- Genera un archivo README para la app con comandos para build Android/iOS/Web/Desktop.
-```
+| Acción | Método y ruta |
+|--------|-----------------|
+| Listar (paginado, `status` opcional) | `GET /api/v1/secure/services/orders?status=&page=&pageSize=` |
+| Crear | `POST /api/v1/secure/services/orders` |
+| Detalle | `GET /api/v1/secure/services/orders/{orderId}` |
+| Agregar línea | `POST /api/v1/secure/services/orders/{orderId}/lines` |
 
 ---
+
+## Base de datos: stored procedures
+
+Los repositorios invocan SPs definidos en `BusinessCentral.Infrastructure/Persistence/Configuration/StoreProcedures/stored_procedures_all.sql`. Tras pull o cambios en ese archivo, **vuelve a ejecutar el script** (o el despliegue equivalente) en SQL Server para que listados, paginación y firmas de `auth.sp_update_user` / `auth.sp_delete_user` coincidan con el código.
+
+---
+
+
 
 ## Licencia / contribución
 

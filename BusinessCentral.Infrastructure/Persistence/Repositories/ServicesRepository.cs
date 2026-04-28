@@ -1,3 +1,4 @@
+using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.DTOs.Services;
 using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
@@ -129,6 +130,7 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
                 FulfillmentDetails = reader["FulfillmentDetails"] == DBNull.Value ? null : reader["FulfillmentDetails"]?.ToString(),
                 Status = reader["Status"]?.ToString() ?? "open",
                 Total = Convert.ToDecimal(reader["Total"]),
+                CreatedAt = reader["CreatedAt"] == DBNull.Value ? default : Convert.ToDateTime(reader["CreatedAt"]),
             };
         }
         else
@@ -157,6 +159,55 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
         }
 
         return details;
+    }
+
+    public async Task<PagedResult<ServiceOrderDTO>> ListServiceOrdersAsync(int companyId, string? status, int page, int pageSize)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new SqlCommand(StoredProcedures.Services.sp_list_service_orders, connection)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        command.Parameters.Add(CreateParameter("@company_id", companyId, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@status", (object?)status ?? DBNull.Value, SqlDbType.NVarChar, 20));
+        command.Parameters.Add(CreateParameter("@page", page, SqlDbType.Int));
+        command.Parameters.Add(CreateParameter("@page_size", pageSize, SqlDbType.Int));
+
+        var items = new List<ServiceOrderDTO>();
+        long total = 0;
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            items.Add(new ServiceOrderDTO
+            {
+                Id = Convert.ToInt64(reader["Id"]),
+                CompanyId = Convert.ToInt32(reader["CompanyId"]),
+                OrderDate = Convert.ToDateTime(reader["OrderDate"]),
+                VehicleType = reader["VehicleType"] == DBNull.Value ? null : reader["VehicleType"]?.ToString(),
+                Plate = reader["Plate"] == DBNull.Value ? null : reader["Plate"]?.ToString(),
+                CustomerName = reader["CustomerName"] == DBNull.Value ? null : reader["CustomerName"]?.ToString(),
+                FulfillmentMethodCode = reader["FulfillmentMethodCode"] == DBNull.Value ? null : reader["FulfillmentMethodCode"]?.ToString(),
+                FulfillmentDetails = reader["FulfillmentDetails"] == DBNull.Value ? null : reader["FulfillmentDetails"]?.ToString(),
+                Status = reader["Status"]?.ToString() ?? "open",
+                Total = Convert.ToDecimal(reader["Total"]),
+                CreatedAt = reader["CreatedAt"] == DBNull.Value ? default : Convert.ToDateTime(reader["CreatedAt"]),
+            });
+        }
+
+        if (await reader.NextResultAsync() && await reader.ReadAsync())
+            total = Convert.ToInt64(reader["Total"]);
+
+        return new PagedResult<ServiceOrderDTO>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            Total = total
+        };
     }
 }
 

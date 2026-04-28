@@ -19,6 +19,16 @@ public sealed class ServiceOrdersController : SecureCompanyControllerBase
         _mediator = mediator;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> List(
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var result = await _mediator.Send(new ListServiceOrdersQuery(CompanyId, status, page, pageSize));
+        return ProcessResult(result);
+    }
+
     public sealed class CreateOrderRequest
     {
         public string? VehicleType { get; set; }

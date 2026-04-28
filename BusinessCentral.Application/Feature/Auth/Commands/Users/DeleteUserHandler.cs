@@ -12,7 +12,11 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 
         public async Task<Result<bool>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
         {
-            await _repo.DeleteUserAsync(request.UserId);
+            var existing = await _repo.GetUserByIdAsync(request.UserId);
+            if (existing == null || existing.CompanyId != request.CompanyId)
+                return Result<bool>.Failure("User not found", "USER_NOT_FOUND", "NotFound");
+
+            await _repo.DeleteUserAsync(request.CompanyId, request.UserId);
             return Result<bool>.Success(true);
         }
     }

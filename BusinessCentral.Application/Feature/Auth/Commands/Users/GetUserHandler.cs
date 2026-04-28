@@ -14,7 +14,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Users
         public async Task<Result<UserResponseDTO>> Handle(GetUserQuery request, CancellationToken cancellationToken)
         {
             var user = await _repo.GetUserByIdAsync(request.UserId);
-            if (user == null)
+            if (user == null || user.CompanyId != request.CompanyId)
                 return Result<UserResponseDTO>.Failure("User not found", "USER_NOT_FOUND", "NotFound");
             return Result<UserResponseDTO>.Success(user);
         }

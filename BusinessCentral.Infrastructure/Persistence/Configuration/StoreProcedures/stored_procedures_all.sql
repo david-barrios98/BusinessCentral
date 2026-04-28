@@ -751,6 +751,60 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [fin].[sp_list_financial_transactions]
+(
+    @company_id INT,
+    @from_date DATETIME2 = NULL,
+    @to_date DATETIME2 = NULL,
+    @page INT = 1,
+    @page_size INT = 50
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
+
+    ;WITH T AS (
+        SELECT
+            t.Id,
+            t.CompanyId,
+            t.TxDate,
+            t.Direction,
+            t.Kind,
+            t.CategoryCode,
+            t.[Description],
+            t.Amount,
+            t.ThirdPartyDocument,
+            t.ThirdPartyName,
+            t.SourceModule,
+            t.ReferenceType,
+            t.ReferenceId,
+            t.TaxCode,
+            t.Active,
+            t.CreatedAt,
+            t.UpdatedAt
+        FROM [fin].[FinancialTransaction] t
+        WHERE t.CompanyId = @company_id
+          AND t.Active = 1
+          AND (@from_date IS NULL OR t.TxDate >= @from_date)
+          AND (@to_date IS NULL OR t.TxDate < DATEADD(DAY, 1, CAST(@to_date AS DATE)))
+    )
+    SELECT Id, CompanyId, TxDate, Direction, Kind, CategoryCode, [Description], Amount,
+        ThirdPartyDocument, ThirdPartyName, SourceModule, ReferenceType, ReferenceId, TaxCode, Active, CreatedAt, UpdatedAt
+    FROM T
+    ORDER BY TxDate DESC, Id DESC
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [fin].[FinancialTransaction] t
+    WHERE t.CompanyId = @company_id
+      AND t.Active = 1
+      AND (@from_date IS NULL OR t.TxDate >= @from_date)
+      AND (@to_date IS NULL OR t.TxDate < DATEADD(DAY, 1, CAST(@to_date AS DATE)));
+END
+GO
+
 CREATE OR ALTER PROCEDURE [fin].[sp_report_financial_summary]
 (
     @company_id INT,
@@ -1700,6 +1754,7 @@ GO
 
 CREATE OR ALTER PROCEDURE [auth].[sp_update_user]
 (
+    @CompanyId INT,
     @UserId INT,
     @DocumentTypeId INT,
     @DocumentNumber VARCHAR(50),
@@ -1730,12 +1785,13 @@ BEGIN
         Active = @Active,
         Updated = SYSUTCDATETIME(),
         Password = CASE WHEN @PasswordHash IS NOT NULL THEN @PasswordHash ELSE Password END
-    WHERE Id = @UserId;
+    WHERE Id = @UserId AND CompanyId = @CompanyId;
 END
 GO
 
 CREATE OR ALTER PROCEDURE [auth].[sp_delete_user]
 (
+    @CompanyId INT,
     @UserId INT
 )
 AS
@@ -1744,7 +1800,7 @@ BEGIN
 
     UPDATE [auth].[UsersInfo]
     SET Active = 0, Updated = SYSUTCDATETIME()
-    WHERE Id = @UserId;
+    WHERE Id = @UserId AND CompanyId = @CompanyId;
 END
 GO
 
@@ -1778,6 +1834,10 @@ BEGIN
     WHERE ui.CompanyId = @CompanyId
     ORDER BY ui.Id
     OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [auth].[UsersInfo]
+    WHERE CompanyId = @CompanyId;
 END
 GO
 
@@ -2668,7 +2728,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT TOP 1 Id, CompanyId, OrderDate, VehicleType, Plate, CustomerName, FulfillmentMethodCode, FulfillmentDetails, Status, Total
+    SELECT TOP 1 Id, CompanyId, OrderDate, VehicleType, Plate, CustomerName, FulfillmentMethodCode, FulfillmentDetails, Status, Total, CreatedAt
     FROM [svc].[ServiceOrder]
     WHERE CompanyId=@company_id AND Id=@order_id;
 
@@ -2677,6 +2737,44 @@ BEGIN
     INNER JOIN [svc].[ServiceCatalog] s ON s.Id=l.ServiceId
     WHERE l.CompanyId=@company_id AND l.OrderId=@order_id
     ORDER BY l.Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_list_service_orders]
+(
+    @company_id INT,
+    @status NVARCHAR(20) = NULL,
+    @page INT = 1,
+    @page_size INT = 50
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Offset INT = (@page - 1) * @page_size;
+
+    SELECT
+        o.Id,
+        o.CompanyId,
+        o.OrderDate,
+        o.VehicleType,
+        o.Plate,
+        o.CustomerName,
+        o.FulfillmentMethodCode,
+        o.FulfillmentDetails,
+        o.[Status],
+        o.Total,
+        o.CreatedAt
+    FROM [svc].[ServiceOrder] o
+    WHERE o.CompanyId = @company_id
+      AND (@status IS NULL OR LOWER(LTRIM(RTRIM(o.[Status]))) = LOWER(LTRIM(RTRIM(@status))))
+    ORDER BY o.OrderDate DESC, o.Id DESC
+    OFFSET @Offset ROWS FETCH NEXT @page_size ROWS ONLY;
+
+    SELECT COUNT(1) AS Total
+    FROM [svc].[ServiceOrder] o
+    WHERE o.CompanyId = @company_id
+      AND (@status IS NULL OR LOWER(LTRIM(RTRIM(o.[Status]))) = LOWER(LTRIM(RTRIM(@status))));
 END
 GO
 

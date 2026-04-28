@@ -72,32 +72,32 @@ namespace BusinessCentral.Api.Controllers.v1.Users
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateUserDTO dto)
         {
-            var cmd = new CreateUserCommand(dto);
+            var cmd = new CreateUserCommand(dto.CompanyId, dto);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 
-        [HttpGet("{userId:int}")]
-        public async Task<IActionResult> Get(int userId)
+        [HttpGet("company/{companyId:int}/users/{userId:int}")]
+        public async Task<IActionResult> Get([FromRoute] int companyId, [FromRoute] int userId)
         {
-            var cmd = new GetUserQuery(userId);
+            var cmd = new GetUserQuery(companyId, userId);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 
-        [HttpPut("{userId:int}")]
-        public async Task<IActionResult> Update(int userId, [FromBody] UpdateUserDTO dto)
+        [HttpPut("company/{companyId:int}/users/{userId:int}")]
+        public async Task<IActionResult> Update([FromRoute] int companyId, int userId, [FromBody] UpdateUserDTO dto)
         {
             dto.UserId = userId;
-            var cmd = new UpdateUserCommand(dto);
+            var cmd = new UpdateUserCommand(companyId, dto);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
 
-        [HttpDelete("{userId:int}")]
-        public async Task<IActionResult> Delete(int userId)
+        [HttpDelete("company/{companyId:int}/users/{userId:int}")]
+        public async Task<IActionResult> Delete([FromRoute] int companyId, int userId)
         {
-            var cmd = new DeleteUserCommand(userId);
+            var cmd = new DeleteUserCommand(companyId, userId);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }

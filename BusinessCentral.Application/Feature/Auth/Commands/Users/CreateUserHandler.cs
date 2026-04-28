@@ -18,6 +18,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Users
         public async Task<Result<int?>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
             var dto = request.User;
+            dto.CompanyId = request.CompanyId;
             dto.Password = _hash.Hash(dto.Password);
             var id = await _repo.CreateUserAsync(dto);
             return Result<int?>.Success(id);

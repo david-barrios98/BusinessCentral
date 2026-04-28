@@ -4,5 +4,5 @@ using BusinessCentral.Application.Feature.Common.Results;
 
 namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 {
-    public record CreateUserCommand(CreateUserDTO User) : IRequest<Result<int?>>;
+    public record CreateUserCommand(int CompanyId, CreateUserDTO User) : IRequest<Result<int?>>;
 }

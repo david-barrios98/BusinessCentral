@@ -17,11 +17,15 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Users
 
         public async Task<Result<bool>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
         {
+            var existing = await _repo.GetUserByIdAsync(request.User.UserId);
+            if (existing == null || existing.CompanyId != request.CompanyId)
+                return Result<bool>.Failure("User not found", "USER_NOT_FOUND", "NotFound");
+
             var dto = request.User;
             if (!string.IsNullOrEmpty(dto.Password))
                 dto.Password = _hash.Hash(dto.Password);
 
-            await _repo.UpdateUserAsync(dto);
+            await _repo.UpdateUserAsync(request.CompanyId, dto);
             return Result<bool>.Success(true);
         }
     }

@@ -114,6 +114,7 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_create_service_order = "[svc].[sp_create_service_order]";
             public const string sp_add_service_order_line = "[svc].[sp_add_service_order_line]";
             public const string sp_get_service_order = "[svc].[sp_get_service_order]";
+            public const string sp_list_service_orders = "[svc].[sp_list_service_orders]";
         }
 
         public static class Commerce
@@ -141,6 +142,7 @@ namespace BusinessCentral.Infrastructure.Constants
         public static class Finance
         {
             public const string sp_create_financial_transaction = "[fin].[sp_create_financial_transaction]";
+            public const string sp_list_financial_transactions = "[fin].[sp_list_financial_transactions]";
             public const string sp_report_financial_summary = "[fin].[sp_report_financial_summary]";
             public const string sp_report_pnl = "[fin].[sp_report_pnl]";
             public const string sp_report_tax_summary_co = "[fin].[sp_report_tax_summary_co]";
@@ -177,7 +179,7 @@ namespace BusinessCentral.Infrastructure.Constants
 
         public static class Common
         {
-            // Geografùa
+            // Geograf?a
             public const string sp_list_countries = "[common].[sp_list_countries]";
             public const string sp_list_departments_by_country = "[common].[sp_list_departments_by_country]";
             public const string sp_list_cities_by_department = "[common].[sp_list_cities_by_department]";
