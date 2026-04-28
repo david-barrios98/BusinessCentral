@@ -126,12 +126,11 @@ BEGIN
         m.Name AS ModuleName,
         p.Code AS PermissionCode,
         p.Name AS PermissionName,
-        COALESCE(p.Active, 1) AS Active
+        CAST(1 AS BIT) AS Active
     FROM [config].[Permission] p WITH (NOLOCK)
     INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = p.ModuleId
-    WHERE (@only_active = 0 OR COALESCE(p.Active, 1) = 1)
-      AND (@module_code IS NULL OR LOWER(m.Code) = LOWER(@module_code))
-      AND COALESCE(m.Active, 1) = 1
+    WHERE (@module_code IS NULL OR LOWER(m.Code) = LOWER(@module_code))
+      AND m.Active = 1
     ORDER BY m.Code, p.Code;
 END
 GO
@@ -164,8 +163,8 @@ BEGIN
         p.Code AS PermissionCode,
         p.Name AS PermissionName
     FROM [config].[BusinessNatureModule] bnm WITH (NOLOCK)
-    INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND COALESCE(m.Active, 1) = 1
-    INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id AND COALESCE(p.Active, 1) = 1
+    INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND m.Active = 1
+    INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id
     WHERE bnm.BusinessNatureId = @nature_id
       AND bnm.IsDefaultEnabled = 1
     ORDER BY m.Code, p.Code;
@@ -206,8 +205,7 @@ BEGIN
     INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.Id = rp.PermissionId
     INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = p.ModuleId
     WHERE rp.RoleId = @role_id
-      AND COALESCE(p.Active, 1) = 1
-      AND COALESCE(m.Active, 1) = 1
+      AND m.Active = 1
     ORDER BY m.Code, p.Code;
 END
 GO
@@ -283,8 +281,8 @@ BEGIN
             @role_id,
             p.Id AS PermissionId
         FROM [config].[BusinessNatureModule] bnm WITH (NOLOCK)
-        INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND COALESCE(m.Active, 1) = 1
-        INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id AND COALESCE(p.Active, 1) = 1
+        INNER JOIN [config].[Module] m WITH (NOLOCK) ON m.Id = bnm.ModuleId AND m.Active = 1
+        INNER JOIN [config].[Permission] p WITH (NOLOCK) ON p.ModuleId = m.Id
         WHERE bnm.BusinessNatureId = @nature_id
           AND bnm.IsDefaultEnabled = 1
           AND NOT EXISTS (
