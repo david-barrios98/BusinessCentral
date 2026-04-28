@@ -158,6 +158,30 @@ En `POST /api/v1/public/auth/login` el servidor devuelve también la informació
 - `perm`: claim repetible (una por permiso), formato `MODULE.PERMISSION_CODE` (ej: `AUTH.USERS_WRITE`).
 - `module`: claim repetible (una por módulo habilitado en la compañía), formato `MODULE_CODE` (ej: `FIN`).
 
+### Separación estricta por canal (Backoffice vs App)
+
+Este backend soporta 2 canales con reglas distintas:
+
+- **Backoffice (Web “Centro de Control”)**
+  - Solo permite usuarios **staff**: `isSystemRole = true` o `isSuperUser = true`.
+  - Login **sin** `companyId`.
+- **Tenant App (MAUI/Blazor Hybrid “Terminal del Negocio”)**
+  - Solo permite usuarios **tenant** asociados a una empresa (login **con** `companyId`).
+  - Bloquea usuarios staff en la app.
+
+Header recomendado (en login):
+
+- `X-Client: backoffice` o `X-Client: tenant-app`
+
+Compatibilidad:
+- Si no envías `X-Client`, el servidor infiere el canal por presencia de `companyId` (si hay `companyId` ⇒ tenant-app; si no ⇒ backoffice).
+
+Errores:
+- Backoffice + `companyId` ⇒ **400**
+- Tenant-app sin `companyId` ⇒ **400**
+- Usuario no staff intentando backoffice ⇒ **403**
+- Usuario staff intentando tenant-app ⇒ **403**
+
 ### System web (superusuario) vs apps tenant (móvil/escritorio)
 
 Se separa el uso por canal:
@@ -190,6 +214,32 @@ Se permite que:
 - `config.Role.CompanyId` sea **NULL** para roles globales del sistema (por ejemplo `SuperUser`).
 
 Para usuarios tenant, `CompanyId` debe existir y el login requiere `companyId`.
+
+---
+
+## Enforcements por módulo (feature flags reales)
+
+Los endpoints `api/v1/secure/**` pueden requerir un módulo. Para eso se usa:
+
+- Atributo: `[RequiresModule("MODULE_CODE")]`
+- Middleware: `TenantSubscriptionMiddleware`
+  - Verifica que el módulo esté habilitado en `CompanyModule` para el tenant.
+  - (Además) valida estado de suscripción/empresa.
+
+Regla:
+- Si la compañía **no** tiene el módulo habilitado, el API responde **403** (plan no incluye el módulo).
+
+Mapa actual (alto nivel):
+- **AUTH**: `api/v1/secure/auth/**`, `api/v1/secure/company/users`, `api/v1/secure/auth/permissions`, `api/v1/secure/auth/roles/**/permissions`
+- **BUSS**: `api/v1/secure/config/payment-methods`, `api/v1/secure/config/fulfillment-methods`
+- **COMMERCE**: `api/v1/secure/commerce/**`, `api/v1/secure/business/storage-locations` (inventario)
+- **POS**: `api/v1/secure/pos/**`
+- **FIN**: `api/v1/secure/finance/**`
+- **HR**: `api/v1/secure/hr/**`
+- **SERVICES**: `api/v1/secure/services/**`
+- **FARM**: `api/v1/secure/farm/**`
+- **AGRO**: `api/v1/secure/agro/**`
+- **MFG**: `api/v1/secure/mfg/**`
 
 ### Usuarios por compañía (JWT + módulo AUTH)
 

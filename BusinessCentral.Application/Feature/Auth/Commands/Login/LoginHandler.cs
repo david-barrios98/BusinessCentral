@@ -67,6 +67,39 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                     "Unauthorized");
             }
 
+            // === Validación de canal/cliente (Backoffice vs App tenant) ===
+            // Header recomendado: X-Client: backoffice | tenant-app
+            // Compatibilidad: si no viene header, inferimos por presencia de companyId.
+            var client = (request.Client ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(client))
+            {
+                client = !string.IsNullOrWhiteSpace(request.userLogin.CompanyId) ? "tenant-app" : "backoffice";
+            }
+
+            if (client != "backoffice" && client != "tenant-app")
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "Valor inválido para X-Client. Use 'backoffice' o 'tenant-app'.",
+                    "INVALID_CLIENT",
+                    "BadRequest");
+            }
+
+            if (client == "backoffice" && !string.IsNullOrWhiteSpace(request.userLogin.CompanyId))
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "En backoffice no se permite enviar companyId en el login.",
+                    "BACKOFFICE_COMPANYID_NOT_ALLOWED",
+                    "BadRequest");
+            }
+
+            if (client == "tenant-app" && string.IsNullOrWhiteSpace(request.userLogin.CompanyId))
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "En la app tenant el login requiere companyId.",
+                    "TENANT_COMPANYID_REQUIRED",
+                    "BadRequest");
+            }
+
             LoginResponseDTO? user = null;
             if (!string.IsNullOrWhiteSpace(request.userLogin.CompanyId))
             {
@@ -100,6 +133,23 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                     Messages.GENERAL[MessageKeys.ERROR_LOGIN],
                     MessageKeys.ERROR_LOGIN,
                     "Unauthorized");
+            }
+
+            // Si la contraseña es correcta, validamos que el usuario corresponda al canal.
+            if (client == "backoffice" && !(user.IsSystemRole || user.IsSuperUser))
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "Acceso denegado: este usuario no es staff (SystemRole/SuperUser).",
+                    "FORBIDDEN_NOT_STAFF",
+                    "Forbidden");
+            }
+
+            if (client == "tenant-app" && (user.IsSystemRole || user.IsSuperUser))
+            {
+                return Result<LoginResponseDTO>.Failure(
+                    "Acceso denegado: este usuario es de sistema y no puede iniciar sesión en la app tenant.",
+                    "FORBIDDEN_SYSTEM_USER_ON_TENANT_APP",
+                    "Forbidden");
             }
 
             // 3. Login exitoso: limpiar contador de intentos fallidos

@@ -8,6 +8,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
         LoginRequestDTO userLogin,
         string? IpAddress,
         string? UserAgent,
-        string? Platform)
+        string? Platform,
+        string? Client)
         : IRequest<Result<LoginResponseDTO>>;
 }

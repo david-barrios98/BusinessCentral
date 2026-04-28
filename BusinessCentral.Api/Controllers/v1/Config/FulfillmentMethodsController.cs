@@ -1,4 +1,5 @@
 using BusinessCentral.Api.Controllers.v1;
+using BusinessCentral.Api.Middleware;
 using BusinessCentral.Application.Feature.Common.Results;
 using BusinessCentral.Application.Ports.Outbound;
 using MediatR;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BusinessCentral.Api.Controllers.v1.Config;
 
 [Authorize]
+[RequiresModule("BUSS")]
 [Route("api/v1/secure/config/fulfillment-methods")]
 public sealed class FulfillmentMethodsController : SecureCompanyControllerBase
 {

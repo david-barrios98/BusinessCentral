@@ -24,7 +24,8 @@ namespace BusinessCentral.Api.Controllers.v1.Auth
                 requestDto,
                 IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
                 UserAgent: Request.Headers["User-Agent"].ToString(),
-                Platform: Request.Headers["sec-ch-ua-platform"].ToString().Trim('"') ?? "Undefaund" // Puedes usar un header personalizado
+                Platform: Request.Headers["sec-ch-ua-platform"].ToString().Trim('"') ?? "Undefaund", // Puedes usar un header personalizado
+                Client: Request.Headers["X-Client"].ToString()
             );
             var result = await _mediator.Send(command);
             return ProcessResult(result);

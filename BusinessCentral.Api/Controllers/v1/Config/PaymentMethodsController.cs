@@ -1,4 +1,5 @@
 using BusinessCentral.Api.Controllers.v1;
+using BusinessCentral.Api.Middleware;
 using BusinessCentral.Application.Ports.Outbound;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace BusinessCentral.Api.Controllers.v1.Config;
 
 [Authorize]
+[RequiresModule("BUSS")]
 [Route("api/v1/secure/config/payment-methods")]
 public sealed class PaymentMethodsController : SecureCompanyControllerBase
 {
