@@ -33,6 +33,7 @@ namespace BusinessCentral.Shared.Helper
                 new Claim("companyId", user.companyId),
                 new Claim("companyName", user.companyName),
                 new Claim("loginField", user.LoginField ?? string.Empty),
+                new Claim("roleId", user.roleId.ToString()),
                 new Claim("role", user.role ?? string.Empty),
                 new Claim("isSystemRole", user.isSystemRole ? "true" : "false"),
                 new Claim("isSuperUser", user.isSuperUser ? "true" : "false"),

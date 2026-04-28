@@ -31,6 +31,36 @@ namespace BusinessCentral.Api.Controllers.v1.Auth
             return ProcessResult(result);
         }
 
+        // Login explícito por canal (para que el frontend no tenga que “adivinar”):
+        [HttpPost("backoffice/login")]
+        public async Task<IActionResult> BackofficeLogin(LoginRequestDTO requestDto)
+        {
+            requestDto.CompanyId = null;
+            var command = new LoginCommand(
+                requestDto,
+                IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent: Request.Headers["User-Agent"].ToString(),
+                Platform: Request.Headers["sec-ch-ua-platform"].ToString().Trim('"') ?? "Undefaund",
+                Client: "backoffice"
+            );
+            var result = await _mediator.Send(command);
+            return ProcessResult(result);
+        }
+
+        [HttpPost("tenant/login")]
+        public async Task<IActionResult> TenantLogin(LoginRequestDTO requestDto)
+        {
+            var command = new LoginCommand(
+                requestDto,
+                IpAddress: HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent: Request.Headers["User-Agent"].ToString(),
+                Platform: Request.Headers["sec-ch-ua-platform"].ToString().Trim('"') ?? "Undefaund",
+                Client: "tenant-app"
+            );
+            var result = await _mediator.Send(command);
+            return ProcessResult(result);
+        }
+
         [HttpPost("password/forgot")]
         public async Task<IActionResult> RequestPasswordReset([FromBody] PasswordResetRequestDTO request)
         {

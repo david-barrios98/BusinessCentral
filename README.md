@@ -139,10 +139,15 @@ Ya aplicado en SPs/listados como productos/proveedores/variantes/ubicaciones/lot
 
 ## Autenticación (JWT)
 
-- Login: `POST /api/v1/public/auth/login`
+- Login (legacy / compatibilidad): `POST /api/v1/public/auth/login`
+- Login recomendado (por canal):
+  - Backoffice: `POST /api/v1/public/auth/backoffice/login`
+  - Tenant App: `POST /api/v1/public/auth/tenant/login`
 - El JWT incluye claims como:
   - `companyId`
   - `userId` (también `sub`)
+  - `roleId`
+  - `role`
 
 Controllers seguros leen:
 - `CompanyId` desde el claim `companyId`
@@ -176,6 +181,10 @@ Header recomendado (en login):
 Compatibilidad:
 - Si no envías `X-Client`, el servidor infiere el canal por presencia de `companyId` (si hay `companyId` ⇒ tenant-app; si no ⇒ backoffice).
 
+Enforcement por ruta:
+- `api/v1/system/**` requiere `X-Client: backoffice`
+- `api/v1/secure/**` requiere `X-Client: tenant-app`
+
 Errores:
 - Backoffice + `companyId` ⇒ **400**
 - Tenant-app sin `companyId` ⇒ **400**
@@ -206,6 +215,10 @@ Logout:
 Efecto:
 - Cierra sesiones abiertas del usuario en `audit.UserSession` asignando `LogoutAt` y poniendo `IsSuccess = 0`.
 - Revoca refresh tokens activos del usuario. Si envías `refreshToken`, el backend puede resolver la sesión exacta; si no, revoca por `UserId` (todas las sesiones del usuario).
+
+Bootstrap (recomendado para inicializar UI sin re-login):
+- `GET /api/v1/secure/auth/bootstrap` (requiere `Authorization: Bearer <accessToken>` y `X-Client: tenant-app`)
+- Devuelve: usuario/rol/empresa + `modules[]` + `permissions[]`
 
 ### Superusuario sin compañía (modelo de datos)
 

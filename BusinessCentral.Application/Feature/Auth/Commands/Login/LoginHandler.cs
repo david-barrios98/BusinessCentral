@@ -167,6 +167,7 @@ namespace BusinessCentral.Application.Feature.Auth.Commands.Login
                 companyId = user.CompanyId.ToString(),
                 companyName = user.CompanyName?.ToString() ?? string.Empty,
                 LoginField = loginFieldType,
+                roleId = user.RoleId,
                 role = user.RoleName ?? string.Empty,
                 isSystemRole = user.IsSystemRole,
                 isSuperUser = user.IsSuperUser,
