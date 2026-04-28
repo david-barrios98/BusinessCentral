@@ -3,6 +3,7 @@ using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Text.Json;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -124,7 +125,17 @@ public sealed class CompanyOnboardingRepository : SqlConfigServer, ICompanyOnboa
             CreateParameter("@OwnerEmail", request.OwnerEmail, SqlDbType.NVarChar, 150),
             CreateParameter("@OwnerPhone", request.OwnerPhone, SqlDbType.NVarChar, 20),
             CreateParameter("@OwnerPasswordHash", passwordHash, SqlDbType.NVarChar, 255),
-            CreateParameter("@OwnerRoleId", request.OwnerRoleId, SqlDbType.Int)
+            CreateParameter("@OwnerRoleId", request.OwnerRoleId, SqlDbType.Int),
+            CreateParameter(
+                "@FacilitiesJson",
+                request.Facilities != null && request.Facilities.Count > 0
+                    ? JsonSerializer.Serialize(request.Facilities, new JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    })
+                    : DBNull.Value,
+                SqlDbType.NVarChar,
+                -1)
         };
 
         var result = await ExecuteStoredProcedureSingleAsync(
@@ -142,6 +153,26 @@ public sealed class CompanyOnboardingRepository : SqlConfigServer, ICompanyOnboa
             });
 
         return result ?? new OnboardCompanyResultDTO { Success = false };
+    }
+
+    public async Task<List<FacilityTypeDTO>> ListFacilityTypesAsync(bool onlyActive = true)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@only_active", onlyActive, SqlDbType.Bit)
+        };
+
+        return await ExecuteStoredProcedureAsync(
+            StoredProcedures.Business.sp_list_facility_types,
+            parameters,
+            reader => new FacilityTypeDTO
+            {
+                Id = Convert.ToInt32(reader["Id"]),
+                Name = reader["Name"]?.ToString() ?? string.Empty,
+                Active = Convert.ToBoolean(reader["Active"]),
+                Create = Convert.ToDateTime(reader["Create"]),
+                Update = Convert.ToDateTime(reader["Update"])
+            });
     }
 }
 

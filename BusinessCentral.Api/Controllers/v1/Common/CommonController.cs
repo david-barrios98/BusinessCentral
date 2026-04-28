@@ -77,6 +77,14 @@ namespace BusinessCentral.Api.Controllers.v1.Common
             return ProcessResult(result);
         }
 
+        /// <summary>Módulos incluidos en el plan (tabla config.PlanModule).</summary>
+        [HttpGet("membership-plans/{id:int}/modules")]
+        public async Task<IActionResult> GetMembershipPlanModules(int id)
+        {
+            var result = await _mediator.Send(new GetMembershipPlanModulesQuery(id));
+            return ProcessResult(result);
+        }
+
         #endregion
     }
 }

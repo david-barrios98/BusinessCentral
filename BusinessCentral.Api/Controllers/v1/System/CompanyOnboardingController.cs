@@ -55,6 +55,14 @@ public sealed class CompanyOnboardingController : ApiControllerBase
         return Ok(ApiResponse<object>.Success(new { companyId, natureCode, enabled, primary }, "OK", 200));
     }
 
+    /// <summary>Catálogo de tipos de sede (Matriz, Local, etc.) para armar <c>facilities</c> en el alta.</summary>
+    [HttpGet("facility-types")]
+    public async Task<IActionResult> ListFacilityTypes([FromQuery] bool onlyActive = true)
+    {
+        var data = await _onboarding.ListFacilityTypesAsync(onlyActive);
+        return Ok(ApiResponse<object>.Success(data, "OK", 200));
+    }
+
     [HttpPost("companies")]
     public async Task<IActionResult> OnboardCompany([FromBody] OnboardCompanyRequestDTO request)
     {

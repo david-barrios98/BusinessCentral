@@ -108,6 +108,19 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 reader => SqlDataReaderMapper.MapToDto<MembershipPlanResponse>(reader));
         }
 
+        public async Task<List<MembershipPlanModuleResponse>> ListPlanModulesAsync(int membershipPlanId)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@MembershipPlanId", membershipPlanId, SqlDbType.Int)
+            };
+
+            return await ExecuteStoredProcedureAsync(
+                StoredProcedures.Config.sp_list_plan_modules,
+                parameters,
+                reader => SqlDataReaderMapper.MapToDto<MembershipPlanModuleResponse>(reader));
+        }
+
         #endregion
     }
 }

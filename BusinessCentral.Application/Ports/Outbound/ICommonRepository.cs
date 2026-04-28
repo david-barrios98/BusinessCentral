@@ -16,6 +16,7 @@ namespace BusinessCentral.Application.Ports.Outbound
         Task<DocumentTypeResponse?> GetDocumentTypeByIdAsync(int id);
         Task<MembershipPlanResponse?> GetMembershipPlanByIdAsync(int id);
         Task<List<MembershipPlanResponse>> ListMembershipPlansAsync();
+        Task<List<MembershipPlanModuleResponse>> ListPlanModulesAsync(int membershipPlanId);
         Task<CityResponse?> GetCityByIdAsync(int id);
     }
 }

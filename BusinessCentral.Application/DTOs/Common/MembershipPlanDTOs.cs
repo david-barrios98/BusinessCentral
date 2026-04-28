@@ -26,4 +26,12 @@ namespace BusinessCentral.Application.DTOs.Common
         public int MaxUsers { get; set; }
         public bool IsPublic { get; set; }
     }
+
+    /// <summary>Módulo incluido en un plan de membresía (<c>config.PlanModule</c>).</summary>
+    public sealed class MembershipPlanModuleResponse
+    {
+        public int ModuleId { get; set; }
+        public string ModuleCode { get; set; } = string.Empty;
+        public string ModuleName { get; set; } = string.Empty;
+    }
 }

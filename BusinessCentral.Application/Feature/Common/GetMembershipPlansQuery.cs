@@ -6,5 +6,6 @@ namespace BusinessCentral.Application.Feature.Common
 {
     public record GetMembershipPlansQuery() : IRequest<Result<List<MembershipPlanResponse>>>;
     public record GetMembershipPlanByIdQuery(int Id) : IRequest<Result<MembershipPlanResponse>>;
+    public record GetMembershipPlanModulesQuery(int MembershipPlanId) : IRequest<Result<List<MembershipPlanModuleResponse>>>;
 
 }

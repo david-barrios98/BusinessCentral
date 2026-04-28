@@ -181,10 +181,40 @@ Sistema:
 - `GET /api/v1/system/config/modules/companies/{companyId}`
 - `PUT /api/v1/system/config/modules/companies/{companyId}/{moduleCode}?enabled=true`
 
-Onboarding:
-- `POST /api/v1/system/config/onboarding/companies`
-- `GET /api/v1/system/config/onboarding/business-natures`
-- `GET /api/v1/system/config/onboarding/business-natures/{code}/modules`
+### Onboarding de compañías (`SystemRole`)
+
+Creación inicial de empresa, primera suscripción (`CompanySubscription`), usuario propietario, primera(s) sede(s) (`business.Facility`) y plantillas derivadas de la naturaleza (fulfillment/payment).
+
+| Recurso | Método y ruta |
+|---------|----------------|
+| Naturalezas | `GET /api/v1/system/config/onboarding/business-natures?onlyActive=` |
+| Módulos sugeridos por naturaleza | `GET /api/v1/system/config/onboarding/business-natures/{code}/modules` |
+| Tipos de sede (Matriz, Local…) | `GET /api/v1/system/config/onboarding/facility-types?onlyActive=` |
+| Alta compañía | `POST /api/v1/system/config/onboarding/companies` |
+
+**Membresía en el alta**
+
+- Body incluye `membershipPlanId`; el SP registra la fila en `config.CompanySubscription` (fechas según `DurationDays` del plan).
+- Primero se aplican los módulos por plantilla de naturaleza (`BusinessNatureModule`).
+- **Después**, si el plan tiene filas en `config.PlanModule`, los módulos efectivos se **alinean al plan**: los incluidos en `PlanModule` quedan habilitados en `CompanyModule`; el resto de filas `CompanyModule` de esa compañía pasan a **deshabilitados**. Si el plan no tiene filas en `PlanModule`, solo rigen los defaults de naturaleza.
+
+Para ver qué trae cada plan antes de vender/contratar:
+
+- `GET /api/v1/public/common/membership-plans`
+- `GET /api/v1/public/common/membership-plans/{id}`
+- `GET /api/v1/public/common/membership-plans/{id}/modules`
+
+**Varias sedes en el mismo alta**
+
+Envía en el JSON `facilities`: arreglo de objetos `{ "facilityTypeId", "name", "code", "email", "phone", "priority" }` (camelCase). Si hay al menos un elemento válido, el SP crea todas las sedes; si envías la lista, **no** uses los campos legacy `facilityTypeId` / `facilityName` para una sola sede.
+
+**Límites / huecos revisados en código** (útiles para roadmap):
+
+- No hay endpoints REST dedicados para **añadir/editar sedes (`Facility`)** después del onboarding (solo ubicaciones `storage-locations` referenciando `facilityId`).
+- No hay API unificada para **cambiar de plan / renovación** de suscripción después del alta (solo EF/seed sobre `CompanySubscription`; habría que exponer SP + controller si lo necesitas).
+- Direcciones de sede (`FacilityAddress`) y otros catálogos siguen modelo de datos pero sin flujo HTTP completo en esta API.
+
+Todos los cambios recientes en `stored_procedures_all.sql` deben **desplegarse en SQL Server** para que coincida el comportamiento anterior.
 
 ---
 

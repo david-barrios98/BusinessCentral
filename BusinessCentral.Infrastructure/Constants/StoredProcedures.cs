@@ -64,10 +64,12 @@ namespace BusinessCentral.Infrastructure.Constants
             // MembershipPlan
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
+            public const string sp_list_plan_modules = "[config].[sp_list_plan_modules]";
         }
 
         public static class Business
         {
+            public const string sp_list_facility_types = "[business].[sp_list_facility_types]";
             public const string sp_upsert_storage_location = "[business].[sp_upsert_storage_location]";
             public const string sp_list_storage_locations = "[business].[sp_list_storage_locations]";
             public const string sp_get_company_financial_bootstrap = "[business].[sp_get_company_financial_bootstrap]";

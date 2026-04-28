@@ -214,6 +214,23 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [config].[sp_list_plan_modules]
+    @MembershipPlanId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        pm.ModuleId,
+        m.Code AS ModuleCode,
+        m.Name AS ModuleName
+    FROM [config].[PlanModule] pm
+    INNER JOIN [config].[Module] m ON m.Id = pm.ModuleId AND m.Active = 1
+    WHERE pm.MembershipPlanId = @MembershipPlanId
+    ORDER BY m.Name;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_business_natures]
     @only_active BIT = 1
 AS
@@ -475,7 +492,12 @@ CREATE OR ALTER PROCEDURE [config].[sp_onboard_company]
     @OwnerPasswordHash NVARCHAR(255),
     @OwnerAuthProvider NVARCHAR(50) = 'local',
     @OwnerExternalId NVARCHAR(150) = NULL,
-    @OwnerRoleId INT
+    @OwnerRoleId INT,
+
+    -- Optional: JSON array of sedes (camelCase). Example:
+    -- [{"facilityTypeId":1,"name":"Matriz","code":"HQ"},{"facilityTypeId":2,"name":"Tienda Norte"}]
+    -- When non-empty valid JSON array, replaces single-facility parameters below.
+    @FacilitiesJson NVARCHAR(MAX) = NULL
 )
 AS
 BEGIN
@@ -512,11 +534,57 @@ BEGIN
         INSERT INTO [config].[CompanyBusinessNature] (CompanyId, BusinessNatureId, IsPrimary, CreatedAt)
         VALUES (@company_id, @bn_id, 1, @now);
 
-        -- Create main facility (Priority = 1)
-        INSERT INTO [business].[Facility]
-            (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, [Create], [Update], Active)
-        VALUES
-            (@company_id, @FacilityTypeId, @FacilityName, @FacilityCode, @FacilityEmail, @FacilityPhone, 1, @now, @now, 1);
+        -- Sedes: lista JSON o una sola sede (retrocompatible)
+        DECLARE @use_facilities_json BIT = 0;
+        IF (@FacilitiesJson IS NOT NULL AND LEN(LTRIM(RTRIM(@FacilitiesJson))) > 2 AND ISJSON(@FacilitiesJson) = 1)
+        BEGIN
+            IF EXISTS (SELECT 1 FROM OPENJSON(@FacilitiesJson))
+                SET @use_facilities_json = 1;
+        END
+
+        IF @use_facilities_json = 1
+        BEGIN
+            ;WITH src AS (
+                SELECT
+                    j.FacilityTypeId,
+                    j.Name,
+                    j.Code,
+                    j.Email,
+                    j.Phone,
+                    j.Priority,
+                    ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS rn
+                FROM OPENJSON(@FacilitiesJson)
+                WITH (
+                    FacilityTypeId INT '$.facilityTypeId',
+                    Name NVARCHAR(200) '$.name',
+                    Code NVARCHAR(200) '$.code',
+                    Email NVARCHAR(150) '$.email',
+                    Phone NVARCHAR(20) '$.phone',
+                    Priority INT '$.priority'
+                ) AS j
+                WHERE j.Name IS NOT NULL AND LTRIM(RTRIM(j.Name)) <> ''
+                  AND j.FacilityTypeId IS NOT NULL AND j.FacilityTypeId > 0
+            )
+            INSERT INTO [business].[Facility]
+                (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, [Create], [Update], Active)
+            SELECT
+                @company_id,
+                FacilityTypeId,
+                Name,
+                Code,
+                Email,
+                Phone,
+                COALESCE(Priority, rn),
+                @now, @now, 1
+            FROM src;
+        END
+        ELSE
+        BEGIN
+            INSERT INTO [business].[Facility]
+                (CompanyId, FacilityTypeId, Name, Code, Email, Phone, Priority, [Create], [Update], Active)
+            VALUES
+                (@company_id, @FacilityTypeId, @FacilityName, @FacilityCode, @FacilityEmail, @FacilityPhone, 1, @now, @now, 1);
+        END
 
         DECLARE @durationDays INT;
         SELECT @durationDays = DurationDays FROM [config].[MembershipPlan] WHERE Id = @MembershipPlanId;
@@ -550,6 +618,31 @@ BEGIN
               SELECT 1 FROM [config].[CompanyModule] cm
               WHERE cm.CompanyId = @company_id AND cm.ModuleId = bnm.ModuleId
           );
+
+        -- Membresía: alinear módulos habilitados con config.PlanModule (si el plan define filas)
+        IF EXISTS (SELECT 1 FROM [config].[PlanModule] WHERE MembershipPlanId = @MembershipPlanId)
+        BEGIN
+            MERGE [config].[CompanyModule] AS cm
+            USING (
+                SELECT @company_id AS CompanyId, pm.ModuleId, CAST(1 AS BIT) AS IsEnabled
+                FROM [config].[PlanModule] pm
+                WHERE pm.MembershipPlanId = @MembershipPlanId
+            ) AS src
+            ON (cm.CompanyId = src.CompanyId AND cm.ModuleId = src.ModuleId)
+            WHEN MATCHED THEN
+                UPDATE SET IsEnabled = 1, UpdatedAt = @now
+            WHEN NOT MATCHED BY TARGET THEN
+                INSERT (CompanyId, ModuleId, IsEnabled, CreatedAt, UpdatedAt)
+                VALUES (src.CompanyId, src.ModuleId, 1, @now, @now);
+
+            UPDATE cm
+            SET IsEnabled = 0, UpdatedAt = @now
+            FROM [config].[CompanyModule] cm
+            WHERE cm.CompanyId = @company_id
+              AND cm.ModuleId NOT IN (
+                  SELECT pm.ModuleId FROM [config].[PlanModule] pm WHERE pm.MembershipPlanId = @MembershipPlanId
+              );
+        END
 
         -- Enable fulfillment methods from nature template
         INSERT INTO [config].[CompanyFulfillmentMethod] (CompanyId, FulfillmentMethodId, IsEnabled, CreatedAt, UpdatedAt)
@@ -1000,6 +1093,24 @@ BEGIN
     WHERE a.CompanyId = @company_id
       AND a.Active = 1
       AND a.Code = @account_code;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [business].[sp_list_facility_types]
+    @only_active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ft.Id,
+        ft.Name,
+        ft.Active,
+        ft.[Create],
+        ft.[Update]
+    FROM [business].[FacilityType] ft WITH (NOLOCK)
+    WHERE (@only_active = 0 OR COALESCE(ft.Active, 1) = 1)
+    ORDER BY ft.Name;
 END
 GO
 
