@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BusinessCentral.Api.Common;
 using BusinessCentral.Api.Middleware;
+using BusinessCentral.Application.DTOs.Auth;
 using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using Microsoft.AspNetCore.Authorization;
@@ -44,19 +45,21 @@ public sealed class AuthBootstrapController : ApiControllerBase
             ? await _rolePermissions.ListRolePermissionsAsync(roleId)
             : new List<BusinessCentral.Application.DTOs.Auth.RolePermissionDTO>();
 
-        return Ok(ApiResponse<object>.Success(new
+        var dto = new AuthBootstrapResponseDTO
         {
-            userId,
-            userName = User.FindFirstValue("userName"),
-            companyId,
-            companyName = User.FindFirstValue("companyName"),
-            roleId,
-            roleName = User.FindFirstValue("role"),
-            isSystemRole,
-            isSuperUser,
-            modules,
-            permissions
-        }, "OK", 200));
+            UserId = userId,
+            UserName = User.FindFirstValue("userName"),
+            CompanyId = companyId,
+            CompanyName = User.FindFirstValue("companyName"),
+            RoleId = roleId,
+            RoleName = User.FindFirstValue("role"),
+            IsSystemRole = isSystemRole,
+            IsSuperUser = isSuperUser,
+            Modules = modules,
+            Permissions = permissions
+        };
+
+        return Ok(ApiResponse<AuthBootstrapResponseDTO>.Success(dto, "OK", 200));
     }
 }
 

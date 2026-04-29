@@ -144,9 +144,15 @@ Ya aplicado en SPs/listados como productos/proveedores/variantes/ubicaciones/lot
 Guía detallada para el front **Julisys** (backoffice, refresh, onboarding, usuarios, arquitectura compartida): [docs/Julisys-Backoffice-Integration.md](docs/Julisys-Backoffice-Integration.md)
 
 - Login (legacy / compatibilidad): `POST /api/v1/public/auth/login`
+  - Request DTO: `LoginRequestDTO`
+  - Response DTO: `ApiResponse<LoginResponseDTO>`
 - Login recomendado (por canal):
   - Backoffice: `POST /api/v1/public/auth/backoffice/login`
+    - Request DTO: `LoginRequestDTO`
+    - Response DTO: `ApiResponse<LoginResponseDTO>`
   - Tenant App: `POST /api/v1/public/auth/tenant/login`
+    - Request DTO: `LoginRequestDTO`
+    - Response DTO: `ApiResponse<LoginResponseDTO>`
 - El JWT incluye claims como:
   - `companyId`
   - `userId` (también `sub`)
@@ -159,7 +165,7 @@ Controllers seguros leen:
 
 ### Claims de autorización (rol, permisos, módulos)
 
-En `POST /api/v1/public/auth/login` el servidor devuelve también la información de autorización, y la replica en el JWT como claims:
+En `POST /api/v1/public/auth/login` (Request DTO: `LoginRequestDTO` / Response DTO: `ApiResponse<LoginResponseDTO>`) el servidor devuelve también la información de autorización, y la replica en el JWT como claims:
 
 - `role`: nombre del rol.
 - `isSystemRole`: `true|false`.
@@ -204,10 +210,16 @@ Se separa el uso por canal:
 
 Login:
 - **Tenant**: `POST /api/v1/public/auth/login` enviando `companyId`.
+-   Request DTO: `LoginRequestDTO`
+-   Response DTO: `ApiResponse<LoginResponseDTO>`
 - **Superusuario web**: `POST /api/v1/public/auth/login` sin `companyId` (usa `auth.sp_login_system_user`). En este modo el JWT emite `companyId = 0` y el usuario en BD puede tener `UsersInfo.CompanyId = NULL`.
+-   Request DTO: `LoginRequestDTO`
+-   Response DTO: `ApiResponse<LoginResponseDTO>`
 
 Logout:
 - `POST /api/v1/secure/auth/logout` (requiere `Authorization: Bearer <accessToken>`)
+  - Request DTO: `LogoutRequestDTO`
+  - Response DTO: `ApiResponse<bool>`
 - Body recomendado:
 
 ```json
@@ -222,6 +234,8 @@ Efecto:
 
 Bootstrap (recomendado para inicializar UI sin re-login):
 - `GET /api/v1/secure/auth/bootstrap` (requiere `Authorization: Bearer <accessToken>` y `X-Client: tenant-app`)
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<AuthBootstrapResponseDTO>`
 - Devuelve: usuario/rol/empresa + `modules[]` + `permissions[]`
 
 ### Respuesta HTTP y cuerpo (`ApiResponse<T>`)
@@ -258,6 +272,8 @@ Salvo indique `200` “crudo” en un controlador, las respuestas van envueltas 
 | **Auth** | No |
 | **Headers** | `Content-Type: application/json`. Opcional: `X-Client: backoffice` \| `tenant-app`; si falta, el canal se infiere (`companyId` en body ⇒ tenant-app; si no ⇒ backoffice). Opcional: `User-Agent`, `sec-ch-ua-platform` (se usa como metadata de plataforma). |
 | **Body** | `{ "UserName": string, "Password": string, "companyId"?: string, "applicationCode"?: string }` — `companyId` en JSON **camelCase** según `LoginRequestDTO`; omitir para login sistema/backoffice. `applicationCode` (opcional): identifica el cliente embebido en APK/instalador; debe coincidir con `config.ApplicationCompanies.ApplicationCode` para esa compañía. Si se omite o va vacío, el SP acepta cualquier fila activa de la compañía (comportamiento previo). |
+| **Request DTO** | `LoginRequestDTO` |
+| **Response DTO** | `ApiResponse<LoginResponseDTO>` |
 
 **200** — `ApiResponse<LoginResponseDTO>` con `data` similar a:
 
@@ -293,6 +309,8 @@ Igual contrato que login, pero el servidor fuerza canal **backoffice** y no debe
 
 | **Headers** | `Content-Type: application/json` |
 | **Body** | `{ "UserName": string, "Password": string }` |
+| **Request DTO** | `LoginRequestDTO` |
+| **Response DTO** | `ApiResponse<LoginResponseDTO>` |
 
 **200** — mismo shape que `LoginResponseDTO`. **403/400** — usuario no staff o body inválido según reglas del handler.
 
@@ -302,6 +320,8 @@ Igual contrato que login, pero el servidor fuerza canal **backoffice** y no debe
 
 | **Headers** | `Content-Type: application/json` |
 | **Body** | `{ "UserName": string, "Password": string, "companyId": string, "applicationCode"?: string }` — `companyId` obligatorio (string numérica). `applicationCode` **recomendado** para móvil/escritorio: el mismo valor que definas en backoffice en `config.ApplicationCompanies` (p. ej. `001` web, `002` APK). Si no se envía, se mantiene compatibilidad con despliegues que aún no envían el código. |
+| **Request DTO** | `LoginRequestDTO` |
+| **Response DTO** | `ApiResponse<LoginResponseDTO>` |
 
 **200** — `LoginResponseDTO`. **403** — usuario staff en app tenant. **400** — falta `companyId`. Si envías `applicationCode` y no hay fila habilitada para ese código en la compañía, el SP puede responder error de negocio (equivalente a usuario no encontrado / configuración inválida).
 
@@ -320,6 +340,11 @@ Desde el **backoffice** puedes definir, por compañía, qué **código de aplica
 | Alta | `POST /api/v1/system/config/companies/{companyId}/application-companies` |
 | Actualizar | `PUT /api/v1/system/config/companies/{companyId}/application-companies/{id}` |
 | Eliminar | `DELETE /api/v1/system/config/companies/{companyId}/application-companies/{id}` |
+
+| | |
+|--|--|
+| **Request DTO** | GET/DELETE: N/A. POST/PUT: `UpsertApplicationCompanyRequestDTO` |
+| **Response DTO** | GET: `ApiResponse<List<ApplicationCompanyDTO>>`. POST/PUT: `ApiResponse<object>` (`{ id }`). DELETE: `ApiResponse<object>` (`{ companyId, id, deleted: true }`) |
 
 **POST/PUT body** (`UpsertApplicationCompanyRequestDTO`):
 
@@ -347,6 +372,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 | **Auth** | No |
 | **Headers** | `Content-Type: application/json` |
 | **Body** | `{ "email": string, "companyId": number }` |
+| **Request DTO** | `PasswordResetRequestDTO` |
+| **Response DTO** | `ApiResponse<bool>` |
 
 **200** — `ApiResponse<bool>` con `data: true` (por seguridad puede devolver OK aunque el correo no exista). **401** — si el usuario ya tiene token de reset activo (mensaje en `message`). Errores de validación → **422** si el modelo no pasa `[Required]` / `[EmailAddress]`.
 
@@ -356,6 +383,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 
 | **Headers** | `Content-Type: application/json` |
 | **Body** | `{ "token": string, "newPassword": string }` (`newPassword` mínimo 6 caracteres según DTO). |
+| **Request DTO** | `PasswordResetConfirmDTO` |
+| **Response DTO** | `ApiResponse<bool>` |
 
 **200** — `ApiResponse<bool>`. Fallos de negocio según handler → **401**/**400**/`ApiResponse` con `isSuccess: false`.
 
@@ -367,6 +396,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 | **Policy** | `SystemRole` |
 | **Headers** | `Content-Type: application/json`. Recomendado: `X-Client: backoffice`. |
 | **Body** | `{ "refreshToken": string }` |
+| **Request DTO** | `RefreshTokenRequestDTO` |
+| **Response DTO** | `ApiResponse<LoginResponseDTO>` |
 
 **200** — `ApiResponse<LoginResponseDTO>` (nuevo access y refresh tras rotación). **401** — refresh inválido o expirado.
 
@@ -378,6 +409,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 | **Policy** | `SystemRole` |
 | **Headers** | `Content-Type: application/json`. Recomendado: `X-Client: backoffice`. |
 | **Body** (opcional) | `{ "userId"?: number, "companyId"?: number, "refreshToken"?: string, "sessionId"?: number }` |
+| **Request DTO** | `LogoutRequestDTO` |
+| **Response DTO** | `ApiResponse<bool>` |
 
 **200** — `ApiResponse<bool>` con `data: true`. El controlador pasa el Bearer al comando de logout.
 
@@ -387,7 +420,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 
 | **Auth** | Bearer + `SystemRole` |
 | **Body** | Vacío |
-| **Respuesta** | `ApiResponse<bool>` vía `ProcessResult` |
+| **Request DTO** | N/A |
+| **Response DTO** | `ApiResponse<bool>` |
 
 ---
 
@@ -396,6 +430,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 | **Auth** | Bearer + `SystemRole` |
 | **Headers** | `Content-Type: application/json` |
 | **Body** | `CreateUserDTO`: `companyId`, `documentTypeId`, `documentNumber`, `firstName`, `lastName`, `email`, `phone`, `password`, `roleId`, opcional `authProvider`, `externalId` |
+| **Request DTO** | `CreateUserDTO` |
+| **Response DTO** | `ApiResponse<int?>` (data = `userId`) |
 
 **200** — `ApiResponse` con el resultado del comando (según handler). Validación → **422**.
 
@@ -404,14 +440,16 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 ### `GET /api/v1/private/users/company/{companyId}`
 
 | **Query** | `page` (default 1), `pageSize` (default 20) |
-| **Respuesta** | Listado paginado (`PagedResult` / estructura que devuelva el handler) dentro de `ApiResponse`. |
+| **Request DTO** | N/A |
+| **Response DTO** | `ApiResponse<PagedResult<UserResponseDTO>>` |
 
 ---
 
 ### `GET|PUT|DELETE /api/v1/private/users/company/{companyId}/users/{userId}`
 
 | **PUT body** | `UpdateUserDTO` (incluye `userId` coherente con ruta) |
-| **Respuesta** | `ApiResponse` con `UserResponseDTO` o bool según operación |
+| **Request DTO** | GET/DELETE: N/A. PUT: `UpdateUserDTO` |
+| **Response DTO** | GET: `ApiResponse<UserResponseDTO>`. PUT: `ApiResponse<bool>`. DELETE: `ApiResponse<bool>` |
 
 ---
 
@@ -420,6 +458,8 @@ En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe co
 | **Auth** | `Authorization: Bearer` |
 | **Headers** | **`X-Client: tenant-app`** (requerido por middleware en `/secure`). |
 | **Policy** | Módulo **AUTH** (`RequiresModule("AUTH")`). |
+| **Request DTO** | N/A |
+| **Response DTO** | `ApiResponse<AuthBootstrapResponseDTO>` |
 
 **200** — `ApiResponse<object>` con `data`:
 
@@ -447,6 +487,8 @@ Si `companyId` en token es `0`, `modules` puede ir vacío.
 | **Auth** | Bearer |
 | **Headers** | **`X-Client: tenant-app`**, `Content-Type: application/json` |
 | **Body** | Opcional: `{ "refreshToken", "sessionId", "userId", "companyId" }` |
+| **Request DTO** | `LogoutRequestDTO` |
+| **Response DTO** | `ApiResponse<bool>` |
 
 **200** — `ApiResponse<bool>`. Cierra sesiones y revoca refresh tokens según `LogoutHandler`.
 
@@ -456,14 +498,14 @@ Si `companyId` en token es `0`, `modules` puede ir vacío.
 
 Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`** + policy **`SystemRole`**.
 
-| Método | Ruta | Query / route | Respuesta |
-|--------|------|----------------|-----------|
-| GET | `/business-natures` | `onlyActive` (default true) | `200` — `ApiResponse<object>` lista |
-| GET | `/business-natures/{code}/modules` | `code` naturaleza | `200` |
-| GET | `/companies/{companyId}/business-natures` | | `200` |
-| PUT | `/companies/{companyId}/business-natures/{natureCode}` | `enabled`, `primary` | `200` ó **400** si falla |
-| GET | `/facility-types` | `onlyActive` | `200` |
-| POST | `/companies` | Body: `OnboardCompanyRequestDTO` (empresa, plan, sedes `facilities` o sede única, datos propietario y `ownerRoleId`) | **200** — `ApiResponse<object>` con payload del onboarding; **400** si `Success` del servicio es false |
+| Método | Ruta | Request DTO | Response DTO |
+|--------|------|-------------|--------------|
+| GET | `/business-natures?onlyActive=` | N/A | `ApiResponse<List<BusinessNatureDTO>>` |
+| GET | `/business-natures/{code}/modules` | N/A | `ApiResponse<List<BusinessNatureModuleDTO>>` |
+| GET | `/companies/{companyId}/business-natures` | N/A | `ApiResponse<List<CompanyBusinessNatureDTO>>` |
+| PUT | `/companies/{companyId}/business-natures/{natureCode}?enabled=&primary=` | N/A | `ApiResponse<object>` (`{ companyId, natureCode, enabled, primary }`) |
+| GET | `/facility-types?onlyActive=` | N/A | `ApiResponse<List<FacilityTypeDTO>>` |
+| POST | `/companies` | `OnboardCompanyRequestDTO` | `ApiResponse<OnboardCompanyResultDTO>` |
 
 ---
 
@@ -473,43 +515,43 @@ Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`**
 
 > Estos endpoints son para mantener **tablas maestras** (catálogos globales). Distinto a “habilitar por compañía” (CompanyModule, CompanyPaymentMethod, etc.).
 
-| Catálogo | Método | Ruta |
-|---------|--------|------|
-| Módulos (`config.Module`) | `GET` | `/api/v1/system/config/modules?onlyActive=` |
-| | `GET` | `/api/v1/system/config/modules/{id}` |
-| | `POST` | `/api/v1/system/config/modules` |
-| | `PUT` | `/api/v1/system/config/modules/{id}` |
-| | `DELETE` | `/api/v1/system/config/modules/{id}` |
-| Naturalezas (`config.BusinessNature`) | `GET` | `/api/v1/system/config/catalog/business-natures?onlyActive=` |
-| | `GET` | `/api/v1/system/config/catalog/business-natures/{id}` |
-| | `POST` | `/api/v1/system/config/catalog/business-natures` |
-| | `PUT` | `/api/v1/system/config/catalog/business-natures/{id}` |
-| | `DELETE` | `/api/v1/system/config/catalog/business-natures/{id}` |
-| Tipos de sede (`business.FacilityType`) | `GET` | `/api/v1/system/config/catalog/facility-types?onlyActive=` |
-| | `GET` | `/api/v1/system/config/catalog/facility-types/{id}` |
-| | `POST` | `/api/v1/system/config/catalog/facility-types` |
-| | `PUT` | `/api/v1/system/config/catalog/facility-types/{id}` |
-| | `DELETE` | `/api/v1/system/config/catalog/facility-types/{id}` |
-| Métodos de pago (`config.PaymentMethod`) | `GET` | `/api/v1/system/config/payment-methods?onlyActive=` |
-| | `GET` | `/api/v1/system/config/payment-methods/{id}` |
-| | `POST` | `/api/v1/system/config/payment-methods` |
-| | `PUT` | `/api/v1/system/config/payment-methods/{id}` |
-| | `DELETE` | `/api/v1/system/config/payment-methods/{id}` |
-| Métodos de fulfillment (`config.FulfillmentMethod`) | `GET` | `/api/v1/system/config/fulfillment-methods?onlyActive=` |
-| | `GET` | `/api/v1/system/config/fulfillment-methods/{id}` |
-| | `POST` | `/api/v1/system/config/fulfillment-methods` |
-| | `PUT` | `/api/v1/system/config/fulfillment-methods/{id}` |
-| | `DELETE` | `/api/v1/system/config/fulfillment-methods/{id}` |
-| Tipos de documento (`common.DocumentType`) | `GET` | `/api/v1/system/config/catalog/document-types` |
-| | `GET` | `/api/v1/system/config/catalog/document-types/{id}` |
-| | `POST` | `/api/v1/system/config/catalog/document-types` |
-| | `PUT` | `/api/v1/system/config/catalog/document-types/{id}` |
-| | `DELETE` | `/api/v1/system/config/catalog/document-types/{id}` |
-| Planes (`config.MembershipPlan`) | `GET` | `/api/v1/system/config/catalog/membership-plans` |
-| | `GET` | `/api/v1/system/config/catalog/membership-plans/{id}` |
-| | `POST` | `/api/v1/system/config/catalog/membership-plans` |
-| | `PUT` | `/api/v1/system/config/catalog/membership-plans/{id}` |
-| | `DELETE` | `/api/v1/system/config/catalog/membership-plans/{id}` |
+| Catálogo | Ruta | Request DTO | Response DTO |
+|---------|------|-------------|--------------|
+| Módulos (`config.Module`) | `GET /api/v1/system/config/modules?onlyActive=` | N/A | `ApiResponse<List<ModuleDTO>>` |
+| | `GET /api/v1/system/config/modules/{id}` | N/A | `ApiResponse<ModuleDTO>` |
+| | `POST /api/v1/system/config/modules` | `UpsertModuleRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/modules/{id}` | `UpsertModuleRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/modules/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Naturalezas (`config.BusinessNature`) | `GET /api/v1/system/config/catalog/business-natures?onlyActive=` | N/A | `ApiResponse<List<BusinessNatureDTO>>` |
+| | `GET /api/v1/system/config/catalog/business-natures/{id}` | N/A | `ApiResponse<BusinessNatureDTO>` |
+| | `POST /api/v1/system/config/catalog/business-natures` | `UpsertBusinessNatureRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/catalog/business-natures/{id}` | `UpsertBusinessNatureRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/catalog/business-natures/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Tipos de sede (`business.FacilityType`) | `GET /api/v1/system/config/catalog/facility-types?onlyActive=` | N/A | `ApiResponse<List<FacilityTypeDTO>>` |
+| | `GET /api/v1/system/config/catalog/facility-types/{id}` | N/A | `ApiResponse<FacilityTypeDTO>` |
+| | `POST /api/v1/system/config/catalog/facility-types` | `UpsertFacilityTypeRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/catalog/facility-types/{id}` | `UpsertFacilityTypeRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/catalog/facility-types/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Métodos de pago (`config.PaymentMethod`) | `GET /api/v1/system/config/payment-methods?onlyActive=` | N/A | `ApiResponse<List<PaymentMethodDTO>>` |
+| | `GET /api/v1/system/config/payment-methods/{id}` | N/A | `ApiResponse<PaymentMethodDTO>` |
+| | `POST /api/v1/system/config/payment-methods` | `UpsertPaymentMethodRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/payment-methods/{id}` | `UpsertPaymentMethodRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/payment-methods/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Métodos de fulfillment (`config.FulfillmentMethod`) | `GET /api/v1/system/config/fulfillment-methods?onlyActive=` | N/A | `ApiResponse<List<FulfillmentMethodDTO>>` |
+| | `GET /api/v1/system/config/fulfillment-methods/{id}` | N/A | `ApiResponse<FulfillmentMethodDTO>` |
+| | `POST /api/v1/system/config/fulfillment-methods` | `UpsertFulfillmentMethodRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/fulfillment-methods/{id}` | `UpsertFulfillmentMethodRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/fulfillment-methods/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Tipos de documento (`common.DocumentType`) | `GET /api/v1/system/config/catalog/document-types` | N/A | `ApiResponse<List<DocumentTypeResponse>>` |
+| | `GET /api/v1/system/config/catalog/document-types/{id}` | N/A | `ApiResponse<DocumentTypeResponse>` |
+| | `POST /api/v1/system/config/catalog/document-types` | `DocumentTypeRequest` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/catalog/document-types/{id}` | `DocumentTypeRequest` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/catalog/document-types/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| Planes (`config.MembershipPlan`) | `GET /api/v1/system/config/catalog/membership-plans` | N/A | `ApiResponse<List<MembershipPlanResponse>>` |
+| | `GET /api/v1/system/config/catalog/membership-plans/{id}` | N/A | `ApiResponse<MembershipPlanResponse>` |
+| | `POST /api/v1/system/config/catalog/membership-plans` | `MembershipPlanRequest` | `ApiResponse<object>` (`{ id }`) |
+| | `PUT /api/v1/system/config/catalog/membership-plans/{id}` | `MembershipPlanRequest` | `ApiResponse<object>` (`{ id }`) |
+| | `DELETE /api/v1/system/config/catalog/membership-plans/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
 
 **Bodies**:
 
@@ -530,15 +572,15 @@ Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`**
 
 Requisitos: Bearer staff, **`X-Client: backoffice`**, `SystemRole`.
 
-| Método | Ruta | Respuesta |
-|--------|------|-----------|
-| GET | `/` | Lista catálogo de módulos |
-| GET | `/{id}` | Detalle de módulo |
-| POST | `/` | Crear módulo |
-| PUT | `/{id}` | Actualizar módulo |
-| DELETE | `/{id}` | Eliminar módulo |
-| GET | `/companies/{companyId}` | Módulos habilitados por compañía |
-| PUT | `/companies/{companyId}/{moduleCode}?enabled=true|false` | **200** ó **400** |
+| Método | Ruta | Request DTO | Response DTO |
+|--------|------|-------------|--------------|
+| GET | `/` | N/A | `ApiResponse<List<ModuleDTO>>` |
+| GET | `/{id}` | N/A | `ApiResponse<ModuleDTO>` |
+| POST | `/` | `UpsertModuleRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| PUT | `/{id}` | `UpsertModuleRequestDTO` | `ApiResponse<object>` (`{ id }`) |
+| DELETE | `/{id}` | N/A | `ApiResponse<object>` (`{ id, deleted: true }`) |
+| GET | `/companies/{companyId}` | N/A | `ApiResponse<List<CompanyModuleDTO>>` |
+| PUT | `/companies/{companyId}/{moduleCode}?enabled=true|false` | N/A | `ApiResponse<object>` (`{ companyId, moduleCode, enabled }`) |
 
 ---
 
@@ -592,6 +634,11 @@ CRUD con **ámbito de tenant** (el `CompanyId` del token; no se fía del body). 
 | Actualizar | `PUT /api/v1/secure/company/users/{userId}` |
 | Eliminar | `DELETE /api/v1/secure/company/users/{userId}` |
 
+| | |
+|--|--|
+| **Request DTO** | GET: N/A. POST: `CreateUserDTO`. PUT: `UpdateUserDTO`. DELETE: N/A |
+| **Response DTO** | GET list: `ApiResponse<PagedResult<UserResponseDTO>>`. GET detalle: `ApiResponse<UserResponseDTO>`. POST: `ApiResponse<int?>` (data = `userId`). PUT: `ApiResponse<bool>`. DELETE: `ApiResponse<bool>` |
+
 ### Usuarios (rol sistema, `SystemRole`)
 
 Mismos casos de uso con **companyId explícito** en la ruta (backoffice / soporte). Prefijo: `api/v1/private/users`.
@@ -604,6 +651,11 @@ Mismos casos de uso con **companyId explícito** en la ruta (backoffice / soport
 | Actualizar | `PUT /api/v1/private/users/company/{companyId}/users/{userId}` |
 | Eliminar | `DELETE /api/v1/private/users/company/{companyId}/users/{userId}` |
 
+| | |
+|--|--|
+| **Request DTO** | GET list/detalle: N/A. POST: `CreateUserDTO`. PUT: `UpdateUserDTO`. DELETE: N/A |
+| **Response DTO** | GET list: `ApiResponse<PagedResult<UserResponseDTO>>`. GET detalle: `ApiResponse<UserResponseDTO>`. POST: `ApiResponse<int?>` (data = `userId`). PUT: `ApiResponse<bool>`. DELETE: `ApiResponse<bool>` |
+
 ---
 
 ## Multi-naturaleza y módulos
@@ -612,8 +664,14 @@ Una empresa puede tener varias naturalezas y módulos habilitados.
 
 Sistema:
 - `GET /api/v1/system/config/modules`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<ModuleDTO>>`
 - `GET /api/v1/system/config/modules/companies/{companyId}`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<CompanyModuleDTO>>`
 - `PUT /api/v1/system/config/modules/companies/{companyId}/{moduleCode}?enabled=true`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<object>` (`{ companyId, moduleCode, enabled }`)
 
 ### Onboarding de compañías (`SystemRole`)
 
@@ -626,6 +684,11 @@ Creación inicial de empresa, primera suscripción (`CompanySubscription`), usua
 | Tipos de sede (Matriz, Local…) | `GET /api/v1/system/config/onboarding/facility-types?onlyActive=` |
 | Alta compañía | `POST /api/v1/system/config/onboarding/companies` |
 
+| | |
+|--|--|
+| **Request DTO** | GETs: N/A. POST alta compañía: `OnboardCompanyRequestDTO` |
+| **Response DTO** | Naturalezas: `ApiResponse<List<BusinessNatureDTO>>`. Módulos sugeridos: `ApiResponse<List<BusinessNatureModuleDTO>>`. Tipos sede: `ApiResponse<List<FacilityTypeDTO>>`. Alta: `ApiResponse<OnboardCompanyResultDTO>` |
+
 **Membresía en el alta**
 
 - Body incluye `membershipPlanId`; el SP registra la fila en `config.CompanySubscription` (fechas según `DurationDays` del plan).
@@ -635,8 +698,14 @@ Creación inicial de empresa, primera suscripción (`CompanySubscription`), usua
 Para ver qué trae cada plan antes de vender/contratar:
 
 - `GET /api/v1/public/common/membership-plans`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<MembershipPlanResponse>>`
 - `GET /api/v1/public/common/membership-plans/{id}`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<MembershipPlanResponse>`
 - `GET /api/v1/public/common/membership-plans/{id}/modules`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<MembershipPlanModuleResponse>>`
 
 **Varias sedes en el mismo alta**
 
@@ -675,18 +744,30 @@ Módulo **AUTH**, `CompanyId` por JWT.
 
 - **Catálogo de permisos**:
   - `GET /api/v1/secure/auth/permissions?onlyActive=true&moduleCode=AUTH`
+    - Request DTO: N/A
+    - Response DTO: `ApiResponse<List<PermissionDTO>>`
 - **Permisos default por naturaleza** (estándar calculado):
   - `GET /api/v1/secure/auth/permissions/business-natures/{natureCode}/defaults`
+    - Request DTO: N/A
+    - Response DTO: `ApiResponse<List<RolePermissionDTO>>`
 - **Permisos asignados a un rol**:
   - `GET /api/v1/secure/auth/roles/{roleId}/permissions`
+    - Request DTO: N/A
+    - Response DTO: `ApiResponse<List<RolePermissionDTO>>`
 - **Asignar / revocar permiso a un rol**:
   - `PUT /api/v1/secure/auth/roles/{roleId}/permissions` body `{ "permissionId": 123, "enabled": true }`
+    - Request DTO: `RolePermissionsController.SetPermissionRequest`
+    - Response DTO: `ApiResponse<object>` (`{ roleId, permissionId, enabled }`)
 
 ### Aplicación automática al habilitar naturaleza
 
 Al habilitar una naturaleza en una compañía (`PUT /api/v1/system/config/onboarding/companies/{companyId}/business-natures/{natureCode}?enabled=true`), el SP:
 - asegura filas de `CompanyModule` según la plantilla de la naturaleza (no rompe personalizaciones ya existentes),
 - deja listo el estándar de defaults por naturaleza para que el admin decida cómo aplicarlo a roles.
+
+**DTOs del endpoint** `PUT /api/v1/system/config/onboarding/companies/{companyId}/business-natures/{natureCode}?enabled=&primary=`:
+- Request DTO: N/A (usa query params)
+- Response DTO: `ApiResponse<object>` (`{ companyId, natureCode, enabled, primary }`)
 
 
 ## FIN / PUC (Contabilidad)
@@ -706,10 +787,20 @@ Arranque financiero (3 escenarios reales):
 
 Endpoints:
 - `GET /api/v1/secure/finance/bootstrap/profile`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<CompanyFinancialBootstrapDTO>`
 - `PUT /api/v1/secure/finance/bootstrap/profile`
+-   Request DTO: `FinancialBootstrapController.SetProfileRequest`
+-   Response DTO: `ApiResponse<bool>`
 - `POST /api/v1/secure/finance/bootstrap/opening/constitution`
+-   Request DTO: `FinancialBootstrapController.ConstitutionRequest`
+-   Response DTO: `ApiResponse<long>` (data = `journalEntryId`)
 - `POST /api/v1/secure/finance/bootstrap/opening/balances`
+-   Request DTO: `FinancialBootstrapController.OpeningBalancesRequest`
+-   Response DTO: `ApiResponse<long>` (data = `journalEntryId`)
 - `GET /api/v1/secure/finance/bootstrap/validate/balance-equation?asOfUtc=...`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<BalanceEquationCheckDTO>`
 
 ### Transacciones financieras (no contables sueltas)
 
@@ -719,6 +810,11 @@ Módulo **FIN**. `CompanyId` por JWT.
 |--------|-----------------|
 | Listar (paginado, opcional `from` / `to` en UTC) | `GET /api/v1/secure/finance/transactions?from=&to=&page=&pageSize=` |
 | Crear | `POST /api/v1/secure/finance/transactions` |
+
+| | |
+|--|--|
+| **Request DTO** | GET: N/A. POST: `CreateFinancialTransactionDTO` |
+| **Response DTO** | GET: `ApiResponse<PagedResult<FinancialTransactionListItemDTO>>`. POST: `ApiResponse<long>` (data = `txId`) |
 
 ---
 
@@ -730,25 +826,43 @@ El POS está pensado para operar rápido en cualquier naturaleza (todos “vende
 
 Catálogo parametrizable por compañía:
 - `GET /api/v1/secure/config/fulfillment-methods?onlyEnabled=true`
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<List<FulfillmentMethodDTO>>`
 
 Sistema:
 - `GET /api/v1/system/config/fulfillment-methods`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<FulfillmentMethodDTO>>`
 - `GET /api/v1/system/config/fulfillment-methods/companies/{companyId}`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<FulfillmentMethodDTO>>`
 - `PUT /api/v1/system/config/fulfillment-methods/companies/{companyId}/{methodCode}?enabled=true`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<object>` (`{ companyId, methodCode, enabled }`)
 
 ### Métodos de pago
 
 Catálogo parametrizable por compañía:
 - `GET /api/v1/secure/config/payment-methods?onlyEnabled=true`
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<List<PaymentMethodDTO>>`
 
 Sistema:
 - `GET /api/v1/system/config/payment-methods`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<PaymentMethodDTO>>`
 - `GET /api/v1/system/config/payment-methods/companies/{companyId}`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<List<PaymentMethodDTO>>`
 - `PUT /api/v1/system/config/payment-methods/companies/{companyId}/{methodCode}?enabled=true`
+-   Request DTO: N/A
+-   Response DTO: `ApiResponse<object>` (`{ companyId, methodCode, enabled }`)
 
 Códigos de cliente / campo de login por app (`ApplicationCompanies`):
 
 - `GET|POST|PUT|DELETE /api/v1/system/config/companies/{companyId}/application-companies` (detalle en la sección **Clientes de aplicación por compañía** más arriba).
+  - Request DTO: GET/DELETE: N/A. POST/PUT: `UpsertApplicationCompanyRequestDTO`
+  - Response DTO: GET: `ApiResponse<List<ApplicationCompanyDTO>>`. POST/PUT: `ApiResponse<object>` (`{ id }`). DELETE: `ApiResponse<object>` (`{ companyId, id, deleted: true }`)
 
 ### Operación POS (tickets)
 
@@ -763,17 +877,25 @@ Códigos de cliente / campo de login por app (`ApplicationCompanies`):
   "fulfillmentDetails": "Calle 123 #45-67"
 }
 ```
+  - Request DTO: `PosController.CreateTicketRequest`
+  - Response DTO: `ApiResponse<long>` (data = `ticketId`)
 
 - Agregar línea:
   - `POST /api/v1/secure/pos/tickets/{ticketId}/lines`
+  - Request DTO: `PosController.AddTicketLineRequest`
+  - Response DTO: `ApiResponse<long>` (data = `lineId`)
 
 - Pagar:
   - `POST /api/v1/secure/pos/tickets/{ticketId}/pay`
   - Nota: el SP valida que el método de pago esté habilitado para la compañía.
+  - Request DTO: `PosController.PayTicketRequest`
+  - Response DTO: `ApiResponse<bool>`
 
 - Consultar ticket/recibo:
   - `GET /api/v1/secure/pos/tickets/{ticketId}`
   - Devuelve header + líneas + pagos.
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<PosTicketReceiptDTO>`
 
 ---
 
@@ -783,12 +905,20 @@ Flujo operativo:
 
 - Abrir caja:
   - `POST /api/v1/secure/pos/cash-sessions`
+  - Request DTO: `PosController.OpenCashRequest`
+  - Response DTO: `ApiResponse<long>` (data = `cashSessionId`)
 - Registrar movimiento (entrada/salida):
   - `POST /api/v1/secure/pos/cash-sessions/{cashSessionId}/movements`
+  - Request DTO: `PosController.AddCashMovementRequest`
+  - Response DTO: `ApiResponse<long>` (data = `movementId`)
 - Consultar caja (con movimientos):
   - `GET /api/v1/secure/pos/cash-sessions/{cashSessionId}`
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<CashSessionDetailsDTO>`
 - Cerrar / arqueo:
   - `POST /api/v1/secure/pos/cash-sessions/{cashSessionId}/close`
+  - Request DTO: `PosController.CloseCashSessionRequest`
+  - Response DTO: `ApiResponse<CashSessionCloseResultDTO>`
 
 En cierre:
 - El sistema calcula **ExpectedClosingAmount** usando apertura + movimientos + pagos en efectivo (configurable).
@@ -836,6 +966,11 @@ En la naturaleza **SERVICES**, ahora puedes habilitar (por compañía) de forma 
 }
 ```
 
+| | |
+|--|--|
+| **Request DTO** | GET: N/A. PUT: `UpdateServiceCompanySettingsRequest` |
+| **Response DTO** | GET: `ApiResponse<ServiceCompanySettingsDTO>`. PUT: `ApiResponse<object>` (`{ updated: true }`) |
+
 ### Cobertura: `GET|POST|PUT|DELETE /api/v1/secure/services/ops/coverage-areas`
 
 - **GET**: `.../coverage-areas?onlyActive=true`
@@ -851,6 +986,11 @@ En la naturaleza **SERVICES**, ahora puedes habilitar (por compañía) de forma 
   "active": true
 }
 ```
+
+| | |
+|--|--|
+| **Request DTO** | GET/DELETE: N/A. POST/PUT: `UpsertServiceCoverageAreaRequest` |
+| **Response DTO** | GET: `ApiResponse<List<ServiceCoverageAreaDTO>>`. POST/PUT: `ApiResponse<object>` (`{ id }`). DELETE: `ApiResponse<object>` (`{ id, deleted: true }`) |
 
 ### Turnos: `GET|POST|PUT|DELETE /api/v1/secure/services/ops/shifts`
 
@@ -869,6 +1009,11 @@ En la naturaleza **SERVICES**, ahora puedes habilitar (por compañía) de forma 
   "active": true
 }
 ```
+
+| | |
+|--|--|
+| **Request DTO** | GET/DELETE: N/A. POST/PUT: `UpsertServiceShiftTemplateRequest` |
+| **Response DTO** | GET: `ApiResponse<List<ServiceShiftTemplateDTO>>`. POST/PUT: `ApiResponse<object>` (`{ id }`). DELETE: `ApiResponse<object>` (`{ id, deleted: true }`) |
 
 `daysOfWeekMask` usa bitmask: Dom=1, Lun=2, Mar=4, Mié=8, Jue=16, Vie=32, Sáb=64. Ejemplo **62** = Lun–Vie.
 
@@ -902,7 +1047,11 @@ Permite registrar:
 
 Endpoints:
 - `GET /api/v1/secure/hr/employees/{userId}/availability`
+  - Request DTO: N/A
+  - Response DTO: `ApiResponse<EmployeeAvailabilityDTO>`
 - `PUT /api/v1/secure/hr/employees/{userId}/availability`
+  - Request DTO: `EmployeeAvailabilityDTO`
+  - Response DTO: `ApiResponse<bool>`
 
 ---
 
@@ -916,6 +1065,11 @@ Módulo **SERVICES**. `CompanyId` por JWT.
 | Crear | `POST /api/v1/secure/services/orders` |
 | Detalle | `GET /api/v1/secure/services/orders/{orderId}` |
 | Agregar línea | `POST /api/v1/secure/services/orders/{orderId}/lines` |
+
+| | |
+|--|--|
+| **Request DTO** | GET list/detalle: N/A. POST create: `ServiceOrdersController.CreateOrderRequest`. POST add line: `ServiceOrdersController.AddLineRequest` |
+| **Response DTO** | GET list: `ApiResponse<PagedResult<ServiceOrderDTO>>`. GET detalle: `ApiResponse<ServiceOrderDetailsDTO>`. POST create: `ApiResponse<long>` (data = `orderId`). POST add line: `ApiResponse<long>` (data = `lineId`) |
 
 ---
 
