@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Domain.Entities.Auth;
 using BusinessCentral.Domain.Entities.Business;
@@ -12,6 +12,7 @@ using BusinessCentral.Domain.Entities.Finance;
 using BusinessCentral.Infrastructure.Persistence.Adapters;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Collections.Concurrent;
 using Module = BusinessCentral.Domain.Entities.Config.Module;
 
 namespace BusinessCentral.Infrastructure.Seed
@@ -120,12 +121,6 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             var dbSet = context.Set<T>();
 
-            if (await dbSet.AnyAsync()) // Usa AnyAsync para no bloquear el hilo
-            {
-                Console.WriteLine($"⚠️ {typeof(T).Name} ya tiene datos");
-                return;
-            }
-
             var data = await LoadJsonAsync<T>(fileName);
 
             if (data == null || !data.Any())
@@ -136,7 +131,66 @@ namespace BusinessCentral.Infrastructure.Seed
 
             try
             {
-                await dbSet.AddRangeAsync(data);
+                // Garantía: insertamos faltantes aunque ya exista data parcial.
+                // Estrategia: si el entity tiene PK simple, hacemos merge por esa PK.
+                // Si no, hacemos fallback al comportamiento “solo si tabla está vacía”.
+                var entityType = context.Model.FindEntityType(typeof(T));
+                var pk = entityType?.FindPrimaryKey();
+                var pkProps = pk?.Properties;
+
+                List<T> toInsert;
+
+                if (pkProps is { Count: 1 })
+                {
+                    var keyProp = pkProps[0];
+                    var keyName = keyProp.Name;
+                    var propInfo = typeof(T).GetProperty(keyName);
+
+                    // Leer llaves existentes desde DB (sin tracking)
+                    var existingKeys = await dbSet.AsNoTracking()
+                        .Select(e => EF.Property<object>(e, keyName)!)
+                        .ToListAsync();
+
+                    var existing = new HashSet<object>(
+                        existingKeys.Where(k => k is not null)
+                    );
+
+                    toInsert = new List<T>();
+                    foreach (var row in data)
+                    {
+                        // Si no podemos leer la PK por reflection, caemos al fallback.
+                        if (propInfo == null)
+                        {
+                            Console.WriteLine($"⚠️ {typeof(T).Name} sin propiedad PK '{keyName}' accesible: se omite merge");
+                            if (await dbSet.AnyAsync()) return;
+                            toInsert = data;
+                            break;
+                        }
+
+                        var rowKey = propInfo.GetValue(row);
+                        if (rowKey is null) continue;
+                        if (!existing.Contains(rowKey))
+                            toInsert.Add(row);
+                    }
+                }
+                else
+                {
+                    // Fallback: si no podemos comparar por PK, solo insertamos si está vacío.
+                    if (await dbSet.AnyAsync())
+                    {
+                        Console.WriteLine($"⚠️ {typeof(T).Name} ya tiene datos (sin PK simple: se omite merge)");
+                        return;
+                    }
+                    toInsert = data;
+                }
+
+                if (!toInsert.Any())
+                {
+                    Console.WriteLine($"⚠️ {typeof(T).Name} ya contiene todos los registros del seed");
+                    return;
+                }
+
+                await dbSet.AddRangeAsync(toInsert);
                 await context.SaveChangesAsync();
 
                 // 💡 ESTO ES LO QUE FALTA:
@@ -144,7 +198,7 @@ namespace BusinessCentral.Infrastructure.Seed
                 // no crea que los objetos de la anterior (ej. Countries) están en conflicto.
                 context.ChangeTracker.Clear();
 
-                Console.WriteLine($"✅ Seed {typeof(T).Name} insertado");
+                Console.WriteLine($"✅ Seed {typeof(T).Name} insertado/merge: {toInsert.Count} nuevos");
             }
             catch (Exception ex)
             {
