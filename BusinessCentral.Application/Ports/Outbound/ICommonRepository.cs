@@ -14,8 +14,12 @@ namespace BusinessCentral.Application.Ports.Outbound
         Task<List<CityResponse>> ListCitiesByDepartmentAsync(int departmentId);
         Task<List<DocumentTypeResponse>> ListDocumentTypesAsync();
         Task<DocumentTypeResponse?> GetDocumentTypeByIdAsync(int id);
+        Task<int> UpsertDocumentTypeAsync(int? id, DocumentTypeRequest request);
+        Task DeleteDocumentTypeAsync(int id);
         Task<MembershipPlanResponse?> GetMembershipPlanByIdAsync(int id);
         Task<List<MembershipPlanResponse>> ListMembershipPlansAsync();
+        Task<int> UpsertMembershipPlanAsync(int? id, MembershipPlanRequest request);
+        Task DeleteMembershipPlanAsync(int id);
         Task<List<MembershipPlanModuleResponse>> ListPlanModulesAsync(int membershipPlanId);
         Task<CityResponse?> GetCityByIdAsync(int id);
     }

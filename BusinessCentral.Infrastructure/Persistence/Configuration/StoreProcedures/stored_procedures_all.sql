@@ -110,6 +110,73 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   CONFIG: Module (catálogo maestro)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [config].[sp_get_module_by_id]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        m.Id,
+        m.Code,
+        m.Name,
+        m.Description,
+        m.Active
+    FROM [config].[Module] m WITH (NOLOCK)
+    WHERE m.Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_module]
+    @Id INT = NULL,
+    @Code NVARCHAR(50),
+    @Name NVARCHAR(100),
+    @Description NVARCHAR(250) = NULL,
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[Module]
+        SET
+            Code = @Code,
+            Name = @Name,
+            [Description] = @Description,
+            Active = @Active
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el módulo.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[Module] (Code, Name, [Description], Active)
+    VALUES (@Code, @Name, @Description, @Active);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_module]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[Module] WHERE Id = @Id;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_permissions]
 (
     @only_active BIT = 1,
@@ -380,6 +447,58 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_membership_plan]
+    @Id INT = NULL,
+    @Name NVARCHAR(50),
+    @Price DECIMAL(18, 2),
+    @BillingCycle NVARCHAR(20),
+    @DurationDays INT,
+    @MaxUsers INT,
+    @IsPublic BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[MembershipPlan]
+        SET
+            Name = @Name,
+            Price = @Price,
+            BillingCycle = @BillingCycle,
+            DurationDays = @DurationDays,
+            MaxUsers = @MaxUsers,
+            IsPublic = @IsPublic
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el plan.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[MembershipPlan]
+        (Name, Price, BillingCycle, DurationDays, MaxUsers, IsPublic)
+    VALUES
+        (@Name, @Price, @BillingCycle, @DurationDays, @MaxUsers, @IsPublic);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_membership_plan]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[MembershipPlan] WHERE Id = @Id;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_plan_modules]
     @MembershipPlanId INT
 AS
@@ -493,6 +612,71 @@ BEGIN
 END
 GO
 
+CREATE OR ALTER PROCEDURE [config].[sp_get_business_nature_by_id]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        bn.Id,
+        bn.Code,
+        bn.Name,
+        bn.Description,
+        bn.Active
+    FROM [config].[BusinessNature] bn WITH (NOLOCK)
+    WHERE bn.Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_business_nature]
+    @Id INT = NULL,
+    @Code NVARCHAR(50),
+    @Name NVARCHAR(150),
+    @Description NVARCHAR(500) = NULL,
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[BusinessNature]
+        SET
+            Code = @Code,
+            Name = @Name,
+            [Description] = @Description,
+            Active = @Active,
+            UpdatedAt = @now
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró la naturaleza.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[BusinessNature] (Code, Name, [Description], Active, CreatedAt, UpdatedAt)
+    VALUES (@Code, @Name, @Description, @Active, @now, @now);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_business_nature]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[BusinessNature] WHERE Id = @Id;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_business_nature_modules]
     @nature_code NVARCHAR(50)
 AS
@@ -548,6 +732,74 @@ BEGIN
     FROM [config].[FulfillmentMethod] fm WITH (NOLOCK)
     WHERE (@only_active = 0 OR fm.Active = 1)
     ORDER BY fm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_get_fulfillment_method_by_id]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        fm.Id,
+        fm.Code,
+        fm.Name,
+        fm.AppliesTo,
+        fm.[Description],
+        fm.Active
+    FROM [config].[FulfillmentMethod] fm WITH (NOLOCK)
+    WHERE fm.Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_fulfillment_method]
+    @Id INT = NULL,
+    @Code NVARCHAR(30),
+    @Name NVARCHAR(150),
+    @AppliesTo NVARCHAR(20) = 'ANY',
+    @Description NVARCHAR(300) = NULL,
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[FulfillmentMethod]
+        SET
+            Code = @Code,
+            Name = @Name,
+            AppliesTo = @AppliesTo,
+            [Description] = @Description,
+            Active = @Active,
+            UpdatedAt = @now
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el método.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[FulfillmentMethod] (Code, Name, AppliesTo, [Description], Active, CreatedAt, UpdatedAt)
+    VALUES (@Code, @Name, @AppliesTo, @Description, @Active, @now, @now);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_fulfillment_method]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[FulfillmentMethod] WHERE Id = @Id;
 END
 GO
 
@@ -636,6 +888,74 @@ BEGIN
     FROM [config].[PaymentMethod] pm WITH (NOLOCK)
     WHERE (@only_active = 0 OR pm.Active = 1)
     ORDER BY pm.Name;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_get_payment_method_by_id]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        pm.Id,
+        pm.Code,
+        pm.Name,
+        pm.AppliesTo,
+        pm.[Description],
+        pm.Active
+    FROM [config].[PaymentMethod] pm WITH (NOLOCK)
+    WHERE pm.Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_payment_method]
+    @Id INT = NULL,
+    @Code NVARCHAR(30),
+    @Name NVARCHAR(150),
+    @AppliesTo NVARCHAR(20) = 'ANY',
+    @Description NVARCHAR(300) = NULL,
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[PaymentMethod]
+        SET
+            Code = @Code,
+            Name = @Name,
+            AppliesTo = @AppliesTo,
+            [Description] = @Description,
+            Active = @Active,
+            UpdatedAt = @now
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el método.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[PaymentMethod] (Code, Name, AppliesTo, [Description], Active, CreatedAt, UpdatedAt)
+    VALUES (@Code, @Name, @AppliesTo, @Description, @Active, @now, @now);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_payment_method]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[PaymentMethod] WHERE Id = @Id;
 END
 GO
 
@@ -1365,6 +1685,71 @@ BEGIN
 END
 GO
 
+/* =========================================================
+   BUSINESS: FacilityType (catálogo maestro)
+   ========================================================= */
+
+CREATE OR ALTER PROCEDURE [business].[sp_get_facility_type_by_id]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ft.Id,
+        ft.Name,
+        ft.Active,
+        ft.[Create],
+        ft.[Update]
+    FROM [business].[FacilityType] ft WITH (NOLOCK)
+    WHERE ft.Id = @Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [business].[sp_upsert_facility_type]
+    @Id INT = NULL,
+    @Name NVARCHAR(200),
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [business].[FacilityType]
+        SET
+            Name = @Name,
+            Active = @Active,
+            [Update] = @now
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el tipo de sede.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [business].[FacilityType] (Name, [Create], [Update], Active)
+    VALUES (@Name, @now, @now, @Active);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [business].[sp_delete_facility_type]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [business].[FacilityType] WHERE Id = @Id;
+END
+GO
+
 /* --- Perfil de arranque financiero (empresa) --- */
 CREATE OR ALTER PROCEDURE [business].[sp_get_company_financial_bootstrap]
     @company_id INT
@@ -1855,6 +2240,50 @@ BEGIN
     SELECT Id, Name, Abbreviation, Active
     FROM [common].[DocumentType]
     WHERE Id = @Id AND Active = 1;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [common].[sp_upsert_document_type]
+    @Id INT = NULL,
+    @Name NVARCHAR(50),
+    @Abbreviation NVARCHAR(10),
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [common].[DocumentType]
+        SET
+            Name = @Name,
+            Abbreviation = @Abbreviation,
+            Active = @Active
+        WHERE Id = @Id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el tipo de documento.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [common].[DocumentType] (Name, Abbreviation, Active)
+    VALUES (@Name, @Abbreviation, @Active);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [common].[sp_delete_document_type]
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [common].[DocumentType] WHERE Id = @Id;
 END
 GO
 

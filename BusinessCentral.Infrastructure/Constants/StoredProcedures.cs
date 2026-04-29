@@ -49,18 +49,30 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_check_tenant_access = "[config].[sp_check_tenant_access]";
             public const string sp_get_company_id_by_subdomain = "[config].[sp_get_company_id_by_subdomain]";
             public const string sp_list_modules = "[config].[sp_list_modules]";
+            public const string sp_get_module_by_id = "[config].[sp_get_module_by_id]";
+            public const string sp_upsert_module = "[config].[sp_upsert_module]";
+            public const string sp_delete_module = "[config].[sp_delete_module]";
             public const string sp_list_company_modules = "[config].[sp_list_company_modules]";
             public const string sp_set_company_module = "[config].[sp_set_company_module]";
             public const string sp_is_company_module_enabled = "[config].[sp_is_company_module_enabled]";
             public const string sp_list_business_natures = "[config].[sp_list_business_natures]";
+            public const string sp_get_business_nature_by_id = "[config].[sp_get_business_nature_by_id]";
+            public const string sp_upsert_business_nature = "[config].[sp_upsert_business_nature]";
+            public const string sp_delete_business_nature = "[config].[sp_delete_business_nature]";
             public const string sp_list_business_nature_modules = "[config].[sp_list_business_nature_modules]";
             public const string sp_onboard_company = "[config].[sp_onboard_company]";
             public const string sp_list_company_business_natures = "[config].[sp_list_company_business_natures]";
             public const string sp_set_company_business_nature = "[config].[sp_set_company_business_nature]";
             public const string sp_list_fulfillment_methods = "[config].[sp_list_fulfillment_methods]";
+            public const string sp_get_fulfillment_method_by_id = "[config].[sp_get_fulfillment_method_by_id]";
+            public const string sp_upsert_fulfillment_method = "[config].[sp_upsert_fulfillment_method]";
+            public const string sp_delete_fulfillment_method = "[config].[sp_delete_fulfillment_method]";
             public const string sp_list_company_fulfillment_methods = "[config].[sp_list_company_fulfillment_methods]";
             public const string sp_set_company_fulfillment_method = "[config].[sp_set_company_fulfillment_method]";
             public const string sp_list_payment_methods = "[config].[sp_list_payment_methods]";
+            public const string sp_get_payment_method_by_id = "[config].[sp_get_payment_method_by_id]";
+            public const string sp_upsert_payment_method = "[config].[sp_upsert_payment_method]";
+            public const string sp_delete_payment_method = "[config].[sp_delete_payment_method]";
             public const string sp_list_company_payment_methods = "[config].[sp_list_company_payment_methods]";
             public const string sp_set_company_payment_method = "[config].[sp_set_company_payment_method]";
             public const string sp_list_role_permissions = "[config].[sp_list_role_permissions]";
@@ -72,6 +84,8 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
             public const string sp_list_plan_modules = "[config].[sp_list_plan_modules]";
+            public const string sp_upsert_membership_plan = "[config].[sp_upsert_membership_plan]";
+            public const string sp_delete_membership_plan = "[config].[sp_delete_membership_plan]";
             public const string sp_list_application_companies = "[config].[sp_list_application_companies]";
             public const string sp_upsert_application_company = "[config].[sp_upsert_application_company]";
             public const string sp_delete_application_company = "[config].[sp_delete_application_company]";
@@ -80,6 +94,9 @@ namespace BusinessCentral.Infrastructure.Constants
         public static class Business
         {
             public const string sp_list_facility_types = "[business].[sp_list_facility_types]";
+            public const string sp_get_facility_type_by_id = "[business].[sp_get_facility_type_by_id]";
+            public const string sp_upsert_facility_type = "[business].[sp_upsert_facility_type]";
+            public const string sp_delete_facility_type = "[business].[sp_delete_facility_type]";
             public const string sp_upsert_storage_location = "[business].[sp_upsert_storage_location]";
             public const string sp_list_storage_locations = "[business].[sp_list_storage_locations]";
             public const string sp_get_company_financial_bootstrap = "[business].[sp_get_company_financial_bootstrap]";
@@ -201,6 +218,8 @@ namespace BusinessCentral.Infrastructure.Constants
             // Documentos
             public const string sp_list_document_types = "[common].[sp_list_document_types]";
             public const string sp_get_document_type_by_id = "[common].[sp_get_document_type_by_id]";
+            public const string sp_upsert_document_type = "[common].[sp_upsert_document_type]";
+            public const string sp_delete_document_type = "[common].[sp_delete_document_type]";
 
         }
     }

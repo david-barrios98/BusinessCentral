@@ -50,6 +50,8 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IManufacturingRepository, ManufacturingRepository>();
             services.AddScoped<IAgroRepository, AgroRepository>();
             services.AddScoped<IPublicAccessRepository, PublicAccessRepository>();
+            services.AddScoped<IBusinessNatureRepository, BusinessNatureRepository>();
+            services.AddScoped<IFacilityTypeRepository, FacilityTypeRepository>();
 
 
             // Services

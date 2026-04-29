@@ -467,6 +467,65 @@ Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`**
 
 ---
 
+### Catálogos maestros (CRUD backoffice)
+
+Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`** + policy **`SystemRole`**.
+
+> Estos endpoints son para mantener **tablas maestras** (catálogos globales). Distinto a “habilitar por compañía” (CompanyModule, CompanyPaymentMethod, etc.).
+
+| Catálogo | Método | Ruta |
+|---------|--------|------|
+| Módulos (`config.Module`) | `GET` | `/api/v1/system/config/modules?onlyActive=` |
+| | `GET` | `/api/v1/system/config/modules/{id}` |
+| | `POST` | `/api/v1/system/config/modules` |
+| | `PUT` | `/api/v1/system/config/modules/{id}` |
+| | `DELETE` | `/api/v1/system/config/modules/{id}` |
+| Naturalezas (`config.BusinessNature`) | `GET` | `/api/v1/system/config/catalog/business-natures?onlyActive=` |
+| | `GET` | `/api/v1/system/config/catalog/business-natures/{id}` |
+| | `POST` | `/api/v1/system/config/catalog/business-natures` |
+| | `PUT` | `/api/v1/system/config/catalog/business-natures/{id}` |
+| | `DELETE` | `/api/v1/system/config/catalog/business-natures/{id}` |
+| Tipos de sede (`business.FacilityType`) | `GET` | `/api/v1/system/config/catalog/facility-types?onlyActive=` |
+| | `GET` | `/api/v1/system/config/catalog/facility-types/{id}` |
+| | `POST` | `/api/v1/system/config/catalog/facility-types` |
+| | `PUT` | `/api/v1/system/config/catalog/facility-types/{id}` |
+| | `DELETE` | `/api/v1/system/config/catalog/facility-types/{id}` |
+| Métodos de pago (`config.PaymentMethod`) | `GET` | `/api/v1/system/config/payment-methods?onlyActive=` |
+| | `GET` | `/api/v1/system/config/payment-methods/{id}` |
+| | `POST` | `/api/v1/system/config/payment-methods` |
+| | `PUT` | `/api/v1/system/config/payment-methods/{id}` |
+| | `DELETE` | `/api/v1/system/config/payment-methods/{id}` |
+| Métodos de fulfillment (`config.FulfillmentMethod`) | `GET` | `/api/v1/system/config/fulfillment-methods?onlyActive=` |
+| | `GET` | `/api/v1/system/config/fulfillment-methods/{id}` |
+| | `POST` | `/api/v1/system/config/fulfillment-methods` |
+| | `PUT` | `/api/v1/system/config/fulfillment-methods/{id}` |
+| | `DELETE` | `/api/v1/system/config/fulfillment-methods/{id}` |
+| Tipos de documento (`common.DocumentType`) | `GET` | `/api/v1/system/config/catalog/document-types` |
+| | `GET` | `/api/v1/system/config/catalog/document-types/{id}` |
+| | `POST` | `/api/v1/system/config/catalog/document-types` |
+| | `PUT` | `/api/v1/system/config/catalog/document-types/{id}` |
+| | `DELETE` | `/api/v1/system/config/catalog/document-types/{id}` |
+| Planes (`config.MembershipPlan`) | `GET` | `/api/v1/system/config/catalog/membership-plans` |
+| | `GET` | `/api/v1/system/config/catalog/membership-plans/{id}` |
+| | `POST` | `/api/v1/system/config/catalog/membership-plans` |
+| | `PUT` | `/api/v1/system/config/catalog/membership-plans/{id}` |
+| | `DELETE` | `/api/v1/system/config/catalog/membership-plans/{id}` |
+
+**Bodies**:
+
+- `POST/PUT /modules`: `UpsertModuleRequestDTO`
+- `POST/PUT /catalog/business-natures`: `UpsertBusinessNatureRequestDTO`
+- `POST/PUT /catalog/facility-types`: `UpsertFacilityTypeRequestDTO`
+- `POST/PUT /payment-methods`: `UpsertPaymentMethodRequestDTO`
+- `POST/PUT /fulfillment-methods`: `UpsertFulfillmentMethodRequestDTO`
+- `POST/PUT /catalog/document-types`: `DocumentTypeRequest`
+- `POST/PUT /catalog/membership-plans`: `MembershipPlanRequest`
+
+**Respuestas**:
+- List/Get: `ApiResponse<object>` con el DTO correspondiente.
+- Create/Update: `ApiResponse<object>` con `data: { "id": <int> }`.
+- Delete: `ApiResponse<object>` con `data: { "id": <int>, "deleted": true }`.
+
 ### Módulos sistema (`/api/v1/system/config/modules`)
 
 Requisitos: Bearer staff, **`X-Client: backoffice`**, `SystemRole`.
@@ -474,6 +533,10 @@ Requisitos: Bearer staff, **`X-Client: backoffice`**, `SystemRole`.
 | Método | Ruta | Respuesta |
 |--------|------|-----------|
 | GET | `/` | Lista catálogo de módulos |
+| GET | `/{id}` | Detalle de módulo |
+| POST | `/` | Crear módulo |
+| PUT | `/{id}` | Actualizar módulo |
+| DELETE | `/{id}` | Eliminar módulo |
 | GET | `/companies/{companyId}` | Módulos habilitados por compañía |
 | PUT | `/companies/{companyId}/{moduleCode}?enabled=true|false` | **200** ó **400** |
 

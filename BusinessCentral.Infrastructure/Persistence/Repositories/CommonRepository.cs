@@ -87,6 +87,38 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 reader => SqlDataReaderMapper.MapToDto<DocumentTypeResponse>(reader));
         }
 
+        public async Task<int> UpsertDocumentTypeAsync(int? id, DocumentTypeRequest request)
+        {
+            object idParam = id is > 0 ? id.Value : DBNull.Value;
+
+            var parameters = new[]
+            {
+                CreateParameter("@Id", idParam, SqlDbType.Int),
+                CreateParameter("@Name", request.Name, SqlDbType.NVarChar, 50),
+                CreateParameter("@Abbreviation", request.Abbreviation, SqlDbType.NVarChar, 10),
+                CreateParameter("@Active", request.Active, SqlDbType.Bit)
+            };
+
+            int? newId = await ExecuteStoredProcedureSingleAsync<int>(
+                StoredProcedures.Common.sp_upsert_document_type,
+                parameters,
+                r => Convert.ToInt32(r["Id"]));
+
+            return newId ?? 0;
+        }
+
+        public async Task DeleteDocumentTypeAsync(int id)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@Id", id, SqlDbType.Int)
+            };
+
+            await ExecuteStoredProcedureNonQueryAsync(
+                StoredProcedures.Common.sp_delete_document_type,
+                parameters);
+        }
+
         public async Task<List<MembershipPlanResponse>> ListMembershipPlansAsync()
         {
             return await ExecuteStoredProcedureAsync(
@@ -106,6 +138,41 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
                 StoredProcedures.Config.sp_get_membership_plan_by_id,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<MembershipPlanResponse>(reader));
+        }
+
+        public async Task<int> UpsertMembershipPlanAsync(int? id, MembershipPlanRequest request)
+        {
+            object idParam = id is > 0 ? id.Value : DBNull.Value;
+
+            var parameters = new[]
+            {
+                CreateParameter("@Id", idParam, SqlDbType.Int),
+                CreateParameter("@Name", request.Name, SqlDbType.NVarChar, 50),
+                CreateParameter("@Price", request.Price, SqlDbType.Decimal),
+                CreateParameter("@BillingCycle", request.BillingCycle, SqlDbType.NVarChar, 20),
+                CreateParameter("@DurationDays", request.DurationDays, SqlDbType.Int),
+                CreateParameter("@MaxUsers", request.MaxUsers, SqlDbType.Int),
+                CreateParameter("@IsPublic", request.IsPublic, SqlDbType.Bit)
+            };
+
+            int? newId = await ExecuteStoredProcedureSingleAsync<int>(
+                StoredProcedures.Config.sp_upsert_membership_plan,
+                parameters,
+                r => Convert.ToInt32(r["Id"]));
+
+            return newId ?? 0;
+        }
+
+        public async Task DeleteMembershipPlanAsync(int id)
+        {
+            var parameters = new[]
+            {
+                CreateParameter("@Id", id, SqlDbType.Int)
+            };
+
+            await ExecuteStoredProcedureNonQueryAsync(
+                StoredProcedures.Config.sp_delete_membership_plan,
+                parameters);
         }
 
         public async Task<List<MembershipPlanModuleResponse>> ListPlanModulesAsync(int membershipPlanId)

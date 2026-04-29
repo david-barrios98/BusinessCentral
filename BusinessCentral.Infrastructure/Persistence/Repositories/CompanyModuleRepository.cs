@@ -32,6 +32,59 @@ public sealed class CompanyModuleRepository : SqlConfigServer, ICompanyModuleRep
             });
     }
 
+    public async Task<ModuleDTO?> GetModuleByIdAsync(int id)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@Id", id, SqlDbType.Int)
+        };
+
+        return await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Config.sp_get_module_by_id,
+            parameters,
+            r => new ModuleDTO
+            {
+                Id = Convert.ToInt32(r["Id"]),
+                Code = r["Code"]?.ToString(),
+                Name = r["Name"]?.ToString() ?? string.Empty,
+                Description = r["Description"]?.ToString(),
+                Active = Convert.ToBoolean(r["Active"])
+            });
+    }
+
+    public async Task<int> UpsertModuleAsync(UpsertModuleRequestDTO request)
+    {
+        object idParam = request.Id is > 0 ? request.Id.Value : DBNull.Value;
+
+        var parameters = new[]
+        {
+            CreateParameter("@Id", idParam, SqlDbType.Int),
+            CreateParameter("@Code", request.Code.Trim(), SqlDbType.NVarChar, 50),
+            CreateParameter("@Name", request.Name.Trim(), SqlDbType.NVarChar, 100),
+            CreateParameter("@Description", (object?)request.Description ?? DBNull.Value, SqlDbType.NVarChar, 250),
+            CreateParameter("@Active", request.Active, SqlDbType.Bit)
+        };
+
+        int? newId = await ExecuteStoredProcedureSingleAsync<int>(
+            StoredProcedures.Config.sp_upsert_module,
+            parameters,
+            r => Convert.ToInt32(r["Id"]));
+
+        return newId ?? 0;
+    }
+
+    public async Task DeleteModuleAsync(int id)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@Id", id, SqlDbType.Int)
+        };
+
+        await ExecuteStoredProcedureNonQueryAsync(
+            StoredProcedures.Config.sp_delete_module,
+            parameters);
+    }
+
     public async Task<List<CompanyModuleDTO>> ListCompanyModulesAsync(int companyId)
     {
         var parameters = new[]
