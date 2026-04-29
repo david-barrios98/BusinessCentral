@@ -144,6 +144,14 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_add_service_order_line = "[svc].[sp_add_service_order_line]";
             public const string sp_get_service_order = "[svc].[sp_get_service_order]";
             public const string sp_list_service_orders = "[svc].[sp_list_service_orders]";
+            public const string sp_get_service_company_settings = "[svc].[sp_get_service_company_settings]";
+            public const string sp_upsert_service_company_settings = "[svc].[sp_upsert_service_company_settings]";
+            public const string sp_list_service_coverage_areas = "[svc].[sp_list_service_coverage_areas]";
+            public const string sp_upsert_service_coverage_area = "[svc].[sp_upsert_service_coverage_area]";
+            public const string sp_delete_service_coverage_area = "[svc].[sp_delete_service_coverage_area]";
+            public const string sp_list_service_shift_templates = "[svc].[sp_list_service_shift_templates]";
+            public const string sp_upsert_service_shift_template = "[svc].[sp_upsert_service_shift_template]";
+            public const string sp_delete_service_shift_template = "[svc].[sp_delete_service_shift_template]";
         }
 
         public static class Commerce

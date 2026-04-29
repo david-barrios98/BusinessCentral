@@ -3517,6 +3517,298 @@ GO
    SERVICES
    ========================================================= */
 
+/* --- DDL mínimo para configuración de SERVICES (si no existe) --- */
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'svc')
+BEGIN
+    EXEC('CREATE SCHEMA [svc]');
+END
+GO
+
+IF OBJECT_ID('[svc].[ServiceCompanySettings]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [svc].[ServiceCompanySettings] (
+        CompanyId INT NOT NULL PRIMARY KEY,
+        EnableAgendas BIT NOT NULL CONSTRAINT DF_ServiceCompanySettings_EnableAgendas DEFAULT(0),
+        EnableCoverage BIT NOT NULL CONSTRAINT DF_ServiceCompanySettings_EnableCoverage DEFAULT(0),
+        EnableShifts BIT NOT NULL CONSTRAINT DF_ServiceCompanySettings_EnableShifts DEFAULT(0),
+        ShiftFrequencyType NVARCHAR(20) NOT NULL CONSTRAINT DF_ServiceCompanySettings_ShiftFrequencyType DEFAULT('WEEKLY'),
+        ShiftSlotMinutes INT NOT NULL CONSTRAINT DF_ServiceCompanySettings_ShiftSlotMinutes DEFAULT(30),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceCompanySettings_CreatedAt DEFAULT(SYSUTCDATETIME()),
+        UpdatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceCompanySettings_UpdatedAt DEFAULT(SYSUTCDATETIME())
+    );
+END
+GO
+
+IF OBJECT_ID('[svc].[ServiceCoverageArea]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [svc].[ServiceCoverageArea] (
+        Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        CompanyId INT NOT NULL,
+        CoverageType NVARCHAR(20) NOT NULL CONSTRAINT DF_ServiceCoverageArea_CoverageType DEFAULT('CITY'), -- CITY|DEPARTMENT|COUNTRY|CUSTOM
+        CountryId INT NULL,
+        DepartmentId INT NULL,
+        CityId INT NULL,
+        Notes NVARCHAR(300) NULL,
+        Active BIT NOT NULL CONSTRAINT DF_ServiceCoverageArea_Active DEFAULT(1),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceCoverageArea_CreatedAt DEFAULT(SYSUTCDATETIME()),
+        UpdatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceCoverageArea_UpdatedAt DEFAULT(SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_ServiceCoverageArea_CompanyId ON [svc].[ServiceCoverageArea](CompanyId);
+END
+GO
+
+IF OBJECT_ID('[svc].[ServiceShiftTemplate]', 'U') IS NULL
+BEGIN
+    CREATE TABLE [svc].[ServiceShiftTemplate] (
+        Id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        CompanyId INT NOT NULL,
+        Code NVARCHAR(50) NOT NULL,
+        Name NVARCHAR(150) NOT NULL,
+        StartTime TIME NOT NULL,
+        EndTime TIME NOT NULL,
+        FrequencyType NVARCHAR(20) NOT NULL CONSTRAINT DF_ServiceShiftTemplate_FrequencyType DEFAULT('WEEKLY'), -- DAILY|WEEKLY
+        Interval INT NOT NULL CONSTRAINT DF_ServiceShiftTemplate_Interval DEFAULT(1), -- cada N días/semanas
+        DaysOfWeekMask INT NOT NULL CONSTRAINT DF_ServiceShiftTemplate_DaysOfWeekMask DEFAULT(127), -- bitmask (Dom=1 ... Sáb=64)
+        Active BIT NOT NULL CONSTRAINT DF_ServiceShiftTemplate_Active DEFAULT(1),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceShiftTemplate_CreatedAt DEFAULT(SYSUTCDATETIME()),
+        UpdatedAt DATETIME2 NOT NULL CONSTRAINT DF_ServiceShiftTemplate_UpdatedAt DEFAULT(SYSUTCDATETIME())
+    );
+    CREATE UNIQUE INDEX UX_ServiceShiftTemplate_Company_Code ON [svc].[ServiceShiftTemplate](CompanyId, Code);
+END
+GO
+
+/* --- Settings (agendas/cobertura/turnos/frecuencias) --- */
+CREATE OR ALTER PROCEDURE [svc].[sp_get_service_company_settings]
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT EXISTS (SELECT 1 FROM [svc].[ServiceCompanySettings] WITH (NOLOCK) WHERE CompanyId = @company_id)
+    BEGIN
+        INSERT INTO [svc].[ServiceCompanySettings] (CompanyId) VALUES (@company_id);
+    END
+
+    SELECT
+        CompanyId,
+        EnableAgendas,
+        EnableCoverage,
+        EnableShifts,
+        ShiftFrequencyType,
+        ShiftSlotMinutes,
+        CreatedAt,
+        UpdatedAt
+    FROM [svc].[ServiceCompanySettings] WITH (NOLOCK)
+    WHERE CompanyId = @company_id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_upsert_service_company_settings]
+    @company_id INT,
+    @enable_agendas BIT,
+    @enable_coverage BIT,
+    @enable_shifts BIT,
+    @shift_frequency_type NVARCHAR(20),
+    @shift_slot_minutes INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF EXISTS (SELECT 1 FROM [svc].[ServiceCompanySettings] WHERE CompanyId = @company_id)
+    BEGIN
+        UPDATE [svc].[ServiceCompanySettings]
+        SET
+            EnableAgendas = @enable_agendas,
+            EnableCoverage = @enable_coverage,
+            EnableShifts = @enable_shifts,
+            ShiftFrequencyType = @shift_frequency_type,
+            ShiftSlotMinutes = @shift_slot_minutes,
+            UpdatedAt = @now
+        WHERE CompanyId = @company_id;
+    END
+    ELSE
+    BEGIN
+        INSERT INTO [svc].[ServiceCompanySettings]
+            (CompanyId, EnableAgendas, EnableCoverage, EnableShifts, ShiftFrequencyType, ShiftSlotMinutes, CreatedAt, UpdatedAt)
+        VALUES
+            (@company_id, @enable_agendas, @enable_coverage, @enable_shifts, @shift_frequency_type, @shift_slot_minutes, @now, @now);
+    END
+
+    SELECT CAST(1 AS BIT) AS Success;
+END
+GO
+
+/* --- Cobertura (dónde está disponible) --- */
+CREATE OR ALTER PROCEDURE [svc].[sp_list_service_coverage_areas]
+    @company_id INT,
+    @only_active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        c.Id,
+        c.CompanyId,
+        c.CoverageType,
+        c.CountryId,
+        c.DepartmentId,
+        c.CityId,
+        c.Notes,
+        c.Active,
+        c.CreatedAt,
+        c.UpdatedAt
+    FROM [svc].[ServiceCoverageArea] c WITH (NOLOCK)
+    WHERE c.CompanyId = @company_id
+      AND (@only_active = 0 OR c.Active = 1)
+    ORDER BY c.Id DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_upsert_service_coverage_area]
+    @Id INT = NULL,
+    @company_id INT,
+    @coverage_type NVARCHAR(20),
+    @country_id INT = NULL,
+    @department_id INT = NULL,
+    @city_id INT = NULL,
+    @notes NVARCHAR(300) = NULL,
+    @active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [svc].[ServiceCoverageArea]
+        SET
+            CoverageType = @coverage_type,
+            CountryId = @country_id,
+            DepartmentId = @department_id,
+            CityId = @city_id,
+            Notes = @notes,
+            Active = @active,
+            UpdatedAt = @now
+        WHERE Id = @Id AND CompanyId = @company_id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el registro de cobertura.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [svc].[ServiceCoverageArea]
+        (CompanyId, CoverageType, CountryId, DepartmentId, CityId, Notes, Active, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @coverage_type, @country_id, @department_id, @city_id, @notes, @active, @now, @now);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_delete_service_coverage_area]
+    @Id INT,
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [svc].[ServiceCoverageArea] WHERE Id = @Id AND CompanyId = @company_id;
+END
+GO
+
+/* --- Turnos y frecuencias --- */
+CREATE OR ALTER PROCEDURE [svc].[sp_list_service_shift_templates]
+    @company_id INT,
+    @only_active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        s.Id,
+        s.CompanyId,
+        s.Code,
+        s.Name,
+        s.StartTime,
+        s.EndTime,
+        s.FrequencyType,
+        s.Interval,
+        s.DaysOfWeekMask,
+        s.Active,
+        s.CreatedAt,
+        s.UpdatedAt
+    FROM [svc].[ServiceShiftTemplate] s WITH (NOLOCK)
+    WHERE s.CompanyId = @company_id
+      AND (@only_active = 0 OR s.Active = 1)
+    ORDER BY s.Id DESC;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_upsert_service_shift_template]
+    @Id INT = NULL,
+    @company_id INT,
+    @code NVARCHAR(50),
+    @name NVARCHAR(150),
+    @start_time TIME,
+    @end_time TIME,
+    @frequency_type NVARCHAR(20),
+    @interval INT,
+    @days_of_week_mask INT,
+    @active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [svc].[ServiceShiftTemplate]
+        SET
+            Code = @code,
+            Name = @name,
+            StartTime = @start_time,
+            EndTime = @end_time,
+            FrequencyType = @frequency_type,
+            Interval = @interval,
+            DaysOfWeekMask = @days_of_week_mask,
+            Active = @active,
+            UpdatedAt = @now
+        WHERE Id = @Id AND CompanyId = @company_id;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el turno.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [svc].[ServiceShiftTemplate]
+        (CompanyId, Code, Name, StartTime, EndTime, FrequencyType, Interval, DaysOfWeekMask, Active, CreatedAt, UpdatedAt)
+    VALUES
+        (@company_id, @code, @name, @start_time, @end_time, @frequency_type, @interval, @days_of_week_mask, @active, @now, @now);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [svc].[sp_delete_service_shift_template]
+    @Id INT,
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [svc].[ServiceShiftTemplate] WHERE Id = @Id AND CompanyId = @company_id;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [svc].[sp_upsert_service]
     @company_id INT,
     @code NVARCHAR(50),

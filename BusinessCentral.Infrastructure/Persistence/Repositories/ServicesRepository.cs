@@ -5,6 +5,7 @@ using BusinessCentral.Infrastructure.Constants;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Globalization;
 
 namespace BusinessCentral.Infrastructure.Persistence.Repositories;
 
@@ -208,6 +209,183 @@ public sealed class ServicesRepository : SqlConfigServer, IServicesRepository
             PageSize = pageSize,
             Total = total
         };
+    }
+
+    public async Task<ServiceCompanySettingsDTO> GetCompanySettingsAsync(int companyId)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+        };
+
+        var dto = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Services.sp_get_service_company_settings,
+            parameters,
+            r => new ServiceCompanySettingsDTO
+            {
+                CompanyId = Convert.ToInt32(r["CompanyId"]),
+                EnableAgendas = Convert.ToBoolean(r["EnableAgendas"]),
+                EnableCoverage = Convert.ToBoolean(r["EnableCoverage"]),
+                EnableShifts = Convert.ToBoolean(r["EnableShifts"]),
+                ShiftFrequencyType = r["ShiftFrequencyType"]?.ToString() ?? "WEEKLY",
+                ShiftSlotMinutes = Convert.ToInt32(r["ShiftSlotMinutes"]),
+                CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
+                UpdatedAt = Convert.ToDateTime(r["UpdatedAt"])
+            });
+
+        return dto ?? new ServiceCompanySettingsDTO { CompanyId = companyId };
+    }
+
+    public async Task<bool> UpdateCompanySettingsAsync(int companyId, UpdateServiceCompanySettingsRequest request)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@enable_agendas", request.EnableAgendas, SqlDbType.Bit),
+            CreateParameter("@enable_coverage", request.EnableCoverage, SqlDbType.Bit),
+            CreateParameter("@enable_shifts", request.EnableShifts, SqlDbType.Bit),
+            CreateParameter("@shift_frequency_type", request.ShiftFrequencyType, SqlDbType.NVarChar, 20),
+            CreateParameter("@shift_slot_minutes", request.ShiftSlotMinutes, SqlDbType.Int),
+        };
+
+        var ok = await ExecuteStoredProcedureSingleAsync(
+            StoredProcedures.Services.sp_upsert_service_company_settings,
+            parameters,
+            r => Convert.ToBoolean(r["Success"]));
+
+        return ok == true;
+    }
+
+    public async Task<List<ServiceCoverageAreaDTO>> ListCoverageAreasAsync(int companyId, bool onlyActive = true)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@only_active", onlyActive, SqlDbType.Bit),
+        };
+
+        return await ExecuteStoredProcedureAsync(
+            StoredProcedures.Services.sp_list_service_coverage_areas,
+            parameters,
+            r => new ServiceCoverageAreaDTO
+            {
+                Id = Convert.ToInt32(r["Id"]),
+                CompanyId = Convert.ToInt32(r["CompanyId"]),
+                CoverageType = r["CoverageType"]?.ToString() ?? "CITY",
+                CountryId = r["CountryId"] == DBNull.Value ? null : (int?)Convert.ToInt32(r["CountryId"]),
+                DepartmentId = r["DepartmentId"] == DBNull.Value ? null : (int?)Convert.ToInt32(r["DepartmentId"]),
+                CityId = r["CityId"] == DBNull.Value ? null : (int?)Convert.ToInt32(r["CityId"]),
+                Notes = r["Notes"] == DBNull.Value ? null : r["Notes"]?.ToString(),
+                Active = Convert.ToBoolean(r["Active"]),
+                CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
+                UpdatedAt = Convert.ToDateTime(r["UpdatedAt"]),
+            });
+    }
+
+    public async Task<int> UpsertCoverageAreaAsync(int companyId, UpsertServiceCoverageAreaRequest request)
+    {
+        object idParam = request.Id is > 0 ? request.Id.Value : DBNull.Value;
+
+        var parameters = new[]
+        {
+            CreateParameter("@Id", idParam, SqlDbType.Int),
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@coverage_type", request.CoverageType, SqlDbType.NVarChar, 20),
+            CreateParameter("@country_id", (object?)request.CountryId ?? DBNull.Value, SqlDbType.Int),
+            CreateParameter("@department_id", (object?)request.DepartmentId ?? DBNull.Value, SqlDbType.Int),
+            CreateParameter("@city_id", (object?)request.CityId ?? DBNull.Value, SqlDbType.Int),
+            CreateParameter("@notes", (object?)request.Notes ?? DBNull.Value, SqlDbType.NVarChar, 300),
+            CreateParameter("@active", request.Active, SqlDbType.Bit),
+        };
+
+        int? newId = await ExecuteStoredProcedureSingleAsync<int>(
+            StoredProcedures.Services.sp_upsert_service_coverage_area,
+            parameters,
+            r => Convert.ToInt32(r["Id"]));
+
+        return newId ?? 0;
+    }
+
+    public async Task DeleteCoverageAreaAsync(int companyId, int id)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@Id", id, SqlDbType.Int),
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+        };
+
+        await ExecuteStoredProcedureNonQueryAsync(
+            StoredProcedures.Services.sp_delete_service_coverage_area,
+            parameters);
+    }
+
+    public async Task<List<ServiceShiftTemplateDTO>> ListShiftTemplatesAsync(int companyId, bool onlyActive = true)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@only_active", onlyActive, SqlDbType.Bit),
+        };
+
+        return await ExecuteStoredProcedureAsync(
+            StoredProcedures.Services.sp_list_service_shift_templates,
+            parameters,
+            r => new ServiceShiftTemplateDTO
+            {
+                Id = Convert.ToInt32(r["Id"]),
+                CompanyId = Convert.ToInt32(r["CompanyId"]),
+                Code = r["Code"]?.ToString() ?? string.Empty,
+                Name = r["Name"]?.ToString() ?? string.Empty,
+                StartTime = ((TimeSpan)r["StartTime"]).ToString("c", CultureInfo.InvariantCulture),
+                EndTime = ((TimeSpan)r["EndTime"]).ToString("c", CultureInfo.InvariantCulture),
+                FrequencyType = r["FrequencyType"]?.ToString() ?? "WEEKLY",
+                Interval = Convert.ToInt32(r["Interval"]),
+                DaysOfWeekMask = Convert.ToInt32(r["DaysOfWeekMask"]),
+                Active = Convert.ToBoolean(r["Active"]),
+                CreatedAt = Convert.ToDateTime(r["CreatedAt"]),
+                UpdatedAt = Convert.ToDateTime(r["UpdatedAt"]),
+            });
+    }
+
+    public async Task<int> UpsertShiftTemplateAsync(int companyId, UpsertServiceShiftTemplateRequest request)
+    {
+        object idParam = request.Id is > 0 ? request.Id.Value : DBNull.Value;
+        var start = TimeSpan.Parse(request.StartTime, CultureInfo.InvariantCulture);
+        var end = TimeSpan.Parse(request.EndTime, CultureInfo.InvariantCulture);
+
+        var parameters = new[]
+        {
+            CreateParameter("@Id", idParam, SqlDbType.Int),
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+            CreateParameter("@code", request.Code, SqlDbType.NVarChar, 50),
+            CreateParameter("@name", request.Name, SqlDbType.NVarChar, 150),
+            CreateParameter("@start_time", start, SqlDbType.Time),
+            CreateParameter("@end_time", end, SqlDbType.Time),
+            CreateParameter("@frequency_type", request.FrequencyType, SqlDbType.NVarChar, 20),
+            CreateParameter("@interval", request.Interval, SqlDbType.Int),
+            CreateParameter("@days_of_week_mask", request.DaysOfWeekMask, SqlDbType.Int),
+            CreateParameter("@active", request.Active, SqlDbType.Bit),
+        };
+
+        int? newId = await ExecuteStoredProcedureSingleAsync<int>(
+            StoredProcedures.Services.sp_upsert_service_shift_template,
+            parameters,
+            r => Convert.ToInt32(r["Id"]));
+
+        return newId ?? 0;
+    }
+
+    public async Task DeleteShiftTemplateAsync(int companyId, int id)
+    {
+        var parameters = new[]
+        {
+            CreateParameter("@Id", id, SqlDbType.Int),
+            CreateParameter("@company_id", companyId, SqlDbType.Int),
+        };
+
+        await ExecuteStoredProcedureNonQueryAsync(
+            StoredProcedures.Services.sp_delete_service_shift_template,
+            parameters);
     }
 }
 

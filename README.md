@@ -799,6 +799,91 @@ En cierre:
 
 ---
 
+## SERVICES: agendas, cobertura, turnos y frecuencias (opcional)
+
+En la naturaleza **SERVICES**, ahora puedes habilitar (por compañía) de forma **opcional**:
+
+- **Agendas** (disponibilidad / calendario operativo)
+- **Cobertura** (zonas donde el servicio está disponible)
+- **Turnos** y **frecuencias** (plantillas de turno reutilizables)
+
+> Todo esto vive bajo el módulo **SERVICES** y requiere `Authorization: Bearer` + `X-Client: tenant-app` (rutas `/secure`).
+
+### `GET|PUT /api/v1/secure/services/ops/settings`
+
+**GET** devuelve `ServiceCompanySettingsDTO`:
+
+```json
+{
+  "companyId": 1,
+  "enableAgendas": false,
+  "enableCoverage": false,
+  "enableShifts": false,
+  "shiftFrequencyType": "WEEKLY",
+  "shiftSlotMinutes": 30
+}
+```
+
+**PUT body** (`UpdateServiceCompanySettingsRequest`):
+
+```json
+{
+  "enableAgendas": true,
+  "enableCoverage": true,
+  "enableShifts": true,
+  "shiftFrequencyType": "WEEKLY",
+  "shiftSlotMinutes": 30
+}
+```
+
+### Cobertura: `GET|POST|PUT|DELETE /api/v1/secure/services/ops/coverage-areas`
+
+- **GET**: `.../coverage-areas?onlyActive=true`
+- **POST/PUT body** (`UpsertServiceCoverageAreaRequest`):
+
+```json
+{
+  "coverageType": "CITY",
+  "countryId": 1,
+  "departmentId": 10,
+  "cityId": 100,
+  "notes": "Zona urbana",
+  "active": true
+}
+```
+
+### Turnos: `GET|POST|PUT|DELETE /api/v1/secure/services/ops/shifts`
+
+- **GET**: `.../shifts?onlyActive=true`
+- **POST/PUT body** (`UpsertServiceShiftTemplateRequest`):
+
+```json
+{
+  "code": "AM",
+  "name": "Turno mañana",
+  "startTime": "08:00:00",
+  "endTime": "12:00:00",
+  "frequencyType": "WEEKLY",
+  "interval": 1,
+  "daysOfWeekMask": 62,
+  "active": true
+}
+```
+
+`daysOfWeekMask` usa bitmask: Dom=1, Lun=2, Mar=4, Mié=8, Jue=16, Vie=32, Sáb=64. Ejemplo **62** = Lun–Vie.
+
+### Nota de despliegue (DB)
+
+Estos endpoints dependen de nuevas tablas/SPs incluidos en:
+`BusinessCentral.Infrastructure/Persistence/Configuration/StoreProcedures/stored_procedures_all.sql`
+
+- Tablas: `svc.ServiceCompanySettings`, `svc.ServiceCoverageArea`, `svc.ServiceShiftTemplate`
+- SPs: `svc.sp_get_service_company_settings`, `svc.sp_upsert_service_company_settings`,
+  `svc.sp_list_service_coverage_areas`, `svc.sp_upsert_service_coverage_area`, `svc.sp_delete_service_coverage_area`,
+  `svc.sp_list_service_shift_templates`, `svc.sp_upsert_service_shift_template`, `svc.sp_delete_service_shift_template`
+
+---
+
 ## HR (empleados)
 
 Un solo `UsersInfo` para todo: usuarios con login y empleados sin login.
