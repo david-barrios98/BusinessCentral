@@ -53,6 +53,11 @@ namespace BusinessCentral.Infrastructure.Seed
             await SeedCompanyModulesMerge(context, "company_modules.json");
             await SeedCompanyBusinessNaturesMerge(context, "company_business_natures.json");
 
+            // Plantillas por naturaleza (no son "demo" transaccional: deben correr siempre con el seed base)
+            await SeedBusinessNatureModulesMerge(context, "business_nature_modules.json");
+            await SeedBusinessNatureFulfillmentMethodsMerge(context, "business_nature_fulfillment_methods.json");
+            await SeedBusinessNaturePaymentMethodsMerge(context, "business_nature_payment_methods.json");
+
             // --- 5. SEGURIDAD DETALLADA (Dependen de Roles/Permissions) ---
             await SeedRolePermissionsMerge(context, "role_permissions.json");
 
@@ -65,9 +70,6 @@ namespace BusinessCentral.Infrastructure.Seed
             // Actívalos solo si necesitas data de demo en un ambiente limpio.
             if (seedDemoData)
             {
-                await SeedBusinessNatureModulesMerge(context, "business_nature_modules.json");
-                await SeedBusinessNatureFulfillmentMethodsMerge(context, "business_nature_fulfillment_methods.json");
-                await SeedBusinessNaturePaymentMethodsMerge(context, "business_nature_payment_methods.json");
                 // HR
                 await SeedEmployeeProfilesMerge(context, "hr_employee_profiles.json");
                 await SeedEntity<PayScheme>(context, "hr_pay_schemes.json");

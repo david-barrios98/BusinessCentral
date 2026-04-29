@@ -26,7 +26,8 @@ Archivo clave: `BusinessCentral.Api/appsettings.Development.json`
 - **ConnectionStrings**: `DefaultConnection`
 - **JwtSettings**: `SecretKey`, `Issuer`, `Audience`, `ExpiryInMinutes`
 - **RunSeed**: si `true` ejecuta el seed al iniciar (ver `BusinessCentral.Infrastructure/Seed/DbInitializer.cs`)
-- **RunSeedDemoData**: si `true` ejecuta **data demo** (POS/HR/SERVICES/FARM) además de catálogos. Default recomendado: `false` (evita errores por FKs/IDs en ambientes con data existente)
+- **RunSeedDemoData**: si `true` ejecuta **data demo** (HR transaccional, FARM, SERVICES, COMMERCE/POS, etc.) además del seed base. En `appsettings.Development.json` del repo está en `true` para desarrollo; en producción conviene `false` si no quieres datos de prueba.
+- Las **plantillas por naturaleza** (`business_nature_modules`, `business_nature_fulfillment_methods`, `business_nature_payment_methods`) se ejecutan **siempre** con el seed base (no dependen de `RunSeedDemoData`).
 
 ---
 
@@ -79,7 +80,8 @@ Notas:
 
 - Algunas entidades usan `SeedEntity<T>` (inserta solo si tabla está vacía).
 - Otras usan “merge” por Code / keys compuestas (no duplica si ya existe).
-- **Data demo (POS/HR/SERVICES/FARM)**: por defecto **no se ejecuta** (para evitar problemas de FK cuando ya hay data o IDs distintos). Para activarla usa `RunSeedDemoData=true`.
+- **Data demo (HR/FARM/SERVICES/COMMERCE-POS)**: se controla con `RunSeedDemoData` (en desarrollo del repo suele estar `true`). Si faltan filas en esas tablas, revisa que `RunSeed=true` y, si quieres demo, `RunSeedDemoData=true`.
+- **`SeedEntity<T>`**: si la tabla **ya tiene al menos un registro**, ese seed **no vuelve a insertar** (se salta). Si necesitas re-seed, vacía la tabla o usa migración + BD limpia.
 
 ---
 
@@ -138,6 +140,8 @@ Ya aplicado en SPs/listados como productos/proveedores/variantes/ubicaciones/lot
 ---
 
 ## Autenticación (JWT)
+
+Guía detallada para el front **Julisys** (backoffice, refresh, onboarding, usuarios, arquitectura compartida): [docs/Julisys-Backoffice-Integration.md](docs/Julisys-Backoffice-Integration.md)
 
 - Login (legacy / compatibilidad): `POST /api/v1/public/auth/login`
 - Login recomendado (por canal):
@@ -219,6 +223,230 @@ Efecto:
 Bootstrap (recomendado para inicializar UI sin re-login):
 - `GET /api/v1/secure/auth/bootstrap` (requiere `Authorization: Bearer <accessToken>` y `X-Client: tenant-app`)
 - Devuelve: usuario/rol/empresa + `modules[]` + `permissions[]`
+
+### Respuesta HTTP y cuerpo (`ApiResponse<T>`)
+
+Salvo indique `200` “crudo” en un controlador, las respuestas van envueltas en `ApiResponse<T>`:
+
+| Campo | Tipo | Descripción |
+|--------|------|-------------|
+| `isSuccess` | bool | `true` si la operación fue correcta |
+| `data` | T \| null | Payload (login, listas, etc.) |
+| `message` | string | Mensaje descriptivo |
+| `code` | int | Suele coincidir con el código HTTP devuelto |
+| `isException` | bool | `true` si fue error no controlado |
+| `traceId` | string \| null | Trazabilidad si aplica |
+
+**MediatR (`ProcessResult`)** traduce `Result<T>.ErrorType` a HTTP: `NotFound`→404, `Validation`→422, `Unauthorized`→401, `Conflict`→409; **cualquier otro** tipo de error de negocio→**400** (incluye algunos mensajes “prohibido” si el handler usa otro `ErrorType`). Cabecera típica: `Content-Type: application/json`.
+
+**Cabeceras globales útiles**
+
+| Header | Cuándo |
+|--------|--------|
+| `Content-Type: application/json` | Requests con body JSON |
+| `Authorization: Bearer <accessToken>` | Rutas `[Authorize]` |
+| `X-Client: backoffice` | **`/api/v1/system/**`** (obligatorio) |
+| `X-Client: tenant-app` | **`/api/v1/secure/**`** (obligatorio) |
+| `X-Client` opcional | **`/api/v1/public/**`** y **`/api/v1/private/**`** (recomendado `backoffice` en private para consistencia) |
+
+---
+
+### `POST /api/v1/public/auth/login`
+
+| | |
+|--|--|
+| **Auth** | No |
+| **Headers** | `Content-Type: application/json`. Opcional: `X-Client: backoffice` \| `tenant-app`; si falta, el canal se infiere (`companyId` en body ⇒ tenant-app; si no ⇒ backoffice). Opcional: `User-Agent`, `sec-ch-ua-platform` (se usa como metadata de plataforma). |
+| **Body** | `{ "UserName": string, "Password": string, "companyId"?: string }` — `companyId` en JSON **camelCase** según `LoginRequestDTO`; omitir para login sistema/backoffice. |
+
+**200** — `ApiResponse<LoginResponseDTO>` con `data` similar a:
+
+```json
+{
+  "userSessionId": 0,
+  "userId": 0,
+  "userName": "...",
+  "loginField": "email|phone|document",
+  "companyId": 0,
+  "companyName": "...",
+  "roleId": 0,
+  "roleName": "...",
+  "isSystemRole": false,
+  "isSuperUser": false,
+  "permissions": [],
+  "modules": [],
+  "accessToken": "jwt...",
+  "refreshToken": "...",
+  "tokenType": "Bearer",
+  "expiresIn": 7200,
+  "issuedAt": "2026-01-01T00:00:00Z"
+}
+```
+
+**Errores típicos** — `ApiResponse` con `isSuccess: false`: **401** credenciales; **404** usuario no encontrado; **400** validación / canal inválido; **403** usuario no permitido para el canal (staff vs tenant).
+
+---
+
+### `POST /api/v1/public/auth/backoffice/login`
+
+Igual contrato que login, pero el servidor fuerza canal **backoffice** y no debe enviarse `companyId`.
+
+| **Headers** | `Content-Type: application/json` |
+| **Body** | `{ "UserName": string, "Password": string }` |
+
+**200** — mismo shape que `LoginResponseDTO`. **403/400** — usuario no staff o body inválido según reglas del handler.
+
+---
+
+### `POST /api/v1/public/auth/tenant/login`
+
+| **Headers** | `Content-Type: application/json` |
+| **Body** | `{ "UserName": string, "Password": string, "companyId": string }` — `companyId` obligatorio (string numérica). |
+
+**200** — `LoginResponseDTO`. **403** — usuario staff en app tenant. **400** — falta `companyId`.
+
+---
+
+### `POST /api/v1/public/auth/password/forgot`
+
+| **Auth** | No |
+| **Headers** | `Content-Type: application/json` |
+| **Body** | `{ "email": string, "companyId": number }` |
+
+**200** — `ApiResponse<bool>` con `data: true` (por seguridad puede devolver OK aunque el correo no exista). **401** — si el usuario ya tiene token de reset activo (mensaje en `message`). Errores de validación → **422** si el modelo no pasa `[Required]` / `[EmailAddress]`.
+
+---
+
+### `POST /api/v1/public/auth/password/reset`
+
+| **Headers** | `Content-Type: application/json` |
+| **Body** | `{ "token": string, "newPassword": string }` (`newPassword` mínimo 6 caracteres según DTO). |
+
+**200** — `ApiResponse<bool>`. Fallos de negocio según handler → **401**/**400**/`ApiResponse` con `isSuccess: false`.
+
+---
+
+### `POST /api/v1/private/users/refresh`
+
+| **Auth** | `Authorization: Bearer <accessToken actual>` |
+| **Policy** | `SystemRole` |
+| **Headers** | `Content-Type: application/json`. Recomendado: `X-Client: backoffice`. |
+| **Body** | `{ "refreshToken": string }` |
+
+**200** — `ApiResponse<LoginResponseDTO>` (nuevo access y refresh tras rotación). **401** — refresh inválido o expirado.
+
+---
+
+### `POST /api/v1/private/users/logout`
+
+| **Auth** | `Authorization: Bearer <accessToken>` |
+| **Policy** | `SystemRole` |
+| **Headers** | `Content-Type: application/json`. Recomendado: `X-Client: backoffice`. |
+| **Body** (opcional) | `{ "userId"?: number, "companyId"?: number, "refreshToken"?: string, "sessionId"?: number }` |
+
+**200** — `ApiResponse<bool>` con `data: true`. El controlador pasa el Bearer al comando de logout.
+
+---
+
+### `POST /api/v1/private/users/logout/user/{userId}` y `.../logout/company/{companyId}`
+
+| **Auth** | Bearer + `SystemRole` |
+| **Body** | Vacío |
+| **Respuesta** | `ApiResponse<bool>` vía `ProcessResult` |
+
+---
+
+### `POST /api/v1/private/users` (crear usuario)
+
+| **Auth** | Bearer + `SystemRole` |
+| **Headers** | `Content-Type: application/json` |
+| **Body** | `CreateUserDTO`: `companyId`, `documentTypeId`, `documentNumber`, `firstName`, `lastName`, `email`, `phone`, `password`, `roleId`, opcional `authProvider`, `externalId` |
+
+**200** — `ApiResponse` con el resultado del comando (según handler). Validación → **422**.
+
+---
+
+### `GET /api/v1/private/users/company/{companyId}`
+
+| **Query** | `page` (default 1), `pageSize` (default 20) |
+| **Respuesta** | Listado paginado (`PagedResult` / estructura que devuelva el handler) dentro de `ApiResponse`. |
+
+---
+
+### `GET|PUT|DELETE /api/v1/private/users/company/{companyId}/users/{userId}`
+
+| **PUT body** | `UpdateUserDTO` (incluye `userId` coherente con ruta) |
+| **Respuesta** | `ApiResponse` con `UserResponseDTO` o bool según operación |
+
+---
+
+### `GET /api/v1/secure/auth/bootstrap`
+
+| **Auth** | `Authorization: Bearer` |
+| **Headers** | **`X-Client: tenant-app`** (requerido por middleware en `/secure`). |
+| **Policy** | Módulo **AUTH** (`RequiresModule("AUTH")`). |
+
+**200** — `ApiResponse<object>` con `data`:
+
+```json
+{
+  "userId": 0,
+  "userName": "...",
+  "companyId": 0,
+  "companyName": "...",
+  "roleId": 0,
+  "roleName": "...",
+  "isSystemRole": false,
+  "isSuperUser": false,
+  "modules": [],
+  "permissions": []
+}
+```
+
+Si `companyId` en token es `0`, `modules` puede ir vacío.
+
+---
+
+### `POST /api/v1/secure/auth/logout`
+
+| **Auth** | Bearer |
+| **Headers** | **`X-Client: tenant-app`**, `Content-Type: application/json` |
+| **Body** | Opcional: `{ "refreshToken", "sessionId", "userId", "companyId" }` |
+
+**200** — `ApiResponse<bool>`. Cierra sesiones y revoca refresh tokens según `LogoutHandler`.
+
+---
+
+### Onboarding (`/api/v1/system/config/onboarding/...`)
+
+Todos requieren **`Authorization: Bearer`** (staff) + **`X-Client: backoffice`** + policy **`SystemRole`**.
+
+| Método | Ruta | Query / route | Respuesta |
+|--------|------|----------------|-----------|
+| GET | `/business-natures` | `onlyActive` (default true) | `200` — `ApiResponse<object>` lista |
+| GET | `/business-natures/{code}/modules` | `code` naturaleza | `200` |
+| GET | `/companies/{companyId}/business-natures` | | `200` |
+| PUT | `/companies/{companyId}/business-natures/{natureCode}` | `enabled`, `primary` | `200` ó **400** si falla |
+| GET | `/facility-types` | `onlyActive` | `200` |
+| POST | `/companies` | Body: `OnboardCompanyRequestDTO` (empresa, plan, sedes `facilities` o sede única, datos propietario y `ownerRoleId`) | **200** — `ApiResponse<object>` con payload del onboarding; **400** si `Success` del servicio es false |
+
+---
+
+### Módulos sistema (`/api/v1/system/config/modules`)
+
+Requisitos: Bearer staff, **`X-Client: backoffice`**, `SystemRole`.
+
+| Método | Ruta | Respuesta |
+|--------|------|-----------|
+| GET | `/` | Lista catálogo de módulos |
+| GET | `/companies/{companyId}` | Módulos habilitados por compañía |
+| PUT | `/companies/{companyId}/{moduleCode}?enabled=true|false` | **200** ó **400** |
+
+---
+
+### Despliegue de scripts SQL
+
+Si cambias procedimientos en `stored_procedures_all.sql`, ejecuta el script en la base de datos para que coincidan con la API (p. ej. `config.sp_onboard_company`).
 
 ### Superusuario sin compañía (modelo de datos)
 

@@ -10,6 +10,7 @@
     "Website": "https://dnails.com",
     "LogoUrl": "https://dnails.com/logo.png",
     "Subdomain": "dnails",
+    "FinancialBootstrapStatus": "NOT_STARTED",
     "Create": "2026-01-01T08:00:00",
     "Update": "2026-01-01T08:00:00",
     "Active": true
@@ -25,6 +26,7 @@
     "Website": "https://globalsystems.com",
     "LogoUrl": null,
     "Subdomain": "globalsys",
+    "FinancialBootstrapStatus": "NOT_STARTED",
     "Create": "2026-03-15T10:30:00",
     "Update": "2026-03-15T10:30:00",
     "Active": true

@@ -690,9 +690,9 @@ BEGIN
             THROW 50002, 'Subdomain already exists', 1;
 
         INSERT INTO [business].[Companies]
-            (Name, TradeName, DocumentTypeId, DocumentNumber, Email, Phone, Subdomain, BusinessNatureId, [Create], [Update], Active)
+            (Name, TradeName, DocumentTypeId, DocumentNumber, Email, Phone, Subdomain, BusinessNatureId, [Create], [Update], Active, FinancialBootstrapStatus)
         VALUES
-            (@CompanyName, @TradeName, @DocumentTypeId, @DocumentNumber, @Email, @Phone, @Subdomain, @bn_id, @now, @now, 1);
+            (@CompanyName, @TradeName, @DocumentTypeId, @DocumentNumber, @Email, @Phone, @Subdomain, @bn_id, @now, @now, 1, N'NOT_STARTED');
 
         DECLARE @company_id INT = CAST(SCOPE_IDENTITY() AS INT);
 
