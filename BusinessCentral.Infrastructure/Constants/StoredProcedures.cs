@@ -72,6 +72,9 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_get_membership_plan_by_id = "[config].[sp_get_membership_plan_by_id]";
             public const string sp_list_membership_plans = "[config].[sp_list_membership_plans]";
             public const string sp_list_plan_modules = "[config].[sp_list_plan_modules]";
+            public const string sp_list_application_companies = "[config].[sp_list_application_companies]";
+            public const string sp_upsert_application_company = "[config].[sp_upsert_application_company]";
+            public const string sp_delete_application_company = "[config].[sp_delete_application_company]";
         }
 
         public static class Business

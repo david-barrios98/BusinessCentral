@@ -397,6 +397,84 @@ BEGIN
 END
 GO
 
+/* Clientes de aplicación (APK, escritorio, web) — qué campo usar para login por compañía */
+CREATE OR ALTER PROCEDURE [config].[sp_list_application_companies]
+    @company_id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        ac.Id,
+        ac.CompanyId,
+        ac.ApplicationCode,
+        ac.LoginField,
+        ac.Priority,
+        ac.IsEnabled,
+        ac.[Create],
+        ac.[Update],
+        ac.Active
+    FROM [config].[ApplicationCompanies] ac WITH (NOLOCK)
+    WHERE ac.CompanyId = @company_id
+    ORDER BY ac.ApplicationCode, ac.Priority, ac.Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_upsert_application_company]
+    @Id INT = NULL,
+    @CompanyId INT,
+    @ApplicationCode NVARCHAR(200),
+    @LoginField NVARCHAR(20),
+    @Priority INT,
+    @IsEnabled BIT,
+    @Active BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @now DATETIME2 = SYSUTCDATETIME();
+
+    IF @Id IS NOT NULL AND @Id > 0
+    BEGIN
+        UPDATE [config].[ApplicationCompanies]
+        SET
+            ApplicationCode = @ApplicationCode,
+            LoginField = @LoginField,
+            Priority = @Priority,
+            IsEnabled = @IsEnabled,
+            Active = @Active,
+            [Update] = @now
+        WHERE Id = @Id AND CompanyId = @CompanyId;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            RAISERROR('No se encontró el registro o no pertenece a la compañía.', 16, 1);
+            RETURN;
+        END
+
+        SELECT @Id AS Id;
+        RETURN;
+    END
+
+    INSERT INTO [config].[ApplicationCompanies]
+        (CompanyId, ApplicationCode, LoginField, Priority, IsEnabled, [Create], [Update], Active)
+    VALUES
+        (@CompanyId, @ApplicationCode, @LoginField, @Priority, @IsEnabled, @now, @now, @Active);
+
+    SELECT CAST(SCOPE_IDENTITY() AS INT) AS Id;
+END
+GO
+
+CREATE OR ALTER PROCEDURE [config].[sp_delete_application_company]
+    @Id INT,
+    @CompanyId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DELETE FROM [config].[ApplicationCompanies]
+    WHERE Id = @Id AND CompanyId = @CompanyId;
+END
+GO
+
 CREATE OR ALTER PROCEDURE [config].[sp_list_business_natures]
     @only_active BIT = 1
 AS
@@ -1860,7 +1938,8 @@ GO
 CREATE OR ALTER PROCEDURE [auth].[sp_login_user]
 (
     @username VARCHAR(150),
-    @company_id INT
+    @company_id INT,
+    @application_code NVARCHAR(200) = NULL
 )
 AS
 BEGIN
@@ -1869,17 +1948,31 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM [config].[ApplicationCompanies] WITH (NOLOCK)
-        WHERE CompanyId = @company_id AND IsEnabled = 1 AND Active = 1
+        WHERE CompanyId = @company_id
+          AND IsEnabled = 1
+          AND Active = 1
+          AND (
+              @application_code IS NULL
+              OR LTRIM(RTRIM(@application_code)) = ''
+              OR LTRIM(RTRIM(ApplicationCode)) = LTRIM(RTRIM(@application_code))
+          )
     )
     BEGIN
-        RAISERROR('La compañía no tiene una configuración de aplicación activa.', 16, 1);
+        RAISERROR('La compañía no tiene una configuración de aplicación activa para este cliente (applicationCode).', 16, 1);
         RETURN;
     END
 
     ;WITH CompanyConfig AS (
         SELECT LoginField, Priority
         FROM [config].[ApplicationCompanies] WITH (NOLOCK)
-        WHERE CompanyId = @company_id AND IsEnabled = 1 AND Active = 1
+        WHERE CompanyId = @company_id
+          AND IsEnabled = 1
+          AND Active = 1
+          AND (
+              @application_code IS NULL
+              OR LTRIM(RTRIM(@application_code)) = ''
+              OR LTRIM(RTRIM(ApplicationCode)) = LTRIM(RTRIM(@application_code))
+          )
     )
     SELECT TOP 1
         ui.Id AS UserId,
@@ -1907,7 +2000,7 @@ BEGIN
       AND (
         (cc.LoginField = 'email' AND ui.Email = @username) OR
         (cc.LoginField = 'phone' AND ui.Phone = @username) OR
-        (cc.LoginField = 'documentNumber' AND ui.DocumentNumber = @username)
+        (cc.LoginField IN ('document', 'documentNumber') AND ui.DocumentNumber = @username)
       )
     ORDER BY cc.Priority;
 

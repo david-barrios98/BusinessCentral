@@ -257,7 +257,7 @@ Salvo indique `200` “crudo” en un controlador, las respuestas van envueltas 
 |--|--|
 | **Auth** | No |
 | **Headers** | `Content-Type: application/json`. Opcional: `X-Client: backoffice` \| `tenant-app`; si falta, el canal se infiere (`companyId` en body ⇒ tenant-app; si no ⇒ backoffice). Opcional: `User-Agent`, `sec-ch-ua-platform` (se usa como metadata de plataforma). |
-| **Body** | `{ "UserName": string, "Password": string, "companyId"?: string }` — `companyId` en JSON **camelCase** según `LoginRequestDTO`; omitir para login sistema/backoffice. |
+| **Body** | `{ "UserName": string, "Password": string, "companyId"?: string, "applicationCode"?: string }` — `companyId` en JSON **camelCase** según `LoginRequestDTO`; omitir para login sistema/backoffice. `applicationCode` (opcional): identifica el cliente embebido en APK/instalador; debe coincidir con `config.ApplicationCompanies.ApplicationCode` para esa compañía. Si se omite o va vacío, el SP acepta cualquier fila activa de la compañía (comportamiento previo). |
 
 **200** — `ApiResponse<LoginResponseDTO>` con `data` similar a:
 
@@ -301,9 +301,44 @@ Igual contrato que login, pero el servidor fuerza canal **backoffice** y no debe
 ### `POST /api/v1/public/auth/tenant/login`
 
 | **Headers** | `Content-Type: application/json` |
-| **Body** | `{ "UserName": string, "Password": string, "companyId": string }` — `companyId` obligatorio (string numérica). |
+| **Body** | `{ "UserName": string, "Password": string, "companyId": string, "applicationCode"?: string }` — `companyId` obligatorio (string numérica). `applicationCode` **recomendado** para móvil/escritorio: el mismo valor que definas en backoffice en `config.ApplicationCompanies` (p. ej. `001` web, `002` APK). Si no se envía, se mantiene compatibilidad con despliegues que aún no envían el código. |
 
-**200** — `LoginResponseDTO`. **403** — usuario staff en app tenant. **400** — falta `companyId`.
+**200** — `LoginResponseDTO`. **403** — usuario staff en app tenant. **400** — falta `companyId`. Si envías `applicationCode` y no hay fila habilitada para ese código en la compañía, el SP puede responder error de negocio (equivalente a usuario no encontrado / configuración inválida).
+
+---
+
+### Clientes de aplicación por compañía (`config.ApplicationCompanies`)
+
+Desde el **backoffice** puedes definir, por compañía, qué **código de aplicación** (APK, instalador de escritorio, build web, etc.) usa qué **campo de login** (`email`, `phone`, `document`; `documentNumber` en datos legacy se normaliza a `document`).
+
+| **Auth** | `Authorization: Bearer` con usuario sistema (`SystemRole`) |
+| **Headers** | Recomendado: `X-Client: backoffice` en rutas `api/v1/system/...` |
+
+| Acción | Método y ruta |
+|--------|----------------|
+| Listar configuraciones de la compañía | `GET /api/v1/system/config/companies/{companyId}/application-companies` |
+| Alta | `POST /api/v1/system/config/companies/{companyId}/application-companies` |
+| Actualizar | `PUT /api/v1/system/config/companies/{companyId}/application-companies/{id}` |
+| Eliminar | `DELETE /api/v1/system/config/companies/{companyId}/application-companies/{id}` |
+
+**POST/PUT body** (`UpsertApplicationCompanyRequestDTO`):
+
+```json
+{
+  "id": 0,
+  "applicationCode": "002",
+  "loginField": "phone",
+  "priority": 1,
+  "isEnabled": true,
+  "active": true
+}
+```
+
+En **POST** el servidor ignora `id` en el body. En **PUT**, `id` en ruta debe coincidir con el registro (el body puede incluir el mismo `id`).
+
+**Respuesta** típica de alta/actualización: `ApiResponse` con `data: { "id": <int> }`.
+
+**Nota de despliegue:** ejecutar en SQL Server el script que define `[config].[sp_list_application_companies]`, `[config].[sp_upsert_application_company]`, `[config].[sp_delete_application_company]` y la versión actualizada de `[auth].[sp_login_user]` (parámetro `@application_code`), incluidos en `BusinessCentral.Infrastructure/Persistence/Configuration/StoreProcedures/stored_procedures_all.sql`.
 
 ---
 
@@ -647,6 +682,10 @@ Sistema:
 - `GET /api/v1/system/config/payment-methods`
 - `GET /api/v1/system/config/payment-methods/companies/{companyId}`
 - `PUT /api/v1/system/config/payment-methods/companies/{companyId}/{methodCode}?enabled=true`
+
+Códigos de cliente / campo de login por app (`ApplicationCompanies`):
+
+- `GET|POST|PUT|DELETE /api/v1/system/config/companies/{companyId}/application-companies` (detalle en la sección **Clientes de aplicación por compañía** más arriba).
 
 ### Operación POS (tickets)
 

@@ -21,6 +21,13 @@ public class LoginRequestDTO
     [JsonPropertyName("companyId")]
     // Opcional: para login tenant es requerido, para login superusuario web no.
     public string? CompanyId { get; set; }
+
+    /// <summary>
+    /// Código del cliente (APK, instalador, web). Si se omite o va vacío, el SP acepta cualquier fila activa de la compañía (compatibilidad).
+    /// Para distinguir instaladores, envíe el mismo valor configurado en <c>config.ApplicationCompanies.ApplicationCode</c>.
+    /// </summary>
+    [JsonPropertyName("applicationCode")]
+    public string? ApplicationCode { get; set; }
 }
 
 public class LogoutRequestDTO

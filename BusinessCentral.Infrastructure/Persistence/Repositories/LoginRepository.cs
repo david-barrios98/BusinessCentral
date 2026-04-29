@@ -18,10 +18,16 @@ namespace BusinessCentral.Infrastructure.Persistence.Repositories
         public async Task<LoginResponseDTO?> GetLoginUserAsync(LoginCommand request)
         {
 
+            var appCode = request.userLogin.ApplicationCode;
+            object appCodeParam = string.IsNullOrWhiteSpace(appCode)
+                ? DBNull.Value
+                : appCode.Trim();
+
             var parameters = new[]
             {
-                CreateParameter("@UserName", request.userLogin.UserName, SqlDbType.VarChar),
-                CreateParameter("@company_id", request.userLogin.CompanyId, SqlDbType.Int)
+                CreateParameter("@username", request.userLogin.UserName, SqlDbType.VarChar, 150),
+                CreateParameter("@company_id", request.userLogin.CompanyId, SqlDbType.Int),
+                CreateParameter("@application_code", appCodeParam, SqlDbType.NVarChar, 200)
             };
             return await ExecuteStoredProcedureSingleAsync(
                 StoredProcedures.Auth.sp_login_user,
