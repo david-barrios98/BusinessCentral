@@ -1,0 +1,91 @@
+# --- Compilación y Salida (C# / .NET) ---
+bin/
+obj/
+*.pdb
+*.exe
+*.dll
+
+# --- Entity Framework Core ---
+# Ignora el script de migración bundle si lo generas
+efbundle
+efbundle.exe
+
+# --- Herramientas de Diagnóstico ---
+# Reportes de cobertura de código y pruebas
+TestResults/
+*.sequencediagram.layout
+*.uxml
+*.vsp
+*.vspx
+
+# --- Publicación y Paquetes ---
+# Si generas paquetes NuGet localmente
+*.nupkg
+*.snupkg
+
+# --- Dependencias de Frontend (Angular) ---
+node_modules/
+.angular/
+dist/
+.npm/
+
+# --- Configuración de Entorno y Secretos ---
+.env
+*.user
+*.suo
+.vs/
+.vscode/
+appsettings.Production.json
+appsettings.Beta.json
+appsettings.json
+
+# --- Docker & Logs ---
+.dockerignore
+log/
+*.log
+docker-compose.override.yml
+
+# --- Archivos del Sistema y Temporales ---
+.DS_Store
+Thumbs.db
+temp/
+tmp/
+
+# --- Paquetes y Caché ---
+packages/
+.nuget/
+*.pyc
+__pycache__/
+
+# --- Infraestructura y CI/CD ---
+.config/workflows/
+
+# --- Documentación y Diseño ---
+*.drawio
+*.pdf
+# Archivos de la carpeta de documentación si no quieres que influyan en el código
+docs/
+
+# --- Seguridad y Certificados ---
+*.pfx
+*.p12
+*.pem
+*.cer
+*.key
+*.crt
+# Secretos de usuario de .NET (si se guardan en la carpeta del proyecto)
+secrets.json
+
+# --- Swagger / OpenAPI ---
+swagger.json
+openapi.json
+
+# --- Lock Files (Opcional, si quieres máxima velocidad) ---
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+# En .NET, el project.assets.json ya suele estar en obj/ pero por si acaso:
+project.assets.json
+
+# --- Docker Build Context ---
+.docker/

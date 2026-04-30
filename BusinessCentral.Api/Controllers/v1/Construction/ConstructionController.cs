@@ -62,11 +62,12 @@ namespace BusinessCentral.Api.Controllers.Construction
             return ProcessResult(result);
         }
 
-        // ---- WorkLog / Bitácora ----
+        // ---- WorkLog / Bitï¿½cora ----
         [HttpPost("{projectId:int}/worklog")]
-        public async Task<IActionResult> AddWorkLog(int projectId, [FromForm] string notes, [FromForm] List<IFormFile>? photos)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddWorkLog(int projectId, [FromForm] CreateWorkLogForm form)
         {
-            var cmd = new CreateWorkLogNotesCommand(projectId, notes, photos);
+            var cmd = new CreateWorkLogNotesCommand(projectId, form.Notes, form.Photos);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
@@ -191,9 +192,10 @@ namespace BusinessCentral.Api.Controllers.Construction
 
         // ---- Project documents ----
         [HttpPost("{projectId:int}/documents")]
-        public async Task<IActionResult> UploadDocument(int projectId, [FromForm] IFormFile file, [FromForm] string documentType)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadDocument(int projectId, [FromForm] UploadProjectDocumentForm form)
         {
-            var cmd = new UploadProjectDocumentCommand(projectId, file, documentType);
+            var cmd = new UploadProjectDocumentCommand(projectId, form.File, form.DocumentType);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }
@@ -204,6 +206,18 @@ namespace BusinessCentral.Api.Controllers.Construction
             var q = new ListProjectDocumentsQuery(projectId);
             var result = await _mediator.Send(q);
             return ProcessResult(result);
+        }
+
+        public sealed class UploadProjectDocumentForm
+        {
+            public IFormFile File { get; set; } = null!;
+            public string DocumentType { get; set; } = string.Empty;
+        }
+
+        public sealed class CreateWorkLogForm
+        {
+            public string Notes { get; set; } = string.Empty;
+            public List<IFormFile>? Photos { get; set; }
         }
     }
 }

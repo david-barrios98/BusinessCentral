@@ -1,4 +1,5 @@
 ﻿using Microsoft.OpenApi;
+using BusinessCentral.Api.Filters;
 
 namespace BusinessCentral.Api.Extensions;
 
@@ -24,6 +25,7 @@ public static class SwaggerExtensions
             });
 
             options.SchemaFilter<Filters.SwaggerSchemaFilter>();
+            options.OperationFilter<SwaggerFileUploadOperationFilter>();
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
