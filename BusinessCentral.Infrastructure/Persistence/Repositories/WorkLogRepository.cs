@@ -1,9 +1,10 @@
-using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Application.DTOs.Construction;
+using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
-using System.Data;
 using Microsoft.Extensions.Configuration;
+using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters;
 public class WorkLogRepository : SqlConfigServer, IWorkLogRepository
@@ -20,7 +21,7 @@ public class WorkLogRepository : SqlConfigServer, IWorkLogRepository
             CreateParameter("@Notes", notes ?? string.Empty, SqlDbType.VarChar),
         };
 
-        var id = await ExecuteStoredProcedureSingleAsync("[construction].[sp_insert_worklog]", parameters, reader => Convert.ToInt32(reader.GetValue(0)));
+        var id = await ExecuteStoredProcedureSingleAsync(StoredProcedures.Construction.sp_insert_worklog, parameters, reader => Convert.ToInt32(reader.GetValue(0)));
         return id;
     }
 
@@ -32,7 +33,7 @@ public class WorkLogRepository : SqlConfigServer, IWorkLogRepository
             CreateParameter("@FilePath", filePath, SqlDbType.VarChar),
             CreateParameter("@FileName", fileName, SqlDbType.VarChar)
         };
-        await ExecuteStoredProcedureNonQueryAsync("[construction].[sp_insert_worklog_photo]", parameters);
+        await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Construction.sp_insert_worklog_photo, parameters);
     }
 
     public async Task<List<WorkLogDto>> ListWorkLogsAsync(int projectId, int page, int pageSize)
@@ -46,6 +47,6 @@ public class WorkLogRepository : SqlConfigServer, IWorkLogRepository
         };
 
         // Asume que existe "[construction].[sp_list_worklogs]" mapeando a WorkLogDto
-        return await ExecuteStoredProcedureAsync("[construction].[sp_list_worklogs]", parameters, reader => SqlDataReaderMapper.MapToDto<WorkLogDto>(reader));
+        return await ExecuteStoredProcedureAsync(StoredProcedures.Construction.sp_list_worklogs, parameters, reader => SqlDataReaderMapper.MapToDto<WorkLogDto>(reader));
     }
 }

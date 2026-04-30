@@ -1,5 +1,6 @@
 using BusinessCentral.Application.DTOs.Construction;
 using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +26,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             var insertedId = await ExecuteStoredProcedureSingleAsync(
-                "[business].[sp_create_construction_project]",
+                 StoredProcedures.Construction.sp_create_project,
                 parameters,
                 reader => Convert.ToInt32(reader.GetValue(0)));
 
@@ -40,7 +41,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureSingleAsync(
-                "[business].[sp_get_construction_project]",
+                 StoredProcedures.Construction.sp_get_project,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<ProjectResponseDTO>(reader));
         }
@@ -59,7 +60,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@Active", dto.Active ? 1 : 0, SqlDbType.Bit)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[business].[sp_update_construction_project]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Construction.sp_update_project, parameters);
         }
 
         public async Task DeleteProjectAsync(int projectId)
@@ -69,7 +70,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@ProjectId", projectId, SqlDbType.Int)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[business].[sp_delete_construction_project]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Construction.sp_delete_project, parameters);
         }
 
         public async Task<List<ProjectResponseDTO>> ListProjectsAsync(int companyId, int page, int pageSize)
@@ -82,7 +83,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[business].[sp_list_construction_projects]",
+                 StoredProcedures.Construction.sp_list_projects,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<ProjectResponseDTO>(reader));
         }

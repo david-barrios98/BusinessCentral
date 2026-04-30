@@ -3,6 +3,8 @@ using BusinessCentral.Application.DTOs.Construction;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using Microsoft.Extensions.Configuration;
+using BusinessCentral.Infrastructure.Constants;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
 {
@@ -21,7 +23,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             var id = await ExecuteStoredProcedureSingleAsync(
-                "[construction].[sp_insert_project_expense]",
+                StoredProcedures.Construction.sp_insert_project_expense,
                 parameters,
                 reader => Convert.ToInt32(reader.GetValue(0)));
 
@@ -38,7 +40,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[construction].[sp_list_project_expenses]",
+                StoredProcedures.Construction.sp_list_project_expenses,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<ProjectExpenseDto>(reader));
         }

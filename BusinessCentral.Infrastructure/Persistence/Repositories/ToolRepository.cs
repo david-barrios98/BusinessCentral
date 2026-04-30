@@ -2,6 +2,8 @@ using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Application.DTOs.Construction;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
+
 using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters

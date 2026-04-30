@@ -1,7 +1,9 @@
-using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Application.DTOs.Construction;
+using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
@@ -20,7 +22,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@Hours", hours, SqlDbType.Decimal)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[construction].[sp_insert_attendance]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Construction.sp_insert_attendance, parameters);
         }
 
         public async Task<List<AttendanceDto>> ListAttendanceAsync(int projectId, DateTime? from = null, DateTime? to = null)
@@ -33,7 +35,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[construction].[sp_list_attendance]",
+                 StoredProcedures.Construction.sp_list_attendance,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<AttendanceDto>(reader));
         }

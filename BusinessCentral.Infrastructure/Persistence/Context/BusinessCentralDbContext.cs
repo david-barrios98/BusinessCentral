@@ -1,15 +1,17 @@
-﻿using BusinessCentral.Domain.Entities.Audit;
+﻿using BusinessCentral.Domain.Entities.Agro;
+using BusinessCentral.Domain.Entities.Audit;
 using BusinessCentral.Domain.Entities.Auth;
 using BusinessCentral.Domain.Entities.Business;
+using BusinessCentral.Domain.Entities.Business.Construction;
 using BusinessCentral.Domain.Entities.Commerce;
-using BusinessCentral.Domain.Entities.Farm;
-using BusinessCentral.Domain.Entities.Hr;
 using BusinessCentral.Domain.Entities.Common;
 using BusinessCentral.Domain.Entities.Config;
-using BusinessCentral.Domain.Entities.Services;
+using BusinessCentral.Domain.Entities.Construction;
+using BusinessCentral.Domain.Entities.Farm;
 using BusinessCentral.Domain.Entities.Finance;
+using BusinessCentral.Domain.Entities.Hr;
 using BusinessCentral.Domain.Entities.Manufacturing;
-using BusinessCentral.Domain.Entities.Agro;
+using BusinessCentral.Domain.Entities.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -76,7 +78,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<EmployeeAvailabilitySlot> EmployeeAvailabilitySlots { get; set; } = null!;
         public DbSet<EmployeeAvailabilityException> EmployeeAvailabilityExceptions { get; set; } = null!;
         public DbSet<PayScheme> PaySchemes { get; set; } = null!;
-        public DbSet<WorkLog> WorkLogs { get; set; } = null!;
+        public DbSet<Domain.Entities.Hr.WorkLog> WorkLogs { get; set; } = null!;
         public DbSet<LoanAdvance> LoanAdvances { get; set; } = null!;
         public DbSet<Deduction> Deductions { get; set; } = null!;
 
@@ -129,6 +131,22 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<AgroFeedLog> AgroFeedLogs { get; set; } = null!;
         public DbSet<AgroMortalityLog> AgroMortalityLogs { get; set; } = null!;
         public DbSet<AgroHarvest> AgroHarvests { get; set; } = null!;
+
+        // Esquema CONSTRUCTION (nuevos)
+        public DbSet<ConstructionProject> ConstructionProjects { get; set; } = null!;
+        public DbSet<ApuItem> ApuItems { get; set; } = null!;
+        public DbSet<WorkLogPhoto> WorkLogPhotos { get; set; } = null!;
+        public DbSet<ProgressItem> ProgressItems { get; set; } = null!;
+        public DbSet<ChangeOrder> ChangeOrders { get; set; } = null!;
+        public DbSet<Tool> Tools { get; set; } = null!;
+        public DbSet<ToolLoan> ToolLoans { get; set; } = null!;
+        public DbSet<ProjectExpense> ProjectExpenses { get; set; } = null!;
+        public DbSet<Attendance> Attendances { get; set; } = null!;
+        public DbSet<PpeRecord> PpeRecords { get; set; } = null!;
+        public DbSet<ProjectDocument> ProjectDocuments { get; set; } = null!;
+        public DbSet<Domain.Entities.Construction.WorkLog> WorkLogsC { get; set; } = null!;
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

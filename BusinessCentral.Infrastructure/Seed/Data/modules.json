@@ -70,5 +70,11 @@
     "Name": "Chatarrería",
     "Description": "Compra/venta por peso y control de materiales/stock.",
     "Active": true
+  },
+  {
+    "Code": "CONST",
+    "Name": "Construcción",
+    "Description": "Gestión de proyectos de construcción, incluyendo planificación, seguimiento y control de recursos.",
+    "Active": true
   }
 ]

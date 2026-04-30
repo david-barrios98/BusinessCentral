@@ -1,7 +1,9 @@
-using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Application.DTOs.Construction;
+using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
@@ -21,7 +23,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 CreateParameter("@UploadedByUserId", uploadedByUserId ?? (object)DBNull.Value, SqlDbType.Int)
             };
 
-            await ExecuteStoredProcedureNonQueryAsync("[construction].[sp_insert_project_document]", parameters);
+            await ExecuteStoredProcedureNonQueryAsync(StoredProcedures.Construction.sp_insert_project_document, parameters);
         }
 
         public async Task<List<ProjectDocumentDto>> ListProjectDocumentsAsync(int projectId)
@@ -32,7 +34,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[construction].[sp_list_project_documents]",
+                StoredProcedures.Construction.sp_list_project_documents,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<ProjectDocumentDto>(reader));
         }

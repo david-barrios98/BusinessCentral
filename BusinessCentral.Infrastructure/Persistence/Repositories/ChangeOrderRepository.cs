@@ -1,7 +1,9 @@
-using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Application.DTOs.Construction;
+using BusinessCentral.Application.Ports.Outbound;
+using BusinessCentral.Infrastructure.Constants;
 using BusinessCentral.Infrastructure.Extensions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
@@ -21,7 +23,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             var id = await ExecuteStoredProcedureSingleAsync(
-                "[construction].[sp_create_change_order]",
+                 StoredProcedures.Construction.sp_create_change_order,
                 parameters,
                 reader => Convert.ToInt32(reader.GetValue(0)));
 
@@ -36,7 +38,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             };
 
             return await ExecuteStoredProcedureAsync(
-                "[construction].[sp_list_change_orders]",
+                 StoredProcedures.Construction.sp_list_change_orders,
                 parameters,
                 reader => SqlDataReaderMapper.MapToDto<ChangeOrderDto>(reader));
         }
