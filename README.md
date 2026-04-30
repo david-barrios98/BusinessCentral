@@ -607,6 +607,39 @@ Los endpoints `api/v1/secure/**` pueden requerir un módulo. Para eso se usa:
   - Verifica que el módulo esté habilitado en `CompanyModule` para el tenant.
   - (Además) valida estado de suscripción/empresa.
 
+### Enforcements por permiso (RBAC “fino”)
+
+Además del módulo (feature flag), puedes requerir permisos específicos por endpoint:
+
+- Atributo: `[RequiresPermission("MODULE.PERMISSION_CODE")]`
+  - Ejemplo: `[RequiresPermission("AGRO.LOTES_CREATE")]`
+- Middleware: `TenantSubscriptionMiddleware`
+  - Valida 3 niveles, **antes** de ejecutar el controller:
+    - **Empresa activa / suscripción al día** (vía `ISubscriptionRepository.CheckAccessAsync`)
+    - **Módulo habilitado** en `config.CompanyModule`
+    - **Permiso** presente en el JWT como claim repetible `perm`
+
+> Nota: el login ya emite claims `perm` y `module`, por lo que el cliente (MAUI/Blazor Hybrid) puede construir menú/UX y el backend puede bloquear sin depender del UI.
+
+---
+
+## TenantProvider / TenantContext (scoped)
+
+El `CompanyId` se resuelve por request y se mantiene consistente con un contexto **Scoped**:
+
+- Middleware: `TenantResolutionMiddleware`
+  - Fuentes: claim `companyId` (JWT) → headers `X-Company-Id`/`companyId` → subdominio → body login (compat).
+- Contexto: `ITenantContext` (scoped)
+  - Garantiza que `CompanyId` **no cambie** durante toda la ejecución de la petición.
+
+### EF Core: Global Query Filter por CompanyId
+
+El `BusinessCentralDbContext` aplica un **Global Query Filter** automático a todas las entidades que tengan propiedad `CompanyId` (tipo `int`) cuando existe un tenant activo (`CompanyId > 0`).
+
+Reglas:
+- Tenant-app (`companyId > 0`) ⇒ el filtro se aplica (aislamiento fuerte).
+- Backoffice/sistema (sin `companyId` o `companyId = 0`) ⇒ el filtro se desactiva (permite administración global).
+
 Regla:
 - Si la compañía **no** tiene el módulo habilitado, el API responde **403** (plan no incluye el módulo).
 

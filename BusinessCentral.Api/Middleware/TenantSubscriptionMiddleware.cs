@@ -3,6 +3,7 @@ using BusinessCentral.Application.DTOs.Common;
 using BusinessCentral.Application.Ports.Outbound;
 using System.Net;
 using BusinessCentral.Api.Services;
+using BusinessCentral.Application.Services;
 
 namespace BusinessCentral.Api.Middleware
 {
@@ -30,6 +31,7 @@ namespace BusinessCentral.Api.Middleware
 
             var endpoint = context.GetEndpoint();
             var requiredModule = endpoint?.Metadata.GetMetadata<RequiresModuleAttribute>()?.ModuleName;
+            var requiredPermission = endpoint?.Metadata.GetMetadata<RequiresPermissionAttribute>()?.Permission;
 
             // Si el endpoint requiere módulo, verificamos que esté habilitado para la compañía (parametrización).
             if (!string.IsNullOrWhiteSpace(requiredModule))
@@ -55,6 +57,37 @@ namespace BusinessCentral.Api.Middleware
                 return;
             }
 
+            // 3er nivel (RBAC): si el endpoint requiere permiso, validamos el claim "perm".
+            // Reglas:
+            // - isSuperUser=true => acceso total (cliente/operación)
+            // - claim repetible perm: "MODULE.PERMISSION_CODE" (o compat: "module.permission")
+            if (!string.IsNullOrWhiteSpace(requiredPermission))
+            {
+                var isSuperUser = string.Equals(
+                    context.User.FindFirst("isSuperUser")?.Value,
+                    "true",
+                    StringComparison.OrdinalIgnoreCase);
+
+                if (!isSuperUser)
+                {
+                    static string Norm(string s) => s.Trim().ToLowerInvariant();
+
+                    var requiredNorm = Norm(requiredPermission);
+                    var has = context.User
+                        .FindAll("perm")
+                        .Select(c => c.Value)
+                        .Where(v => !string.IsNullOrWhiteSpace(v))
+                        .Select(Norm)
+                        .Any(v => v == requiredNorm);
+
+                    if (!has)
+                    {
+                        await HandleBlockedAccessAsync(context, AccessResult.Forbidden);
+                        return;
+                    }
+                }
+            }
+
             await HandleBlockedAccessAsync(context, accessStatus);
         }
 
@@ -69,6 +102,7 @@ namespace BusinessCentral.Api.Middleware
                 AccessResult.CompanyDisabled => (HttpStatusCode.Unauthorized, "La cuenta de la empresa está desactivada."),
                 AccessResult.SubscriptionExpired => (HttpStatusCode.PaymentRequired, "Su suscripción ha vencido. Por favor realice el pago."),
                 AccessResult.ModuleNotIncluded => (HttpStatusCode.Forbidden, "Su plan actual no incluye este módulo."),
+                AccessResult.Forbidden => (HttpStatusCode.Forbidden, "No tiene permisos para ejecutar esta acción."),
                 _ => (HttpStatusCode.Forbidden, "Acceso denegado por políticas de suscripción.")
             };
 

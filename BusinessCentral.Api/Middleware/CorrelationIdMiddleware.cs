@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using BusinessCentral.Api.Services;
+using BusinessCentral.Application.Services;
 
 namespace BusinessCentral.Api.Middleware;
 

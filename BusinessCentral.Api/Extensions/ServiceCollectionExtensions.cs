@@ -15,6 +15,8 @@ public static class ServiceCollectionExtensions
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+        services.AddHttpContextAccessor();
+
         return services;
     }
 }

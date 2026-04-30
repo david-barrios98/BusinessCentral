@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
@@ -22,7 +23,9 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
             var optionsBuilder = new DbContextOptionsBuilder<BusinessCentralDbContext>();
             var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder
+                .UseSqlServer(connectionString)
+                .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 
             return new BusinessCentralDbContext(optionsBuilder.Options);
         }

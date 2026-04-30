@@ -1,6 +1,7 @@
 ﻿using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.ExternalServices;
 using BusinessCentral.Infrastructure.Models;
+using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Persistence.Repositories;
 using BusinessCentral.Infrastructure.Security;
 using BusinessCentral.Shared.Helper;
@@ -52,6 +53,16 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IPublicAccessRepository, PublicAccessRepository>();
             services.AddScoped<IBusinessNatureRepository, BusinessNatureRepository>();
             services.AddScoped<IFacilityTypeRepository, FacilityTypeRepository>();
+            services.AddScoped<IWorkLogRepository, WorkLogRepository>();
+            services.AddScoped<IPpeRepository, PpeRepository>();
+            services.AddScoped<IToolRepository, ToolRepository>();
+            services.AddScoped<ITenantRepository, TenantRepository>();
+            services.AddScoped<IApuRepository, ApuRepository>();
+            services.AddScoped<IConstructionRepository, ConstructionRepository>();
+            services.AddScoped<IProjectDocumentRepository, ProjectDocumentRepository>();
+            services.AddScoped<IProjectExpenseRepository, ProjectExpenseRepository>();
+            services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+            services.AddScoped<IChangeOrderRepository, ChangeOrderRepository>();
 
 
             // Services
@@ -61,6 +72,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddSingleton<IFailedLoginAttemptService, FailedLoginAttemptService>();
             services.AddScoped<IEmailService, SmtpEmailService>();
             services.AddScoped<MemoryCacheService>();
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
             return services;

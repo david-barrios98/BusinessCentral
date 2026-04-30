@@ -1,11 +1,6 @@
-namespace BusinessCentral.Api.Services;
+using BusinessCentral.Application.Services;
 
-public interface ITenantContext
-{
-    int? CompanyId { get; set; }
-    string? Subdomain { get; set; }
-    string? CorrelationId { get; set; }
-}
+namespace BusinessCentral.Api.Services;
 
 public sealed class TenantContext : ITenantContext
 {

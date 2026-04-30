@@ -10,18 +10,33 @@ using BusinessCentral.Domain.Entities.Services;
 using BusinessCentral.Domain.Entities.Finance;
 using BusinessCentral.Domain.Entities.Manufacturing;
 using BusinessCentral.Domain.Entities.Agro;
+using BusinessCentral.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using System.Linq.Expressions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace BusinessCentral.Infrastructure.Persistence.Adapters
 {
     public class BusinessCentralDbContext : DbContext
     {
+        private readonly int? _currentCompanyId;
+
         public BusinessCentralDbContext(DbContextOptions<BusinessCentralDbContext> options)
             : base(options)
         {
         }
+
+        public BusinessCentralDbContext(DbContextOptions<BusinessCentralDbContext> options, ITenantContext tenantContext)
+            : base(options)
+        {
+            // CompanyId=0 (o null) se interpreta como "contexto sistema" (sin filtro).
+            _currentCompanyId = tenantContext.CompanyId is > 0 ? tenantContext.CompanyId : null;
+        }
+
+        public int? CurrentCompanyId => _currentCompanyId;
+        public int CurrentCompanyIdValue => _currentCompanyId ?? 0;
+        public bool HasTenantCompany => _currentCompanyId is > 0;
         // Esquema AUDIT
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<UserAddress> UserAddresses { get; set; } = null!;
@@ -77,6 +92,7 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
         public DbSet<EmployeeAvailabilityException> EmployeeAvailabilityExceptions { get; set; } = null!;
         public DbSet<PayScheme> PaySchemes { get; set; } = null!;
         public DbSet<WorkLog> WorkLogs { get; set; } = null!;
+        public DbSet<WorkLogHr> WorkLogsHr { get; set; } = null!;
         public DbSet<LoanAdvance> LoanAdvances { get; set; } = null!;
         public DbSet<Deduction> Deductions { get; set; } = null!;
 
@@ -200,6 +216,31 @@ namespace BusinessCentral.Infrastructure.Persistence.Adapters
                 foreach (var fk in entity.GetForeignKeys())
                 {
                     fk.DeleteBehavior = DeleteBehavior.Restrict;
+                }
+
+                // --- MULTITENANCY: GLOBAL QUERY FILTER POR CompanyId ---
+                // Se aplica a entidades con propiedad CompanyId (int) (no nullable),
+                // y solo cuando existe un CompanyId vigente en el contexto (tenant-app).
+                // En backoffice/sistema (CompanyId null o 0), el filtro se desactiva.
+                var companyIdProp = entity.FindProperty("CompanyId");
+                if (companyIdProp is not null && companyIdProp.ClrType == typeof(int))
+                {
+                    var parameter = Expression.Parameter(entity.ClrType, "e");
+                    var companyIdValue = Expression.Call(
+                        typeof(EF),
+                        nameof(EF.Property),
+                        new[] { typeof(int) },
+                        parameter,
+                        Expression.Constant("CompanyId"));
+
+                    var hasTenant = Expression.Property(Expression.Constant(this), nameof(HasTenantCompany));
+                    var currentValue = Expression.Property(Expression.Constant(this), nameof(CurrentCompanyIdValue));
+                    var equals = Expression.Equal(companyIdValue, currentValue);
+
+                    // !HasTenantCompany || e.CompanyId == CurrentCompanyIdValue
+                    var body = Expression.OrElse(Expression.Not(hasTenant), equals);
+                    var lambda = Expression.Lambda(body, parameter);
+                    entity.SetQueryFilter(lambda);
                 }
 
                 // --- OPCIONAL: AUTO-SNAKE_CASE PARA COLUMNAS ---

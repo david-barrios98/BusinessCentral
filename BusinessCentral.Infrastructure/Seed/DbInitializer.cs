@@ -25,6 +25,10 @@ namespace BusinessCentral.Infrastructure.Seed
         {
             await context.Database.MigrateAsync();
 
+            // --- 0. SAAS DEFAULTS (C#) ---
+            // Asegura "vida" mínima sin depender de JSON, útil en ambientes nuevos.
+            await SeedSaasDefaultsAsync(context);
+
             // --- 1. CATÁLOGOS BASE (Nivel 0 - No dependen de nadie) ---
             await SeedEntity<Countries>(context, "countries.json");
             await SeedEntity<DocumentType>(context, "document_types.json");
@@ -109,6 +113,92 @@ namespace BusinessCentral.Infrastructure.Seed
 
             // BUSINESS (Ubicaciones opcionales)
             await SeedStorageLocationsMerge(context, "business_storage_locations.json");
+        }
+
+        private static async Task SeedSaasDefaultsAsync(BusinessCentralDbContext context)
+        {
+            // Planes base (por nombre; la entidad no tiene Code)
+            if (!await context.Set<MembershipPlan>().AnyAsync())
+            {
+                var plans = new[]
+                {
+                    new MembershipPlan { Name = "Basic", Price = 0, BillingCycle = "monthly", DurationDays = 30, MaxUsers = 3, IsPublic = true },
+                    new MembershipPlan { Name = "Pro", Price = 49, BillingCycle = "monthly", DurationDays = 30, MaxUsers = 25, IsPublic = true },
+                    new MembershipPlan { Name = "Premium", Price = 99, BillingCycle = "monthly", DurationDays = 30, MaxUsers = 200, IsPublic = true }
+                };
+
+                await context.Set<MembershipPlan>().AddRangeAsync(plans);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
+
+            // Módulos SaaS (por Code; idempotente)
+            static string Norm(string? s) => (s ?? string.Empty).Trim().ToUpperInvariant();
+
+            var existingModuleCodes = await context.Set<Module>()
+                .Select(m => m.Code)
+                .ToListAsync();
+
+            var moduleSet = new HashSet<string>(existingModuleCodes.Where(c => !string.IsNullOrWhiteSpace(c)).Select(Norm));
+
+            var baseModules = new[]
+            {
+                new Module { Code = "AGRO", Name = "Agro", Description = "Operación agro (lotes, producción, etc.)", Active = true },
+                new Module { Code = "COMMERCE", Name = "Comercio", Description = "Productos, compras, inventario, POS", Active = true },
+                new Module { Code = "FIN", Name = "Finanzas", Description = "Contabilidad, PUC, reportes", Active = true },
+                new Module { Code = "AUTH", Name = "Autorización", Description = "Usuarios, roles y permisos", Active = true }
+            };
+
+            var toAddModules = baseModules.Where(m => !moduleSet.Contains(Norm(m.Code))).ToList();
+            if (toAddModules.Any())
+            {
+                await context.Set<Module>().AddRangeAsync(toAddModules);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
+
+            // Roles maestros:
+            // - SuperAdmin (global / staff): CompanyId NULL, IsSystemRole=true
+            // - Admin (tenant): uno por compañía existente
+            var roles = context.Set<Role>();
+
+            var hasSuperAdmin = await roles.AnyAsync(r =>
+                r.CompanyId == null &&
+                r.IsSystemRole == true &&
+                r.Name == "SuperAdmin");
+
+            if (!hasSuperAdmin)
+            {
+                roles.Add(new Role
+                {
+                    CompanyId = null,
+                    Name = "SuperAdmin",
+                    IsSystemRole = true,
+                    IsSuperUser = true,
+                    Active = true
+                });
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
+
+            var companies = await context.Set<Companies>().Select(c => c.Id).ToListAsync();
+            foreach (var companyId in companies)
+            {
+                var existsAdmin = await roles.AnyAsync(r => r.CompanyId == companyId && r.Name == "Admin");
+                if (existsAdmin) continue;
+
+                roles.Add(new Role
+                {
+                    CompanyId = companyId,
+                    Name = "Admin",
+                    IsSystemRole = false,
+                    IsSuperUser = true,
+                    Active = true
+                });
+
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
         }
 
         // =============================
@@ -1647,10 +1737,10 @@ namespace BusinessCentral.Infrastructure.Seed
             catch (FileNotFoundException) { Console.WriteLine($"⚠️ {fileName} no existe (seed opcional)"); return; }
             if (raw == null || !raw.Any()) { Console.WriteLine($"⚠️ {fileName} vacío"); return; }
 
-            var dbSet = context.Set<WorkLog>();
+            var dbSet = context.Set<WorkLogHr>();
             var existing = await dbSet.Select(w => new { w.UserId, w.WorkDate, w.PaySchemeId }).ToListAsync();
             var existingSet = new HashSet<string>(existing.Select(x => $"{x.UserId}|{x.WorkDate:O}|{x.PaySchemeId}"));
-            var toInsert = new List<WorkLog>();
+            var toInsert = new List<WorkLogHr>();
 
             foreach (var row in raw)
             {
@@ -1659,7 +1749,7 @@ namespace BusinessCentral.Infrastructure.Seed
                 if (row.PaySchemeId <= 0) continue;
                 var k = $"{userId.Value}|{row.WorkDate:O}|{row.PaySchemeId}";
                 if (existingSet.Contains(k)) continue;
-                toInsert.Add(new WorkLog
+                toInsert.Add(new WorkLogHr
                 {
                     CompanyId = row.CompanyId,
                     UserId = userId.Value,
@@ -1674,7 +1764,7 @@ namespace BusinessCentral.Infrastructure.Seed
                 });
             }
 
-            if (!toInsert.Any()) { Console.WriteLine("⚠️ WorkLog ya contiene todos los registros del seed"); return; }
+            if (!toInsert.Any()) { Console.WriteLine("⚠️ WorkLogHr ya contiene todos los registros del seed"); return; }
             await dbSet.AddRangeAsync(toInsert);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();

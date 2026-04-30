@@ -1,5 +1,6 @@
 ﻿using BusinessCentral.Api.Middleware;
 using BusinessCentral.Api.Services;
+using BusinessCentral.Application.Services;
 
 namespace BusinessCentral.Api.Extensions;
 
