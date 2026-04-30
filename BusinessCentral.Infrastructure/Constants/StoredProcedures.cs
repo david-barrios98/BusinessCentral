@@ -103,54 +103,6 @@ namespace BusinessCentral.Infrastructure.Constants
             public const string sp_update_company_financial_bootstrap = "[business].[sp_update_company_financial_bootstrap]";
         }
 
-        public static class Construction
-        {
-            // Projects
-            public const string sp_create_project = "[construction].[sp_create_project]";
-            public const string sp_get_project = "[construction].[sp_get_project]";
-            public const string sp_update_project = "[construction].[sp_update_project]";
-            public const string sp_delete_project = "[construction].[sp_delete_project]";
-            public const string sp_list_projects = "[construction].[sp_list_projects]";
-
-            // APU / Items
-            public const string sp_insert_apu_item = "[construction].[sp_insert_apu_item]";
-            public const string sp_list_apu_items = "[construction].[sp_list_apu_items]";
-
-            // WorkLog / Photos
-            public const string sp_insert_worklog = "[construction].[sp_insert_worklog]";
-            public const string sp_insert_worklog_photo = "[construction].[sp_insert_worklog_photo]";
-            public const string sp_list_worklogs = "[construction].[sp_list_worklogs]";
-
-            // Progress / Checklist
-            public const string sp_upsert_progress_item = "[construction].[sp_upsert_progress_item]";
-            public const string sp_list_progress_items = "[construction].[sp_list_progress_items]";
-
-            // Change Orders
-            public const string sp_create_change_order = "[construction].[sp_create_change_order]";
-            public const string sp_list_change_orders = "[construction].[sp_list_change_orders]";
-
-            // Tools & Loans
-            public const string sp_create_tool = "[construction].[sp_create_tool]";
-            public const string sp_list_tools = "[construction].[sp_list_tools]";
-            public const string sp_loan_tool = "[construction].[sp_loan_tool]";
-            public const string sp_list_tool_loans = "[construction].[sp_list_tool_loans]";
-
-            // Project expenses
-            public const string sp_insert_project_expense = "[construction].[sp_insert_project_expense]";
-            public const string sp_list_project_expenses = "[construction].[sp_list_project_expenses]";
-
-            // Attendance
-            public const string sp_insert_attendance = "[construction].[sp_insert_attendance]";
-            public const string sp_list_attendance = "[construction].[sp_list_attendance]";
-
-            // PPE and documents
-            public const string sp_insert_ppe_record = "[construction].[sp_insert_ppe_record]";
-            public const string sp_list_ppe = "[construction].[sp_list_ppe]";
-
-            public const string sp_insert_project_document = "[construction].[sp_insert_project_document]";
-            public const string sp_list_project_documents = "[construction].[sp_list_project_documents]";
-        }
-
         public static class Hr
         {
             public const string sp_upsert_employee_profile = "[hr].[sp_upsert_employee_profile]";

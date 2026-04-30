@@ -66,7 +66,7 @@ namespace BusinessCentral.Api.Controllers.Construction
         [HttpPost("{projectId:int}/worklog")]
         public async Task<IActionResult> AddWorkLog(int projectId, [FromForm] string notes, [FromForm] List<IFormFile>? photos)
         {
-            var cmd = new CreateWorkLogCommand(projectId, notes, photos);
+            var cmd = new CreateWorkLogNotesCommand(projectId, notes, photos);
             var result = await _mediator.Send(cmd);
             return ProcessResult(result);
         }

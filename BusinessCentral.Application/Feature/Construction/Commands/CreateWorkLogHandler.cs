@@ -4,7 +4,7 @@ using BusinessCentral.Application.DTOs.Construction;
 using BusinessCentral.Application.Feature.Common.Results;
 using Microsoft.AspNetCore.Http;
 
-public class CreateWorkLogHandler : IRequestHandler<CreateWorkLogCommand, Result<WorkLogCreateResultDto>>
+public class CreateWorkLogHandler : IRequestHandler<CreateWorkLogNotesCommand, Result<WorkLogCreateResultDto>>
 {
     private readonly IWorkLogRepository _repo;
     private readonly IFileStorageService _storage;
@@ -17,7 +17,7 @@ public class CreateWorkLogHandler : IRequestHandler<CreateWorkLogCommand, Result
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<Result<WorkLogCreateResultDto>> Handle(CreateWorkLogCommand request, CancellationToken cancellationToken)
+    public async Task<Result<WorkLogCreateResultDto>> Handle(CreateWorkLogNotesCommand request, CancellationToken cancellationToken)
     {
         var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst("userId")?.Value;
         int? userId = null;

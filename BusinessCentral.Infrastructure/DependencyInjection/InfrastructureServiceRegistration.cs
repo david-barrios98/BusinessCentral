@@ -1,11 +1,9 @@
 ﻿using BusinessCentral.Application.Ports.Outbound;
 using BusinessCentral.Infrastructure.ExternalServices;
 using BusinessCentral.Infrastructure.Models;
-using BusinessCentral.Infrastructure.Persistence.Adapters;
 using BusinessCentral.Infrastructure.Persistence.Repositories;
 using BusinessCentral.Infrastructure.Security;
 using BusinessCentral.Shared.Helper;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +23,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IUserSessionRepository, UserSessionRepository>();
-            services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();    
+            services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
             services.AddScoped<IUserRepository, UsersRepository>();
             services.AddScoped<UsersRepository>();
             services.AddScoped<ICommonRepository, CommonRepository>();
@@ -54,16 +52,6 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddScoped<IPublicAccessRepository, PublicAccessRepository>();
             services.AddScoped<IBusinessNatureRepository, BusinessNatureRepository>();
             services.AddScoped<IFacilityTypeRepository, FacilityTypeRepository>();
-            services.AddScoped<IConstructionRepository, ConstructionRepository>();
-            services.AddScoped<IWorkLogRepository, WorkLogRepository>();
-            services.AddScoped<IApuRepository, ApuRepository>();
-            services.AddScoped<IChangeOrderRepository, ChangeOrderRepository>();
-            services.AddScoped<IToolRepository, ToolRepository>();
-            services.AddScoped<IProjectExpenseRepository, ProjectExpenseRepository>();
-            services.AddScoped<IAttendanceRepository, AttendanceRepository>();
-            services.AddScoped<IPpeRepository, PpeRepository>();
-            services.AddScoped<IProjectDocumentRepository, ProjectDocumentRepository>();
-            services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
             // Services
@@ -73,7 +61,7 @@ namespace BusinessCentral.Infrastructure.DependencyInjection
             services.AddSingleton<IFailedLoginAttemptService, FailedLoginAttemptService>();
             services.AddScoped<IEmailService, SmtpEmailService>();
             services.AddScoped<MemoryCacheService>();
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
             return services;
         }

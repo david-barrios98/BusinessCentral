@@ -6,8 +6,8 @@ using System.Text;
 
 namespace BusinessCentral.Domain.Entities.Construction
 {
-    [Table("WorkLog", Schema = "construction")]
-    public class WorkLog
+    [Table("WorkLogConstruction", Schema = "construction")]
+    public class WorkLogConstruction
     {
         [Key]
         public int Id { get; set; }

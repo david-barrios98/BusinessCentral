@@ -27,6 +27,44 @@ namespace BusinessCentral.Infrastructure.Migrations
                 name: "auth");
 
             migrationBuilder.CreateTable(
+                name: "ApuItem",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Unit = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Yield = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApuItem", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Attendance",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    DateWorked = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Hours = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Attendance", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "BusinessNature",
                 schema: "config",
                 columns: table => new
@@ -43,6 +81,48 @@ namespace BusinessCentral.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BusinessNature", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChangeOrder",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    RequestedByUserId = table.Column<int>(type: "int", nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChangeOrder", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ConstructionProject",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CompanyId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Budget = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Active = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConstructionProject", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -171,6 +251,79 @@ namespace BusinessCentral.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PpeRecord",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Item = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    DeliveredAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PpeRecord", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProgressItem",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Percentage = table.Column<int>(type: "int", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProgressItem", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProjectDocument",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    DocumentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    UploadedByUserId = table.Column<int>(type: "int", nullable: true),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectDocument", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProjectExpense",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Concept = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    SpentByUserId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectExpense", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Role",
                 schema: "config",
                 columns: table => new
@@ -207,6 +360,79 @@ namespace BusinessCentral.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TaxConcept", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tool",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CompanyId = table.Column<int>(type: "int", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    SerialNumber = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Active = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tool", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ToolLoan",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ToolId = table.Column<int>(type: "int", nullable: false),
+                    ProjectId = table.Column<int>(type: "int", nullable: true),
+                    BorrowedByUserId = table.Column<int>(type: "int", nullable: true),
+                    LoanDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReturnDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ToolLoan", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WorkLogConstruction",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProjectId = table.Column<int>(type: "int", nullable: false),
+                    LoggedByUserId = table.Column<int>(type: "int", nullable: true),
+                    LogDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkLogConstruction", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WorkLogPhoto",
+                schema: "business",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WorkLogId = table.Column<int>(type: "int", nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkLogPhoto", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -2040,7 +2266,7 @@ namespace BusinessCentral.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "WorkLog",
+                name: "WorkLogHr",
                 schema: "business",
                 columns: table => new
                 {
@@ -2059,23 +2285,23 @@ namespace BusinessCentral.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_WorkLog", x => x.Id);
+                    table.PrimaryKey("PK_WorkLogHr", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WorkLog_Companies_CompanyId",
+                        name: "FK_WorkLogHr_Companies_CompanyId",
                         column: x => x.CompanyId,
                         principalSchema: "business",
                         principalTable: "Companies",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_WorkLog_PayScheme_PaySchemeId",
+                        name: "FK_WorkLogHr_PayScheme_PaySchemeId",
                         column: x => x.PaySchemeId,
                         principalSchema: "business",
                         principalTable: "PayScheme",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_WorkLog_UsersInfo_UserId",
+                        name: "FK_WorkLogHr_UsersInfo_UserId",
                         column: x => x.UserId,
                         principalSchema: "auth",
                         principalTable: "UsersInfo",
@@ -3254,21 +3480,21 @@ namespace BusinessCentral.Infrastructure.Migrations
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WorkLog_CompanyId",
+                name: "IX_WorkLogHr_CompanyId",
                 schema: "business",
-                table: "WorkLog",
+                table: "WorkLogHr",
                 column: "CompanyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WorkLog_PaySchemeId",
+                name: "IX_WorkLogHr_PaySchemeId",
                 schema: "business",
-                table: "WorkLog",
+                table: "WorkLogHr",
                 column: "PaySchemeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WorkLog_UserId",
+                name: "IX_WorkLogHr_UserId",
                 schema: "business",
-                table: "WorkLog",
+                table: "WorkLogHr",
                 column: "UserId");
         }
 
@@ -3296,6 +3522,14 @@ namespace BusinessCentral.Infrastructure.Migrations
                 schema: "config");
 
             migrationBuilder.DropTable(
+                name: "ApuItem",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "Attendance",
+                schema: "business");
+
+            migrationBuilder.DropTable(
                 name: "BusinessNatureFulfillmentMethod",
                 schema: "config");
 
@@ -3309,6 +3543,10 @@ namespace BusinessCentral.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "CashMovement",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "ChangeOrder",
                 schema: "business");
 
             migrationBuilder.DropTable(
@@ -3334,6 +3572,10 @@ namespace BusinessCentral.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "CompanySubscription",
                 schema: "config");
+
+            migrationBuilder.DropTable(
+                name: "ConstructionProject",
+                schema: "business");
 
             migrationBuilder.DropTable(
                 name: "Deduction",
@@ -3392,6 +3634,10 @@ namespace BusinessCentral.Infrastructure.Migrations
                 schema: "business");
 
             migrationBuilder.DropTable(
+                name: "PpeRecord",
+                schema: "business");
+
+            migrationBuilder.DropTable(
                 name: "ProductCategory",
                 schema: "business");
 
@@ -3401,6 +3647,18 @@ namespace BusinessCentral.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProductVariantOption",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "ProgressItem",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "ProjectDocument",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "ProjectExpense",
                 schema: "business");
 
             migrationBuilder.DropTable(
@@ -3436,11 +3694,27 @@ namespace BusinessCentral.Infrastructure.Migrations
                 schema: "business");
 
             migrationBuilder.DropTable(
+                name: "Tool",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "ToolLoan",
+                schema: "business");
+
+            migrationBuilder.DropTable(
                 name: "UserAddress",
                 schema: "auth");
 
             migrationBuilder.DropTable(
-                name: "WorkLog",
+                name: "WorkLogConstruction",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "WorkLogHr",
+                schema: "business");
+
+            migrationBuilder.DropTable(
+                name: "WorkLogPhoto",
                 schema: "business");
 
             migrationBuilder.DropTable(
