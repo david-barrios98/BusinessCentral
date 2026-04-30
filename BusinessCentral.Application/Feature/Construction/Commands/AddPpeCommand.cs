@@ -6,4 +6,3 @@ namespace BusinessCentral.Application.Feature.Construction.Command
 {
     public record AddPpeCommand(int ProjectId, PpeDto Payload) : IRequest<Result<int?>>;
 }
-```
