@@ -1114,6 +1114,414 @@ Los repositorios invocan SPs definidos en `BusinessCentral.Infrastructure/Persis
 
 
 
+## Anexo: DTOs de request/response (obligatorio vs opcional)
+
+> Fuente: clases DTO en `BusinessCentral.Application/DTOs/**` y request models en `BusinessCentral.Api/Controllers/**`.
+> Regla de lectura:
+> - **Obligatorio**: `[Required]` o regla explícita del endpoint.
+> - **Opcional**: nullable (`?`) o sin validación requerida.
+> - En responses, "opcional" significa que puede llegar `null`.
+
+### Envoltorios comunes
+
+#### `ApiResponse<T>`
+- `isSuccess` (`bool`) - **obligatorio**
+- `data` (`T | null`) - **opcional**
+- `message` (`string`) - **obligatorio**
+- `code` (`int`) - **obligatorio**
+- `isException` (`bool`) - **obligatorio**
+- `traceId` (`string | null`) - **opcional**
+
+#### `PagedResult<T>`
+- `items` (`List<T>`) - **obligatorio**
+- `page` (`int`) - **obligatorio**
+- `pageSize` (`int`) - **obligatorio**
+- `total` (`long`) - **obligatorio**
+
+---
+
+### Auth
+
+#### `LoginRequestDTO` (request)
+- `UserName` (`string`) - **obligatorio**
+- `Password` (`string`) - **obligatorio**, mínimo 2 caracteres
+- `companyId` (`string?`) - **opcional en DTO**; **obligatorio** para `/public/auth/tenant/login`
+- `applicationCode` (`string?`) - **opcional**
+
+#### `LoginResponseDTO` (response)
+- `userSessionId` (`long`) - **obligatorio**
+- `userId` (`int`) - **obligatorio**
+- `userName` (`string?`) - **opcional**
+- `loginField` (`string?`) - **opcional**
+- `documentNumber` (`string?`) - **opcional**
+- `email` (`string?`) - **opcional**
+- `phone` (`string?`) - **opcional**
+- `firstName` (`string?`) - **opcional**
+- `lastName` (`string?`) - **opcional**
+- `companyId` (`int`) - **obligatorio**
+- `companyName` (`string?`) - **opcional**
+- `roleId` (`int`) - **obligatorio**
+- `roleName` (`string?`) - **opcional**
+- `isSystemRole` (`bool`) - **obligatorio**
+- `isSuperUser` (`bool`) - **obligatorio**
+- `permissions` (`List<RolePermissionDTO>`) - **obligatorio**
+- `modules` (`List<CompanyModuleDTO>`) - **obligatorio**
+- `accessToken` (`string`) - **obligatorio**
+- `refreshToken` (`string?`) - **opcional**
+- `tokenType` (`string`) - **obligatorio**
+- `expiresIn` (`int`) - **obligatorio**
+- `issuedAt` (`DateTime`) - **obligatorio**
+- `password` (`string?`) - **opcional** (normalmente no se devuelve)
+
+#### `LogoutRequestDTO` (request)
+- `userId` (`int?`) - **opcional**
+- `companyId` (`int?`) - **opcional**
+- `refreshToken` (`string?`) - **opcional**
+- `sessionId` (`long?`) - **opcional**
+
+#### `RefreshTokenRequestDTO` (request)
+- `refreshToken` (`string`) - **obligatorio**
+
+#### `PasswordResetRequestDTO` (request)
+- `email` (`string`) - **obligatorio**, formato email
+- `companyId` (`int`) - **obligatorio**
+
+#### `PasswordResetConfirmDTO` (request)
+- `token` (`string`) - **obligatorio**
+- `newPassword` (`string`) - **obligatorio**, mínimo 6 caracteres
+
+#### `AuthBootstrapResponseDTO` (response)
+- `userId` (`int`) - **obligatorio**
+- `userName` (`string?`) - **opcional**
+- `companyId` (`int`) - **obligatorio**
+- `companyName` (`string?`) - **opcional**
+- `roleId` (`int`) - **obligatorio**
+- `roleName` (`string?`) - **opcional**
+- `isSystemRole` (`bool`) - **obligatorio**
+- `isSuperUser` (`bool`) - **obligatorio**
+- `modules` (`List<CompanyModuleDTO>`) - **obligatorio**
+- `permissions` (`List<RolePermissionDTO>`) - **obligatorio**
+
+#### `RolePermissionDTO` (response)
+- `permissionId` (`int`) - **obligatorio**
+- `moduleCode` (`string`) - **obligatorio**
+- `permissionCode` (`string`) - **obligatorio**
+- `permissionName` (`string`) - **obligatorio**
+
+---
+
+### Usuarios
+
+#### `CreateUserDTO` (request)
+- `companyId` (`int`) - **obligatorio**
+- `documentTypeId` (`int`) - **obligatorio**
+- `documentNumber` (`string?`) - **opcional**
+- `firstName` (`string`) - **obligatorio**
+- `lastName` (`string?`) - **opcional**
+- `email` (`string?`) - **opcional**, si se envía debe ser email válido
+- `phone` (`string`) - **obligatorio**
+- `password` (`string`) - **obligatorio**
+- `authProvider` (`string`) - **opcional** (default `Local`)
+- `externalId` (`string?`) - **opcional**
+- `roleId` (`int`) - **obligatorio**
+
+#### `UpdateUserDTO` (request)
+- `userId` (`int`) - **obligatorio**
+- `documentTypeId` (`int`) - **obligatorio**
+- `documentNumber` (`string?`) - **opcional**
+- `firstName` (`string`) - **obligatorio**
+- `lastName` (`string?`) - **opcional**
+- `email` (`string?`) - **opcional**, si se envía debe ser email válido
+- `phone` (`string`) - **obligatorio**
+- `password` (`string?`) - **opcional** (`null` = no cambia)
+- `authProvider` (`string`) - **opcional** (default `Local`)
+- `externalId` (`string?`) - **opcional**
+- `roleId` (`int`) - **obligatorio**
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `UserResponseDTO` (response)
+- `userId` (`int`) - **obligatorio**
+- `companyId` (`int`) - **obligatorio**
+- `companyName` (`string?`) - **opcional**
+- `documentNumber` (`string?`) - **opcional**
+- `firstName` (`string?`) - **opcional**
+- `lastName` (`string?`) - **opcional**
+- `email` (`string?`) - **opcional**
+- `phone` (`string`) - **obligatorio**
+- `roleId` (`int`) - **obligatorio**
+- `roleName` (`string?`) - **opcional**
+- `active` (`bool`) - **obligatorio**
+- `created` (`DateTime`) - **obligatorio**
+- `updated` (`DateTime`) - **obligatorio**
+
+---
+
+### Configuración y catálogos
+
+#### `UpsertApplicationCompanyRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `applicationCode` (`string`) - **obligatorio**, max 200
+- `loginField` (`string`) - **obligatorio**, max 20
+- `priority` (`int`) - **opcional**
+- `isEnabled` (`bool`) - **opcional** (default `true`)
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `ApplicationCompanyDTO` (response)
+- `id` (`int`) - **obligatorio**
+- `companyId` (`int`) - **obligatorio**
+- `applicationCode` (`string`) - **obligatorio**
+- `loginField` (`string`) - **obligatorio**
+- `priority` (`int`) - **obligatorio**
+- `isEnabled` (`bool`) - **obligatorio**
+- `create` (`DateTime?`) - **opcional**
+- `update` (`DateTime?`) - **opcional**
+- `active` (`bool?`) - **opcional**
+
+#### `CompanyModuleDTO` (response)
+- `companyId` (`int`) - **obligatorio**
+- `moduleId` (`int`) - **obligatorio**
+- `moduleCode` (`string?`) - **opcional**
+- `moduleName` (`string`) - **obligatorio**
+- `isEnabled` (`bool`) - **obligatorio**
+
+#### `UpsertModuleRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `code` (`string`) - **obligatorio**, max 50
+- `name` (`string`) - **obligatorio**, max 100
+- `description` (`string?`) - **opcional**, max 250
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `UpsertBusinessNatureRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `code` (`string`) - **obligatorio**, max 50
+- `name` (`string`) - **obligatorio**, max 150
+- `description` (`string?`) - **opcional**, max 500
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `UpsertFacilityTypeRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `name` (`string`) - **obligatorio**, max 200
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `UpsertPaymentMethodRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `code` (`string`) - **obligatorio**, max 30
+- `name` (`string`) - **obligatorio**, max 150
+- `appliesTo` (`string`) - **opcional**, max 20, default `ANY`
+- `description` (`string?`) - **opcional**, max 300
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `UpsertFulfillmentMethodRequestDTO` (request)
+- `id` (`int?`) - **opcional**
+- `code` (`string`) - **obligatorio**, max 30
+- `name` (`string`) - **obligatorio**, max 150
+- `appliesTo` (`string`) - **opcional**, max 20, default `ANY`
+- `description` (`string?`) - **opcional**, max 300
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `DocumentTypeRequest` / `DocumentTypeResponse`
+- Request:
+  - `name` (`string`) - **obligatorio**
+  - `abbreviation` (`string`) - **obligatorio**
+  - `active` (`bool`) - **obligatorio**
+- Response:
+  - `id` (`int`) - **obligatorio**
+  - `name` (`string`) - **obligatorio**
+  - `abbreviation` (`string`) - **obligatorio**
+  - `active` (`bool`) - **obligatorio**
+
+#### `MembershipPlanRequest` / `MembershipPlanResponse` / `MembershipPlanModuleResponse`
+- `MembershipPlanRequest`:
+  - `name` (`string`) - **obligatorio**
+  - `price` (`decimal`) - **obligatorio**
+  - `billingCycle` (`string`) - **obligatorio**
+  - `durationDays` (`int`) - **obligatorio**
+  - `maxUsers` (`int`) - **obligatorio**
+  - `isPublic` (`bool`) - **obligatorio**
+- `MembershipPlanResponse`:
+  - `id` (`int`) - **obligatorio**
+  - `name` (`string`) - **obligatorio**
+  - `price` (`decimal`) - **obligatorio**
+  - `billingCycle` (`string`) - **obligatorio**
+  - `durationDays` (`int`) - **obligatorio**
+  - `maxUsers` (`int`) - **obligatorio**
+  - `isPublic` (`bool`) - **obligatorio**
+- `MembershipPlanModuleResponse`:
+  - `moduleId` (`int`) - **obligatorio**
+  - `moduleCode` (`string`) - **obligatorio**
+  - `moduleName` (`string`) - **obligatorio**
+
+---
+
+### Onboarding de compañía
+
+#### `OnboardCompanyRequestDTO` (request)
+- Company:
+  - `companyName` (`string`) - **obligatorio**, max 200
+  - `tradeName` (`string?`) - **opcional**, max 200
+  - `subdomain` (`string?`) - **opcional**, max 50
+  - `documentTypeId` (`int?`) - **opcional**
+  - `documentNumber` (`string?`) - **opcional**, max 50
+  - `email` (`string?`) - **opcional**, max 150
+  - `phone` (`string?`) - **opcional**, max 20
+  - `businessNatureCode` (`string`) - **obligatorio**, max 50
+- Subscription:
+  - `membershipPlanId` (`int`) - **obligatorio**
+  - `startDateUtc` (`DateTime?`) - **opcional**
+  - `autoRenew` (`bool`) - **opcional** (default `true`)
+- Facilities:
+  - `facilities` (`List<OnboardFacilityDTO>?`) - **opcional**
+  - `facilityTypeId` (`int`) - **condicional obligatorio** si `facilities` está vacío
+  - `facilityName` (`string?`) - **condicional obligatorio** si `facilities` está vacío
+  - `facilityCode` (`string?`) - **opcional**
+  - `facilityEmail` (`string?`) - **opcional**
+  - `facilityPhone` (`string?`) - **opcional**
+- Owner:
+  - `ownerDocumentTypeId` (`int`) - **obligatorio**
+  - `ownerDocumentNumber` (`string`) - **obligatorio**, max 50
+  - `ownerFirstName` (`string`) - **obligatorio**, max 150
+  - `ownerLastName` (`string`) - **obligatorio**, max 150
+  - `ownerEmail` (`string`) - **obligatorio**, max 150
+  - `ownerPhone` (`string`) - **obligatorio**, max 20
+  - `ownerPassword` (`string`) - **obligatorio**, min 8 max 100
+  - `ownerRoleId` (`int`) - **obligatorio**
+
+#### `OnboardFacilityDTO` (request embebido)
+- `facilityTypeId` (`int`) - **obligatorio**
+- `name` (`string`) - **obligatorio**
+- `code` (`string?`) - **opcional**
+- `email` (`string?`) - **opcional**
+- `phone` (`string?`) - **opcional**
+- `priority` (`int?`) - **opcional**
+
+#### `OnboardCompanyResultDTO` (response)
+- `success` (`bool`) - **obligatorio**
+- `companyId` (`int`) - **obligatorio**
+- `ownerUserId` (`int`) - **obligatorio**
+- `businessNatureId` (`int`) - **obligatorio**
+- `membershipPlanId` (`int`) - **obligatorio**
+- `startDate` (`DateTime`) - **obligatorio**
+- `endDate` (`DateTime`) - **obligatorio**
+
+---
+
+### Finance
+
+#### `CreateFinancialTransactionDTO` (request)
+- `txDate` (`DateTime`) - **obligatorio**
+- `direction` (`string`) - **obligatorio**, max 20 (`IN`/`OUT`)
+- `kind` (`string`) - **obligatorio**, max 30 (`OPERATING`/`INVESTING`/`FINANCING`/`TAX`)
+- `categoryCode` (`string?`) - **opcional**, max 50
+- `description` (`string?`) - **opcional**, max 500
+- `amount` (`decimal`) - **obligatorio**, rango `0.01 .. max`
+- `thirdPartyDocument` (`string?`) - **opcional**, max 50
+- `thirdPartyName` (`string?`) - **opcional**, max 200
+- `sourceModule` (`string?`) - **opcional**, max 50
+- `referenceType` (`string?`) - **opcional**, max 50
+- `referenceId` (`string?`) - **opcional**, max 100
+- `taxCode` (`string?`) - **opcional**, max 50
+
+#### `OpeningJournalLineInputDTO` (request embebido)
+- `accountCode` (`string`) - **obligatorio**
+- `debit` (`decimal`) - **obligatorio**
+- `credit` (`decimal`) - **obligatorio**
+- `thirdPartyDocument` (`string?`) - **opcional**
+- `thirdPartyName` (`string?`) - **opcional**
+- `notes` (`string?`) - **opcional**
+
+---
+
+### Services Ops
+
+#### `UpdateServiceCompanySettingsRequest` (request)
+- `enableAgendas` (`bool`) - **obligatorio**
+- `enableCoverage` (`bool`) - **obligatorio**
+- `enableShifts` (`bool`) - **obligatorio**
+- `shiftFrequencyType` (`string`) - **obligatorio** (`DAILY`/`WEEKLY`)
+- `shiftSlotMinutes` (`int`) - **obligatorio**
+
+#### `ServiceCompanySettingsDTO` (response)
+- `companyId` (`int`) - **obligatorio**
+- `enableAgendas` (`bool`) - **obligatorio**
+- `enableCoverage` (`bool`) - **obligatorio**
+- `enableShifts` (`bool`) - **obligatorio**
+- `shiftFrequencyType` (`string`) - **obligatorio**
+- `shiftSlotMinutes` (`int`) - **obligatorio**
+- `createdAt` (`DateTime`) - **obligatorio**
+- `updatedAt` (`DateTime`) - **obligatorio**
+
+#### `UpsertServiceCoverageAreaRequest` (request)
+- `id` (`int?`) - **opcional**
+- `coverageType` (`string`) - **obligatorio por contrato** (`CITY`/`DEPARTMENT`/`COUNTRY`/`CUSTOM`)
+- `countryId` (`int?`) - **opcional**
+- `departmentId` (`int?`) - **opcional**
+- `cityId` (`int?`) - **opcional**
+- `notes` (`string?`) - **opcional**
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `ServiceCoverageAreaDTO` (response)
+- `id` (`int`) - **obligatorio**
+- `companyId` (`int`) - **obligatorio**
+- `coverageType` (`string`) - **obligatorio**
+- `countryId` (`int?`) - **opcional**
+- `departmentId` (`int?`) - **opcional**
+- `cityId` (`int?`) - **opcional**
+- `notes` (`string?`) - **opcional**
+- `active` (`bool`) - **obligatorio**
+- `createdAt` (`DateTime`) - **obligatorio**
+- `updatedAt` (`DateTime`) - **obligatorio**
+
+#### `UpsertServiceShiftTemplateRequest` (request)
+- `id` (`int?`) - **opcional**
+- `code` (`string`) - **obligatorio por contrato**
+- `name` (`string`) - **obligatorio por contrato**
+- `startTime` (`string`) - **obligatorio** (HH:mm:ss)
+- `endTime` (`string`) - **obligatorio** (HH:mm:ss)
+- `frequencyType` (`string`) - **obligatorio** (`DAILY`/`WEEKLY`)
+- `interval` (`int`) - **obligatorio**
+- `daysOfWeekMask` (`int`) - **obligatorio**
+- `active` (`bool`) - **opcional** (default `true`)
+
+#### `ServiceShiftTemplateDTO` (response)
+- `id` (`int`) - **obligatorio**
+- `companyId` (`int`) - **obligatorio**
+- `code` (`string`) - **obligatorio**
+- `name` (`string`) - **obligatorio**
+- `startTime` (`string`) - **obligatorio**
+- `endTime` (`string`) - **obligatorio**
+- `frequencyType` (`string`) - **obligatorio**
+- `interval` (`int`) - **obligatorio**
+- `daysOfWeekMask` (`int`) - **obligatorio**
+- `active` (`bool`) - **obligatorio**
+- `createdAt` (`DateTime`) - **obligatorio**
+- `updatedAt` (`DateTime`) - **obligatorio**
+
+---
+
+### Request models definidos directamente en Controllers (sin DTO en Application)
+
+#### POS (`PosController`)
+- `OpenCashRequest`: `openedByUserId?`, `openingAmount` (default `0`)
+- `AddCashMovementRequest`: `direction` (default `OUT`), `reasonCode?`, `amount`, `referenceType?`, `referenceId?`, `notes?`
+- `CloseCashSessionRequest`: `countedClosingAmount`, `cashPaymentMethodCode` (default `CASH`)
+- `CreateTicketRequest`: `cashSessionId?`, `fulfillmentMethodCode?`, `fulfillmentDetails?`
+- `AddTicketLineRequest`: `productId`, `quantity` (default `1`), `unitPrice`
+- `PayTicketRequest`: `method` (default `CASH`), `amount`
+
+#### Finance bootstrap (`FinancialBootstrapController`)
+- `SetProfileRequest`: `startupMode?`, `operatingStartDateUtc?`, `bootstrapStatus` (default `NOT_STARTED`), `notes?`
+- `ConstitutionRequest`: `entryDateUtc`, `cashAmount`, `bankAmount`, `equipmentAmount`, `inventoryAmount`, `otherAssetsAmount`, `otherAssetsAccountCode?`, `capitalAccountCode?`, `cashAccountCode?`, `bankAccountCode?`, `equipmentAccountCode?`, `inventoryAccountCode?`
+- `OpeningBalancesRequest`: `entryDateUtc`, `openingKind` (default `SANITATION`), `description?`, `lines` (`List<OpeningJournalLineInputDTO>`)
+
+#### Services orders (`ServiceOrdersController`)
+- `CreateOrderRequest`: `vehicleType?`, `plate?`, `customerName?`, `fulfillmentMethodCode?`, `fulfillmentDetails?`
+- `AddLineRequest`: `serviceId`, `quantity` (default `1`), `unitPrice`, `employeeUserId?`
+
+#### Authz (`RolePermissionsController`)
+- `SetPermissionRequest`: `permissionId`, `enabled` (default `true`)
+
+---
+
 ## Licencia / contribución
 
 Pendiente: define licencia y flujo de contribución según tu modelo de negocio.
